@@ -714,7 +714,21 @@
    */
   fabric.Path.fromElement = function(element, callback, options) {
     var parsedAttributes = fabric.parseAttributes(element, fabric.Path.ATTRIBUTE_NAMES);
-    callback && callback(new fabric.Path(parsedAttributes.d, extend(parsedAttributes, options)));
+    var p = new fabric.Path(parsedAttributes.d, extend(parsedAttributes, options));
+    p.totalLength = element.getTotalLength();
+    p.getPointAtRelativeLength = (function(_el){
+      var el = _el;
+      return function(fraction){
+        return el.getPointAtLength(el.getTotalLength()*fraction);
+      };
+    })(element);
+    p.setObjectToPointAtRelativeLength = function(obj,fraction){
+      var _p = this.getPointAtRelativeLength(fraction);
+      //console.log('obj going to (',p.x,',',p.y,')');
+      obj.set('left',_p.x);
+      obj.set('top',_p.y);
+    };
+    callback && callback(p);
   };
   /* _FROM_SVG_END_ */
 

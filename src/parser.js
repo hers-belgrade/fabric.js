@@ -555,6 +555,74 @@
   }
 
   /**
+   * @private
+   */
+  function hasAncestorWithNodeName(element, nodeName) {
+    while (element && (element = element.parentNode)) {
+      if (nodeName.test(element.nodeName)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * @private
+   */
+  function produceElements(svgelemarray, cb, options, reviver) {
+
+    var reAllowedSVGTagNames = /^(path|circle|polygon|polyline|ellipse|rect|line|image|text)$/;
+
+    var elements = svgelemarray.filter(function(el) {
+      return reAllowedSVGTagNames.test(el.tagName) &&
+            !hasAncestorWithNodeName(el, /^(?:pattern|defs)$/); // http://www.w3.org/TR/SVG/struct.html#DefsElement
+    });
+
+    if (!elements || (elements && !elements.length)) return;
+
+    (function(els,_cb,_options,_reviver){
+      var elements = els,
+        cb = _cb,
+        options = _options,
+        reviver = _reviver;
+      fabric.parseElements(elements, cb, options, reviver);
+    })(elements,cb,options,reviver);
+  }
+
+  /**
+   * @private
+   */
+  function processGroup(map,elements,g,options){
+    var gmap = {};
+    var gelements = [];
+    for(var i in g.children){
+      var gc = g.children[i];
+      var gcid = gc.id;
+      if(gc.tagName!=='g'){
+        produceElements([gc],function(instances){
+          var inst = instances[0];
+          if(gcid){
+            inst.id = gcid;
+            gmap[gcid] = inst;
+          }
+          gelements.push(inst);
+        },clone(options));
+      }else{
+        processGroup(gmap,gelements,gc,options);
+      }
+    }
+    var group = new fabric.Group(gelements);
+    for(var i in gmap){
+      group[i] = gmap[i];
+    }
+    elements.push(group);
+    if(g.id){
+      group.id = g.id;
+      map[g.id] = group;
+    }
+  };
+
+  /**
    * Parses an SVG document, converts it to an array of corresponding fabric.* instances and passes them to a callback
    * @static
    * @function
@@ -564,8 +632,6 @@
    * @param {Function} [reviver] Method for further parsing of SVG elements, called after each fabric object created.
    */
   fabric.parseSVGDocument = (function() {
-
-    var reAllowedSVGTagNames = /^(path|circle|polygon|polyline|ellipse|rect|line|image|text)$/;
 
     // http://www.w3.org/TR/SVG/coords.html#ViewBoxAttribute
     // \d doesn't quite cut it (as we need to match an actual float number)
@@ -581,15 +647,6 @@
       '\\s*(' + reNum + '+)\\s*' +
       '$'
     );
-
-    function hasAncestorWithNodeName(element, nodeName) {
-      while (element && (element = element.parentNode)) {
-        if (nodeName.test(element.nodeName)) {
-          return true;
-        }
-      }
-      return false;
-    }
 
     return function(doc, callback, reviver) {
       if (!doc) return;
@@ -607,13 +664,6 @@
         }
         descendants = arr;
       }
-
-      var elements = descendants.filter(function(el) {
-        return reAllowedSVGTagNames.test(el.tagName) &&
-              !hasAncestorWithNodeName(el, /^(?:pattern|defs)$/); // http://www.w3.org/TR/SVG/struct.html#DefsElement
-      });
-
-      if (!elements || (elements && !elements.length)) return;
 
       var viewBoxAttr = doc.getAttribute('viewBox'),
           widthAttr = doc.getAttribute('width'),
@@ -634,22 +684,26 @@
       width = widthAttr ? parseFloat(widthAttr) : width;
       height = heightAttr ? parseFloat(heightAttr) : height;
 
+      fabric.gradientDefs = fabric.getGradientDefs(doc);
+      fabric.cssRules = getCSSRules(doc);
+
       var options = {
         width: width,
         height: height
       };
 
-      fabric.gradientDefs = fabric.getGradientDefs(doc);
-      fabric.cssRules = getCSSRules(doc);
+      var docchildren = descendants.filter(function(el){
+        return el.parentNode && el.parentNode.nodeName==='svg';
+      });
 
-      // Precedence of rules:   style > class > attribute
+      var hierarchy = {};
+      var elements = [];
+      processGroup(hierarchy,elements,{children:docchildren},options);
 
-      fabric.parseElements(elements, function(instances) {
-        fabric.documentParsingTime = new Date() - startTime;
-        if (callback) {
-          callback(instances, options);
-        }
-      }, clone(options), reviver);
+      fabric.documentParsingTime = new Date() - startTime;
+      if(callback) {
+        callback(elements[0], options);
+      }
     };
   })();
 

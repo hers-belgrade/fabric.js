@@ -455,6 +455,7 @@
       var NUM_FRACTION_DIGITS = fabric.Object.NUM_FRACTION_DIGITS;
 
       var object = {
+        id:                 this.id,
         type:               this.type,
         originX:            this.originX,
         originY:            this.originY,
@@ -478,7 +479,8 @@
         opacity:            toFixed(this.opacity, NUM_FRACTION_DIGITS),
         shadow:             (this.shadow && this.shadow.toObject) ? this.shadow.toObject() : this.shadow,
         visible:            this.visible,
-        clipTo:             this.clipTo && String(this.clipTo)
+        clipTo:             this.clipTo && String(this.clipTo),
+        transformMatrix:    this.transformMatrix
       };
 
       if (!this.includeDefaultValues) {

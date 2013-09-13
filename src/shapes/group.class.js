@@ -50,7 +50,11 @@
 
       this._objects = objects || [];
       for (var i = this._objects.length; i--; ) {
-        this._objects[i].group = this;
+        var o = this._objects[i];
+        if(o.id){
+          this[o.id] = o;
+        }
+        o.group = this;
       }
 
       this.originalState = { };

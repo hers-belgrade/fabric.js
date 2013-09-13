@@ -203,6 +203,7 @@
      */
     _render: function(ctx) {
 
+      /*
       var isInPathGroup = this.group && this.group.type !== 'group';
       if (isInPathGroup && !this.transformMatrix) {
         ctx.translate(-this.group.width/2 + this.left, -this.group.height / 2 + this.top);
@@ -210,12 +211,22 @@
       else if (isInPathGroup && this.transformMatrix) {
         ctx.translate(-this.group.width/2, -this.group.height/2);
       }
+      console.log(this.text,this.transformMatrix);
+      */
+      var m = this.transformMatrix;
+      if(m){
+        ctx.save();
+        ctx.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
+      }
 
       if (typeof Cufon === 'undefined' || this.useNative === true) {
         this._renderViaNative(ctx);
       }
       else {
         this._renderViaCufon(ctx);
+      }
+      if(m){
+        ctx.restore();
       }
     },
 
