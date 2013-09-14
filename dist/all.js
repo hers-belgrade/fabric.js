@@ -8123,7 +8123,6 @@ fabric.util.string = {
           colorStops = [],
           coords = { };
 
-      console.log(parsedAttributes);
       if (type === 'linear') {
         coords = {
           x1: el.getAttribute('x1') || 0,
@@ -8198,7 +8197,6 @@ fabric.util.string = {
     }
     var m = options.transformMatrix;
     if(m){
-      console.log(options);
       options.x1+=m[4];
       options.x2+=m[4];
       options.x1*=m[0];
