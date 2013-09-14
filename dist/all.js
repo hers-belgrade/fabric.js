@@ -19372,6 +19372,7 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass(/** @lends fabric.Imag
      */
     _renderViaNative: function(ctx) {
 
+      ctx.save();
       this.transform(ctx, fabric.isLikelyNode);
 
       this._setTextStyles(ctx);
@@ -19406,6 +19407,7 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass(/** @lends fabric.Imag
 
       this._setBoundaries(ctx, textLines);
       this._totalLineHeight = 0;
+      ctx.restore();
     },
 
     /**

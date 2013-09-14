@@ -236,6 +236,7 @@
      */
     _renderViaNative: function(ctx) {
 
+      ctx.save();
       this.transform(ctx, fabric.isLikelyNode);
 
       this._setTextStyles(ctx);
@@ -270,6 +271,7 @@
 
       this._setBoundaries(ctx, textLines);
       this._totalLineHeight = 0;
+      ctx.restore();
     },
 
     /**
