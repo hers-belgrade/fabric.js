@@ -40,7 +40,8 @@
     'text-decoration':  'textDecoration',
     'cy':               'top',
     'y':                'top',
-    'transform':        'transformMatrix'
+    'transform':        'transformMatrix',
+    'gradientTransform':'transformMatrix'
   };
 
   var colorAttributes = {
@@ -611,13 +612,12 @@
         processGroup(gmap,gelements,gc,options);
       }
     }
-    var group = new fabric.Group(gelements);
+    var group = new fabric.Group(gelements,{id:g.id});
     for(var i in gmap){
       group[i] = gmap[i];
     }
     elements.push(group);
     if(g.id){
-      group.id = g.id;
       map[g.id] = group;
     }
   };

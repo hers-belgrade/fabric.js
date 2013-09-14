@@ -6038,7 +6038,8 @@ fabric.util.string = {
     'text-decoration':  'textDecoration',
     'cy':               'top',
     'y':                'top',
-    'transform':        'transformMatrix'
+    'transform':        'transformMatrix',
+    'gradientTransform':'transformMatrix'
   };
 
   var colorAttributes = {
@@ -6609,13 +6610,12 @@ fabric.util.string = {
         processGroup(gmap,gelements,gc,options);
       }
     }
-    var group = new fabric.Group(gelements);
+    var group = new fabric.Group(gelements,{id:g.id});
     for(var i in gmap){
       group[i] = gmap[i];
     }
     elements.push(group);
     if(g.id){
-      group.id = g.id;
       map[g.id] = group;
     }
   };
@@ -8115,12 +8115,15 @@ fabric.util.string = {
        *
        */
 
+      var parsedAttributes = fabric.parseAttributes(el,['gradientTransform']);
+
       var colorStopEls = el.getElementsByTagName('stop'),
           type = (el.nodeName === 'linearGradient' ? 'linear' : 'radial'),
           gradientUnits = el.getAttribute('gradientUnits') || 'objectBoundingBox',
           colorStops = [],
           coords = { };
 
+      console.log(parsedAttributes);
       if (type === 'linear') {
         coords = {
           x1: el.getAttribute('x1') || 0,
@@ -8139,6 +8142,8 @@ fabric.util.string = {
           r2: el.getAttribute('r') || '50%'
         };
       }
+
+      coords.transformMatrix = parsedAttributes.transformMatrix;
 
       for (var i = colorStopEls.length; i--; ) {
         colorStops.push(getColorStop(colorStopEls[i]));
@@ -8190,6 +8195,18 @@ fabric.util.string = {
       else if (prop === 'y1' || prop === 'y2') {
         options[prop] -= fabric.util.toFixed(object.height / 2, 2);
       }
+    }
+    var m = options.transformMatrix;
+    if(m){
+      console.log(options);
+      options.x1+=m[4];
+      options.x2+=m[4];
+      options.x1*=m[0];
+      options.x2*=m[0];
+      options.y1+=m[5];
+      options.y2+=m[5];
+      options.y1*=m[3];
+      options.y2*=m[3];
     }
   }
 

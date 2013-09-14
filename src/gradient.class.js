@@ -260,12 +260,15 @@
        *
        */
 
+      var parsedAttributes = fabric.parseAttributes(el,['gradientTransform']);
+
       var colorStopEls = el.getElementsByTagName('stop'),
           type = (el.nodeName === 'linearGradient' ? 'linear' : 'radial'),
           gradientUnits = el.getAttribute('gradientUnits') || 'objectBoundingBox',
           colorStops = [],
           coords = { };
 
+      console.log(parsedAttributes);
       if (type === 'linear') {
         coords = {
           x1: el.getAttribute('x1') || 0,
@@ -284,6 +287,8 @@
           r2: el.getAttribute('r') || '50%'
         };
       }
+
+      coords.transformMatrix = parsedAttributes.transformMatrix;
 
       for (var i = colorStopEls.length; i--; ) {
         colorStops.push(getColorStop(colorStopEls[i]));
@@ -335,6 +340,18 @@
       else if (prop === 'y1' || prop === 'y2') {
         options[prop] -= fabric.util.toFixed(object.height / 2, 2);
       }
+    }
+    var m = options.transformMatrix;
+    if(m){
+      console.log(options);
+      options.x1+=m[4];
+      options.x2+=m[4];
+      options.x1*=m[0];
+      options.x2*=m[0];
+      options.y1+=m[5];
+      options.y2+=m[5];
+      options.y1*=m[3];
+      options.y2*=m[3];
     }
   }
 
