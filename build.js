@@ -149,6 +149,7 @@ var filesToInclude = [
   ifSpecifiedInclude('easing', 'src/util/anim_ease.js'),
 
   ifSpecifiedInclude('parser', 'src/parser.js'),
+  ifSpecifiedInclude('loader', 'src/loader.js'),
 
   'src/point.class.js',
   'src/intersection.class.js',
@@ -196,6 +197,7 @@ var filesToInclude = [
   'src/shapes/path_group.class.js',
   'src/shapes/group.class.js',
   'src/shapes/image.class.js',
+  'src/shapes/sprite.class.js',
 
   ifSpecifiedInclude('object_straightening', 'src/mixins/object_straightening.mixin.js'),
 
@@ -274,7 +276,7 @@ else {
 
       exec(mininfierCmd, function (error, output) {
         if (error) {
-          console.error('Minification failed using', minifier, 'with', mininfierCmd);
+          console.error('Minification failed using', minifier, 'with', mininfierCmd, ':', error);
           process.exit(1);
         }
         console.log('Minified using', minifier, 'to dist/all.min.js');
