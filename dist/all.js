@@ -6939,27 +6939,7 @@ fabric.util.string = {
   /**
    * @private
    */
-  function _urlOfResource(picname){
-    return fabric.workingDirectory+'/'+picname;
-  };
-
-  /**
-   * @private
-   */
-  function _resolveResourceName(name){
-    var ra = name.split(':');
-    if(ra.length!==2){
-      return {};
-    }
-    return {type:ra[0],name:ra[1]};
-  };
-
-  /**
-   * @private
-   */
   function _loadSprites(spritename,cb){
-    var rn = _urlOfResource(spritename);
-    var path = rn.substr(0,rn.lastIndexOf('/'));
     var ih = (function(_cb){
       var cb = _cb;
       return function(spriteobj){
@@ -6975,54 +6955,101 @@ fabric.util.string = {
         };
       };
     })(cb);
-    var och = (function(_path,_ih){
-      var path = _path,ih=_ih;
+    var och = (function(_ih){
+      var ih=_ih;
       return function(xhr){
         var so = {};
         try{
           so = JSON.parse(xhr.responseText);
         }catch(e){
-         return;
+          cb();
+          return;
         } 
-        fabric.Image.fromURL(path+'/'+so.image,ih(so));
+        fabric.Image.fromURL(fabric.workingDirectory+'/'+so.image,ih(so));
       };
-    })(path,ih);
-    fabric.util.request(rn,{onComplete:och});
+    })(ih);
+    fabric.util.request(fabric.workingDirectory+'/'+spritename+'.sprites',{onComplete:och});
   };
 
   /**
    * @private
    */
-  function _load(picname,cb){
-    var resource = _resolveResourceName(picname);
-    var rn = _urlOfResource(resource.name);
-    switch(resource.type){
-      case 'pic':
-        fabric.Image.fromURL(rn,(function(_t){var t = _t; return function(img){cb.call(t,img);}})(this));
-        return;
-      case 'sprite':
-        _loadSprites(rn,(function(_t){var t = _t; return function(sprites){cb.call(t,sprites);}})(this));
-        return;
-      case 'svg':
-        var objhash = {};
-        fabric.loadSVGFromURL(
-            rn,
-            (function(_t){var t = _t; return function(svggroup,options){ cb.apply(t,arguments); };})(this)
-        );
-        return;
-      default:
-        return;
+  function _loadArray(type,picnamearray,cb,ctx){
+    function isArray(value) { return  Object.prototype.toString.call(value) === '[object Array]' };
+    if(!isArray(picnamearray)){
+      return;
     }
+    
+    var picnamearraylen = picnamearray.length;
+    var loaded = {};
+    var _lf = (function(_loaded,_type){
+      var loaded = _loaded;
+      var type = _type;
+      return function(index){
+        if(index>=picnamearraylen){
+          //console.log('all intermediate loaded',loaded,'calling cb now');
+          cb.call(ctx,loaded);
+          return;
+        }
+        var picname = picnamearray[index];
+        if(isArray(picname)){
+          return _loadArray(type,picname,function(_loaded){for(var i in _loaded){this[i]=_loaded[i];}_lf(index+1)},loaded);
+        }
+        function resourceloaded(resource){
+          //console.log(picname,'loaded',loaded);
+          loaded[picname] = resource;
+          //console.log('finally',loaded);
+          _lf(index+1);
+        };
+        var rn = fabric.workingDirectory+'/'+picname+'.'+type;
+        //console.log('loading',fabric.workingDirectory,picname,type,rn);
+        switch(type){
+          case 'png':
+            return fabric.Image.fromURL(rn,resourceloaded);
+          case 'sprites':
+            return _loadSprites(picname,resourceloaded);
+          case 'svg':
+            return fabric.loadSVGFromURL(rn, resourceloaded);
+          default:
+            return _lf(index+1);
+        }
+      };
+    })(loaded,type);
+    _lf(0);
   };
+
+  /**
+   * Sets the path for further call to loadResources
+   * @static
+   * @function
+   * @memberOf fabric
+   * @param {String} path to working directory
+   */
   function setWorkingDirectory(path){
     fabric.workingDirectory = path;
   };
 
-  function loadResources(resobj){
+  /**
+   * Sets the path for further call to loadResources
+   * @static
+   * @function
+   * @memberOf fabric
+   * @param {Object} hash with keys: sprites, svg. Values are arrays of appropriate resource names in the Working Directory
+   */
+  function loadResources(resobj,cb,ctx){
+    _loadArray('svg',resobj.svg,function(loaded){
+      _loadArray('sprites',resobj.sprites,function(_loaded){
+        for(var i in _loaded){
+          loaded[i] = _loaded[i];
+        }
+        cb.call(ctx,loaded);
+      });
+    });
   };
 
   extend(fabric, {
-    setWorkingDirectory : setWorkingDirectory
+    setWorkingDirectory : setWorkingDirectory,
+    loadResources : loadResources
   });
 
 })(typeof exports !== 'undefined' ? exports : this);

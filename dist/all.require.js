@@ -4151,22 +4151,7 @@ fabric.Collection = {
 
 (function(global) {
     var fabric = global.fabric || (global.fabric = {}), extend = fabric.util.object.extend;
-    function _urlOfResource(picname) {
-        return fabric.workingDirectory + "/" + picname;
-    }
-    function _resolveResourceName(name) {
-        var ra = name.split(":");
-        if (ra.length !== 2) {
-            return {};
-        }
-        return {
-            type: ra[0],
-            name: ra[1]
-        };
-    }
     function _loadSprites(spritename, cb) {
-        var rn = _urlOfResource(spritename);
-        var path = rn.substr(0, rn.lastIndexOf("/"));
         var ih = function(_cb) {
             var cb = _cb;
             return function(spriteobj) {
@@ -4190,64 +4175,87 @@ fabric.Collection = {
                 };
             };
         }(cb);
-        var och = function(_path, _ih) {
-            var path = _path, ih = _ih;
+        var och = function(_ih) {
+            var ih = _ih;
             return function(xhr) {
                 var so = {};
                 try {
                     so = JSON.parse(xhr.responseText);
                 } catch (e) {
+                    cb();
                     return;
                 }
-                fabric.Image.fromURL(path + "/" + so.image, ih(so));
+                fabric.Image.fromURL(fabric.workingDirectory + "/" + so.image, ih(so));
             };
-        }(path, ih);
-        fabric.util.request(rn, {
+        }(ih);
+        fabric.util.request(fabric.workingDirectory + "/" + spritename + ".sprites", {
             onComplete: och
         });
     }
-    function _load(picname, cb) {
-        var resource = _resolveResourceName(picname);
-        var rn = _urlOfResource(resource.name);
-        switch (resource.type) {
-          case "pic":
-            fabric.Image.fromURL(rn, function(_t) {
-                var t = _t;
-                return function(img) {
-                    cb.call(t, img);
-                };
-            }(this));
-            return;
-
-          case "sprite":
-            _loadSprites(rn, function(_t) {
-                var t = _t;
-                return function(sprites) {
-                    cb.call(t, sprites);
-                };
-            }(this));
-            return;
-
-          case "svg":
-            var objhash = {};
-            fabric.loadSVGFromURL(rn, function(_t) {
-                var t = _t;
-                return function(svggroup, options) {
-                    cb.apply(t, arguments);
-                };
-            }(this));
-            return;
-
-          default:
+    function _loadArray(type, picnamearray, cb, ctx) {
+        function isArray(value) {
+            return Object.prototype.toString.call(value) === "[object Array]";
+        }
+        if (!isArray(picnamearray)) {
             return;
         }
+        var picnamearraylen = picnamearray.length;
+        var loaded = {};
+        var _lf = function(_loaded, _type) {
+            var loaded = _loaded;
+            var type = _type;
+            return function(index) {
+                if (index >= picnamearraylen) {
+                    cb.call(ctx, loaded);
+                    return;
+                }
+                var picname = picnamearray[index];
+                if (isArray(picname)) {
+                    return _loadArray(type, picname, function(_loaded) {
+                        for (var i in _loaded) {
+                            this[i] = _loaded[i];
+                        }
+                        _lf(index + 1);
+                    }, loaded);
+                }
+                function resourceloaded(resource) {
+                    loaded[picname] = resource;
+                    _lf(index + 1);
+                }
+                var rn = fabric.workingDirectory + "/" + picname + "." + type;
+                switch (type) {
+                  case "png":
+                    return fabric.Image.fromURL(rn, resourceloaded);
+
+                  case "sprites":
+                    return _loadSprites(picname, resourceloaded);
+
+                  case "svg":
+                    return fabric.loadSVGFromURL(rn, resourceloaded);
+
+                  default:
+                    return _lf(index + 1);
+                }
+            };
+        }(loaded, type);
+        _lf(0);
     }
     function setWorkingDirectory(path) {
         fabric.workingDirectory = path;
     }
-    function loadResources(resobj) {}
+    function loadResources(resobj, cb, ctx) {
+        _loadArray("svg", resobj.svg, function(loaded) {
+            _loadArray("sprites", resobj.sprites, function(_loaded) {
+                for (var i in _loaded) {
+                    loaded[i] = _loaded[i];
+                }
+                cb.call(ctx, loaded);
+            });
+        });
+    }
     extend(fabric, {
-        setWorkingDirectory: setWorkingDirectory
+        setWorkingDirectory: setWorkingDirectory,
+        loadResources: loadResources
     });
 })(typeof exports !== "undefined" ? exports : this);
 
