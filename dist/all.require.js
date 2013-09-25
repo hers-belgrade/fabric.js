@@ -3967,20 +3967,22 @@ fabric.Collection = {
     function processGroup(map, elements, g, options) {
         var gmap = {};
         var gelements = [];
-        for (var i in g.children) {
-            var gc = g.children[i];
+        for (var i in g.childNodes) {
+            var gc = g.childNodes[i];
             var gcid = gc.id;
-            if (gc.tagName !== "g") {
-                produceElements([ gc ], function(instances) {
-                    var inst = instances[0];
-                    if (gcid) {
-                        inst.id = gcid;
-                        gmap[gcid] = inst;
-                    }
-                    gelements.push(inst);
-                }, clone(options));
-            } else {
-                processGroup(gmap, gelements, gc, options);
+            if (gc.tagName) {
+                if (gc.tagName !== "g") {
+                    produceElements([ gc ], function(instances) {
+                        var inst = instances[0];
+                        if (gcid) {
+                            inst.id = gcid;
+                            gmap[gcid] = inst;
+                        }
+                        gelements.push(inst);
+                    }, clone(options));
+                } else {
+                    processGroup(gmap, gelements, gc, options);
+                }
             }
         }
         var group = new fabric.Group(gelements, {
@@ -4028,9 +4030,7 @@ fabric.Collection = {
             });
             var hierarchy = {};
             var elements = [];
-            processGroup(hierarchy, elements, {
-                children: docchildren
-            }, options);
+            processGroup(hierarchy, elements, doc, options);
             fabric.documentParsingTime = new Date() - startTime;
             if (callback) {
                 callback(elements[0], options);

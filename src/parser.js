@@ -593,6 +593,7 @@
   /**
    * @private
    */
+  /*
   function processGroup(map,elements,g,options){
     var gmap = {};
     var gelements = [];
@@ -610,6 +611,37 @@
         },clone(options));
       }else{
         processGroup(gmap,gelements,gc,options);
+      }
+    }
+    var group = new fabric.Group(gelements,{id:g.id});
+    for(var i in gmap){
+      group[i] = gmap[i];
+    }
+    elements.push(group);
+    if(g.id){
+      map[g.id] = group;
+    }
+  };
+  */
+  function processGroup(map,elements,g,options){
+    var gmap = {};
+    var gelements = [];
+    for(var i in g.childNodes){
+      var gc = g.childNodes[i];
+      var gcid = gc.id;
+      if(gc.tagName){
+        if((gc.tagName!=='g')){
+          produceElements([gc],function(instances){
+            var inst = instances[0];
+            if(gcid){
+              inst.id = gcid;
+              gmap[gcid] = inst;
+            }
+            gelements.push(inst);
+          },clone(options));
+        }else{
+          processGroup(gmap,gelements,gc,options);
+        }
       }
     }
     var group = new fabric.Group(gelements,{id:g.id});
@@ -698,7 +730,7 @@
 
       var hierarchy = {};
       var elements = [];
-      processGroup(hierarchy,elements,{children:docchildren},options);
+      processGroup(hierarchy,elements,doc,options);
 
       fabric.documentParsingTime = new Date() - startTime;
       if(callback) {
