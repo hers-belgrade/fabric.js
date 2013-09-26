@@ -3645,8 +3645,7 @@ fabric.Collection = {
         "text-decoration": "textDecoration",
         cy: "top",
         y: "top",
-        transform: "transformMatrix",
-        gradientTransform: "transformMatrix"
+        transform: "transformMatrix"
     };
     var colorAttributes = {
         stroke: "strokeOpacity",
@@ -3945,61 +3944,94 @@ fabric.Collection = {
         }
         return styles;
     }
-    function hasAncestorWithNodeName(element, nodeName) {
-        while (element && (element = element.parentNode)) {
-            if (nodeName.test(element.nodeName)) {
-                return true;
-            }
-        }
-        return false;
-    }
-    function produceElements(svgelemarray, cb, options, reviver) {
-        var reAllowedSVGTagNames = /^(path|circle|polygon|polyline|ellipse|rect|line|image|text)$/;
-        var elements = svgelemarray.filter(function(el) {
-            return reAllowedSVGTagNames.test(el.tagName) && !hasAncestorWithNodeName(el, /^(?:pattern|defs)$/);
-        });
-        if (!elements || elements && !elements.length) return;
-        (function(els, _cb, _options, _reviver) {
-            var elements = els, cb = _cb, options = _options, reviver = _reviver;
-            fabric.parseElements(elements, cb, options, reviver);
-        })(elements, cb, options, reviver);
-    }
-    function processGroup(map, elements, g, options) {
-        var gmap = {};
-        var gelements = [];
-        for (var i in g.childNodes) {
-            var gc = g.childNodes[i];
-            var gcid = gc.id;
-            if (gc.tagName) {
-                if (gc.tagName !== "g") {
-                    produceElements([ gc ], function(instances) {
-                        var inst = instances[0];
-                        if (gcid) {
-                            inst.id = gcid;
-                            gmap[gcid] = inst;
-                        }
-                        gelements.push(inst);
-                    }, clone(options));
-                } else {
-                    processGroup(gmap, gelements, gc, options);
-                }
-            }
-        }
-        var group = new fabric.Group(gelements, {
-            id: g.id
-        });
-        for (var i in gmap) {
-            group[i] = gmap[i];
-        }
-        elements.push(group);
-        if (g.id) {
-            map[g.id] = group;
-        }
-    }
     fabric.parseSVGDocument = function() {
+        var reAllowedSVGTagNames = /^(path|circle|polygon|polyline|ellipse|rect|line|image|text)$/;
         var reNum = "(?:[-+]?\\d+(?:\\.\\d+)?(?:e[-+]?\\d+)?)";
         var reViewBoxAttrValue = new RegExp("^" + "\\s*(" + reNum + "+)\\s*,?" + "\\s*(" + reNum + "+)\\s*,?" + "\\s*(" + reNum + "+)\\s*,?" + "\\s*(" + reNum + "+)\\s*" + "$");
+        function hasAncestorWithNodeName(element, nodeName) {
+            while (element && (element = element.parentNode)) {
+                if (nodeName.test(element.nodeName)) {
+                    return true;
+                }
+            }
+            return false;
+        }
         return function(doc, callback, reviver) {
+            if (!doc) return;
+            var startTime = new Date(), descendants = fabric.util.toArray(doc.getElementsByTagName("*"));
+            if (descendants.length === 0) {
+                descendants = doc.selectNodes("//*[name(.)!='svg']");
+                var arr = [];
+                for (var i = 0, len = descendants.length; i < len; i++) {
+                    arr[i] = descendants[i];
+                }
+                descendants = arr;
+            }
+            var elements = descendants.filter(function(el) {
+                return reAllowedSVGTagNames.test(el.tagName) && !hasAncestorWithNodeName(el, /^(?:pattern|defs)$/);
+            });
+            if (!elements || elements && !elements.length) return;
+            var viewBoxAttr = doc.getAttribute("viewBox"), widthAttr = doc.getAttribute("width"), heightAttr = doc.getAttribute("height"), width = null, height = null, minX, minY;
+            if (viewBoxAttr && (viewBoxAttr = viewBoxAttr.match(reViewBoxAttrValue))) {
+                minX = parseInt(viewBoxAttr[1], 10);
+                minY = parseInt(viewBoxAttr[2], 10);
+                width = parseInt(viewBoxAttr[3], 10);
+                height = parseInt(viewBoxAttr[4], 10);
+            }
+            width = widthAttr ? parseFloat(widthAttr) : width;
+            height = heightAttr ? parseFloat(heightAttr) : height;
+            var options = {
+                width: width,
+                height: height
+            };
+            fabric.gradientDefs = fabric.getGradientDefs(doc);
+            fabric.cssRules = getCSSRules(doc);
+            fabric.parseElements(elements, function(instances) {
+                fabric.documentParsingTime = new Date() - startTime;
+                if (callback) {
+                    callback(instances, options);
+                }
+            }, clone(options), reviver);
+        };
+    }();
+    fabric.parseSVGDocumentHierarchical = function() {
+        function processGroup(map, elements, g, options) {
+            var gmap = {};
+            var gelements = [];
+            for (var i in g.childNodes) {
+                var gc = g.childNodes[i];
+                var gcid = gc.id;
+                if (gc.tagName) {
+                    if (gc.tagName !== "g") {
+                        if (/^(path|circle|polygon|polyline|ellipse|rect|line|image|text)$/.test(gc.tagName)) {
+                            fabric.parseElements([ gc ], function(instances) {
+                                var inst = instances[0];
+                                if (gcid) {
+                                    inst.id = gcid;
+                                    gmap[gcid] = inst;
+                                }
+                                gelements.push(inst);
+                            }, clone(options));
+                        }
+                    } else {
+                        processGroup(gmap, gelements, gc, options);
+                    }
+                }
+            }
+            var group = new fabric.Group(gelements, {
+                id: g.id
+            });
+            for (var i in gmap) {
+                group[i] = gmap[i];
+            }
+            elements.push(group);
+            if (g.id) {
+                map[g.id] = group;
+            }
+        }
+        var reNum = "(?:[-+]?\\d+(?:\\.\\d+)?(?:e[-+]?\\d+)?)";
+        var reViewBoxAttrValue = new RegExp("^" + "\\s*(" + reNum + "+)\\s*,?" + "\\s*(" + reNum + "+)\\s*,?" + "\\s*(" + reNum + "+)\\s*,?" + "\\s*(" + reNum + "+)\\s*" + "$");
+        return function(doc, callback) {
             if (!doc) return;
             var startTime = new Date(), descendants = fabric.util.toArray(doc.getElementsByTagName("*"));
             if (descendants.length === 0) {
@@ -4076,6 +4108,38 @@ fabric.Collection = {
             }, reviver);
         }
     }
+    function loadSVGHierarchicalFromURL(url, callback, reviver) {
+        url = url.replace(/^\n\s*/, "").trim();
+        svgCache.has(url, function(hasUrl) {
+            if (hasUrl) {
+                svgCache.get(url, function(value) {
+                    var enlivedRecord = _enlivenCachedObject(value);
+                    callback(enlivedRecord.objects, enlivedRecord.options);
+                });
+            } else {
+                new fabric.util.request(url, {
+                    method: "get",
+                    onComplete: onComplete
+                });
+            }
+        });
+        function onComplete(r) {
+            var xml = r.responseXML;
+            if (!xml.documentElement && fabric.window.ActiveXObject && r.responseText) {
+                xml = new ActiveXObject("Microsoft.XMLDOM");
+                xml.async = "false";
+                xml.loadXML(r.responseText.replace(/<!DOCTYPE[\s\S]*?(\[[\s\S]*\])*?>/i, ""));
+            }
+            if (!xml.documentElement) return;
+            fabric.parseSVGDocumentHierarchical(xml.documentElement, function(results, options) {
+                svgCache.set(url, {
+                    objects: fabric.util.array.invoke(results, "toObject"),
+                    options: options
+                });
+                callback(results, options);
+            }, reviver);
+        }
+    }
     function _enlivenCachedObject(cachedObject) {
         var objects = cachedObject.objects, options = cachedObject.options;
         objects = objects.map(function(o) {
@@ -4142,6 +4206,7 @@ fabric.Collection = {
         parsePointsAttribute: parsePointsAttribute,
         getCSSRules: getCSSRules,
         loadSVGFromURL: loadSVGFromURL,
+        loadSVGHierarchicalFromURL: loadSVGHierarchicalFromURL,
         loadSVGFromString: loadSVGFromString,
         createSVGFontFacesMarkup: createSVGFontFacesMarkup,
         createSVGRefElementsMarkup: createSVGRefElementsMarkup,
@@ -4231,7 +4296,7 @@ fabric.Collection = {
                     return _loadSprites(picname, resourceloaded);
 
                   case "svg":
-                    return fabric.loadSVGFromURL(rn, resourceloaded);
+                    return fabric.loadSVGHierarchicalFromURL(rn, resourceloaded);
 
                   default:
                     return _lf(index + 1);

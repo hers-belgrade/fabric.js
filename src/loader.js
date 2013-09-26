@@ -75,7 +75,7 @@
           case 'sprites':
             return _loadSprites(picname,resourceloaded);
           case 'svg':
-            return fabric.loadSVGFromURL(rn, resourceloaded);
+            return fabric.loadSVGHierarchicalFromURL(rn, resourceloaded);
           default:
             return _lf(index+1);
         }
