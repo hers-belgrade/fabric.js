@@ -43,7 +43,7 @@
   function _loadArray(type,picnamearray,cb,ctx){
     function isArray(value) { return  Object.prototype.toString.call(value) === '[object Array]' };
     if(!isArray(picnamearray)){
-      return;
+      return cb.call(ctx,{});
     }
     
     var picnamearraylen = picnamearray.length;
@@ -75,7 +75,7 @@
           case 'sprites':
             return _loadSprites(picname,resourceloaded);
           case 'svg':
-            return fabric.loadSVGFromURL(rn, resourceloaded);
+            return fabric.loadSVGHierarchicalFromURL(rn, resourceloaded);
           default:
             return _lf(index+1);
         }

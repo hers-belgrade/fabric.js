@@ -3625,8 +3625,9 @@ fabric.Collection = {
 (function(global) {
     "use strict";
     var fabric = global.fabric || (global.fabric = {}), extend = fabric.util.object.extend, capitalize = fabric.util.string.capitalize, clone = fabric.util.object.clone, toFixed = fabric.util.toFixed, multiplyTransformMatrices = fabric.util.multiplyTransformMatrices;
-    fabric.SHARED_ATTRIBUTES = [ "transform", "fill", "fill-opacity", "fill-rule", "opacity", "stroke", "stroke-dasharray", "stroke-linecap", "stroke-linejoin", "stroke-miterlimit", "stroke-opacity", "stroke-width" ];
+    fabric.SHARED_ATTRIBUTES = [ "id", "transform", "fill", "fill-opacity", "fill-rule", "opacity", "stroke", "stroke-dasharray", "stroke-linecap", "stroke-linejoin", "stroke-miterlimit", "stroke-opacity", "stroke-width" ];
     var attributesMap = {
+        id: "id",
         "fill-opacity": "fillOpacity",
         "fill-rule": "fillRule",
         "font-family": "fontFamily",
@@ -3646,7 +3647,7 @@ fabric.Collection = {
         cy: "top",
         y: "top",
         transform: "transformMatrix",
-        gradientTransform: "transformMatrix"
+        "text-align": "textAlign"
     };
     var colorAttributes = {
         stroke: "strokeOpacity",
@@ -3658,7 +3659,7 @@ fabric.Collection = {
         }
         return attr;
     }
-    function normalizeValue(attr, value, parentAttributes) {
+    function normalizeValue(attr, value) {
         var isArray;
         if ((attr === "fill" || attr === "stroke") && value === "none") {
             value = "";
@@ -3667,11 +3668,7 @@ fabric.Collection = {
         } else if (attr === "strokeDashArray") {
             value = value.replace(/,/g, " ").split(/\s+/);
         } else if (attr === "transformMatrix") {
-            if (parentAttributes && parentAttributes.transformMatrix) {
-                value = multiplyTransformMatrices(parentAttributes.transformMatrix, fabric.parseTransformAttribute(value));
-            } else {
-                value = fabric.parseTransformAttribute(value);
-            }
+            value = fabric.parseTransformAttribute(value);
         }
         isArray = Object.prototype.toString.call(value) === "[object Array]";
         var parsed = isArray ? value.map(parseFloat) : parseFloat(value);
@@ -3692,9 +3689,6 @@ fabric.Collection = {
             return;
         }
         var value, parentAttributes = {};
-        if (element.parentNode && /^g$/i.test(element.parentNode.nodeName)) {
-            parentAttributes = fabric.parseAttributes(element.parentNode, attributes);
-        }
         var ownAttributes = attributes.reduce(function(memo, attr) {
             value = element.getAttribute(attr);
             if (value) {
@@ -3945,59 +3939,95 @@ fabric.Collection = {
         }
         return styles;
     }
-    function hasAncestorWithNodeName(element, nodeName) {
-        while (element && (element = element.parentNode)) {
-            if (nodeName.test(element.nodeName)) {
-                return true;
-            }
-        }
-        return false;
-    }
-    function produceElements(svgelemarray, cb, options, reviver) {
-        var reAllowedSVGTagNames = /^(path|circle|polygon|polyline|ellipse|rect|line|image|text)$/;
-        var elements = svgelemarray.filter(function(el) {
-            return reAllowedSVGTagNames.test(el.tagName) && !hasAncestorWithNodeName(el, /^(?:pattern|defs)$/);
-        });
-        if (!elements || elements && !elements.length) return;
-        (function(els, _cb, _options, _reviver) {
-            var elements = els, cb = _cb, options = _options, reviver = _reviver;
-            fabric.parseElements(elements, cb, options, reviver);
-        })(elements, cb, options, reviver);
-    }
-    function processGroup(map, elements, g, options) {
-        var gmap = {};
-        var gelements = [];
-        for (var i in g.children) {
-            var gc = g.children[i];
-            var gcid = gc.id;
-            if (gc.tagName !== "g") {
-                produceElements([ gc ], function(instances) {
-                    var inst = instances[0];
-                    if (gcid) {
-                        inst.id = gcid;
-                        gmap[gcid] = inst;
-                    }
-                    gelements.push(inst);
-                }, clone(options));
-            } else {
-                processGroup(gmap, gelements, gc, options);
-            }
-        }
-        var group = new fabric.Group(gelements, {
-            id: g.id
-        });
-        for (var i in gmap) {
-            group[i] = gmap[i];
-        }
-        elements.push(group);
-        if (g.id) {
-            map[g.id] = group;
-        }
-    }
     fabric.parseSVGDocument = function() {
+        var reAllowedSVGTagNames = /^(path|circle|polygon|polyline|ellipse|rect|line|image|text)$/;
         var reNum = "(?:[-+]?\\d+(?:\\.\\d+)?(?:e[-+]?\\d+)?)";
         var reViewBoxAttrValue = new RegExp("^" + "\\s*(" + reNum + "+)\\s*,?" + "\\s*(" + reNum + "+)\\s*,?" + "\\s*(" + reNum + "+)\\s*,?" + "\\s*(" + reNum + "+)\\s*" + "$");
+        function hasAncestorWithNodeName(element, nodeName) {
+            while (element && (element = element.parentNode)) {
+                if (nodeName.test(element.nodeName)) {
+                    return true;
+                }
+            }
+            return false;
+        }
         return function(doc, callback, reviver) {
+            if (!doc) return;
+            var startTime = new Date(), descendants = fabric.util.toArray(doc.getElementsByTagName("*"));
+            if (descendants.length === 0) {
+                descendants = doc.selectNodes("//*[name(.)!='svg']");
+                var arr = [];
+                for (var i = 0, len = descendants.length; i < len; i++) {
+                    arr[i] = descendants[i];
+                }
+                descendants = arr;
+            }
+            var elements = descendants.filter(function(el) {
+                return reAllowedSVGTagNames.test(el.tagName) && !hasAncestorWithNodeName(el, /^(?:pattern|defs)$/);
+            });
+            if (!elements || elements && !elements.length) return;
+            var viewBoxAttr = doc.getAttribute("viewBox"), widthAttr = doc.getAttribute("width"), heightAttr = doc.getAttribute("height"), width = null, height = null, minX, minY;
+            if (viewBoxAttr && (viewBoxAttr = viewBoxAttr.match(reViewBoxAttrValue))) {
+                minX = parseInt(viewBoxAttr[1], 10);
+                minY = parseInt(viewBoxAttr[2], 10);
+                width = parseInt(viewBoxAttr[3], 10);
+                height = parseInt(viewBoxAttr[4], 10);
+            }
+            width = widthAttr ? parseFloat(widthAttr) : width;
+            height = heightAttr ? parseFloat(heightAttr) : height;
+            var options = {
+                width: width,
+                height: height
+            };
+            fabric.gradientDefs = fabric.getGradientDefs(doc);
+            fabric.cssRules = getCSSRules(doc);
+            fabric.parseElements(elements, function(instances) {
+                fabric.documentParsingTime = new Date() - startTime;
+                if (callback) {
+                    callback(instances, options);
+                }
+            }, clone(options), reviver);
+        };
+    }();
+    fabric.parseSVGDocumentHierarchical = function() {
+        function processGroup(map, elements, g, options) {
+            var gmap = {};
+            var gelements = [];
+            for (var i in g.childNodes) {
+                var gc = g.childNodes[i];
+                var gcid = gc.id;
+                if (gc.tagName) {
+                    if (gc.tagName !== "g") {
+                        if (/^(path|circle|polygon|polyline|ellipse|rect|line|image|text)$/.test(gc.tagName)) {
+                            fabric.parseElements([ gc ], function(instances) {
+                                var inst = instances[0];
+                                if (gcid) {
+                                    inst.id = gcid;
+                                    gmap[gcid] = inst;
+                                }
+                                gelements.push(inst);
+                            }, clone(options));
+                        }
+                    } else {
+                        processGroup(gmap, gelements, gc, options);
+                    }
+                }
+            }
+            var ga = fabric.parseAttributes(g, fabric.SHARED_ATTRIBUTES);
+            ga.width = ga.width || options.width;
+            ga.height = ga.height || options.height;
+            var group = new fabric.Group(gelements, ga);
+            for (var i in gmap) {
+                group[i] = gmap[i];
+            }
+            elements.push(group);
+            if (g.id) {
+                map[g.id] = group;
+            }
+        }
+        var reNum = "(?:[-+]?\\d+(?:\\.\\d+)?(?:e[-+]?\\d+)?)";
+        var reViewBoxAttrValue = new RegExp("^" + "\\s*(" + reNum + "+)\\s*,?" + "\\s*(" + reNum + "+)\\s*,?" + "\\s*(" + reNum + "+)\\s*,?" + "\\s*(" + reNum + "+)\\s*" + "$");
+        return function(doc, callback) {
             if (!doc) return;
             var startTime = new Date(), descendants = fabric.util.toArray(doc.getElementsByTagName("*"));
             if (descendants.length === 0) {
@@ -4028,9 +4058,7 @@ fabric.Collection = {
             });
             var hierarchy = {};
             var elements = [];
-            processGroup(hierarchy, elements, {
-                children: docchildren
-            }, options);
+            processGroup(hierarchy, elements, doc, options);
             fabric.documentParsingTime = new Date() - startTime;
             if (callback) {
                 callback(elements[0], options);
@@ -4068,6 +4096,38 @@ fabric.Collection = {
             }
             if (!xml.documentElement) return;
             fabric.parseSVGDocument(xml.documentElement, function(results, options) {
+                svgCache.set(url, {
+                    objects: fabric.util.array.invoke(results, "toObject"),
+                    options: options
+                });
+                callback(results, options);
+            }, reviver);
+        }
+    }
+    function loadSVGHierarchicalFromURL(url, callback, reviver) {
+        url = url.replace(/^\n\s*/, "").trim();
+        svgCache.has(url, function(hasUrl) {
+            if (hasUrl) {
+                svgCache.get(url, function(value) {
+                    var enlivedRecord = _enlivenCachedObject(value);
+                    callback(enlivedRecord.objects, enlivedRecord.options);
+                });
+            } else {
+                new fabric.util.request(url, {
+                    method: "get",
+                    onComplete: onComplete
+                });
+            }
+        });
+        function onComplete(r) {
+            var xml = r.responseXML;
+            if (!xml.documentElement && fabric.window.ActiveXObject && r.responseText) {
+                xml = new ActiveXObject("Microsoft.XMLDOM");
+                xml.async = "false";
+                xml.loadXML(r.responseText.replace(/<!DOCTYPE[\s\S]*?(\[[\s\S]*\])*?>/i, ""));
+            }
+            if (!xml.documentElement) return;
+            fabric.parseSVGDocumentHierarchical(xml.documentElement, function(results, options) {
                 svgCache.set(url, {
                     objects: fabric.util.array.invoke(results, "toObject"),
                     options: options
@@ -4142,6 +4202,7 @@ fabric.Collection = {
         parsePointsAttribute: parsePointsAttribute,
         getCSSRules: getCSSRules,
         loadSVGFromURL: loadSVGFromURL,
+        loadSVGHierarchicalFromURL: loadSVGHierarchicalFromURL,
         loadSVGFromString: loadSVGFromString,
         createSVGFontFacesMarkup: createSVGFontFacesMarkup,
         createSVGRefElementsMarkup: createSVGRefElementsMarkup,
@@ -4197,7 +4258,7 @@ fabric.Collection = {
             return Object.prototype.toString.call(value) === "[object Array]";
         }
         if (!isArray(picnamearray)) {
-            return;
+            return cb.call(ctx, {});
         }
         var picnamearraylen = picnamearray.length;
         var loaded = {};
@@ -4231,7 +4292,7 @@ fabric.Collection = {
                     return _loadSprites(picname, resourceloaded);
 
                   case "svg":
-                    return fabric.loadSVGFromURL(rn, resourceloaded);
+                    return fabric.loadSVGHierarchicalFromURL(rn, resourceloaded);
 
                   default:
                     return _lf(index + 1);
@@ -7002,7 +7063,8 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
         transform: function(ctx, fromLeft) {
             ctx.globalAlpha = this.opacity;
             var center = fromLeft ? this._getLeftTopCoords() : this.getCenterPoint();
-            ctx.translate(center.x, center.y);
+            console.log(this.id, "translating by", this.left, this.top);
+            ctx.translate(this.left, this.top);
             ctx.rotate(degreesToRadians(this.angle));
             ctx.scale(this.scaleX * (this.flipX ? -1 : 1), this.scaleY * (this.flipY ? -1 : 1));
         },
@@ -7144,8 +7206,11 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
             if (this.width === 0 || this.height === 0 || !this.visible) return;
             ctx.save();
             var m = this.transformMatrix;
-            if (m && !this.group) {
-                ctx.setTransform(m[0], m[1], m[2], m[3], m[4], m[5]);
+            if (m) {
+                console.log(this.id, "matrix", m);
+                ctx.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
+            } else {
+                console.log(this.id, "no matrix");
             }
             if (!noTransform) {
                 this.transform(ctx);
@@ -7161,10 +7226,6 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
                 ctx.fillStyle = this.overlayFill;
             } else if (this.fill) {
                 ctx.fillStyle = this.fill.toLive ? this.fill.toLive(ctx) : this.fill;
-            }
-            if (m && this.group) {
-                ctx.translate(-this.group.width / 2, -this.group.height / 2);
-                ctx.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
             }
             this._setShadow(ctx);
             this.clipTo && fabric.util.clipContext(this, ctx);
@@ -9302,7 +9363,7 @@ fabric.util.object.extend(fabric.Object.prototype, {
                 objects: invoke(this._objects, "toObject", propertiesToInclude)
             });
         },
-        render: function(ctx, noTransform) {
+        render1: function(ctx, noTransform) {
             if (!this.visible) return;
             ctx.save();
             this.transform(ctx);
@@ -9324,6 +9385,13 @@ fabric.util.object.extend(fabric.Object.prototype, {
             }
             ctx.restore();
             this.setCoords();
+        },
+        _render: function(ctx, noTransform) {
+            for (var i = 0, len = this._objects.length; i < len; i++) {
+                var object = this._objects[i];
+                object.render(ctx);
+                console.log(object.id, object.oCoords);
+            }
         },
         _restoreObjectsState: function() {
             this._objects.forEach(this._restoreObjectState, this);
@@ -9386,10 +9454,6 @@ fabric.util.object.extend(fabric.Object.prototype, {
             maxY = max(aY);
             width = maxX - minX || 0;
             height = maxY - minY || 0;
-            this.width = width;
-            this.height = height;
-            this.left = minX + width / 2 || 0;
-            this.top = minY + height / 2 || 0;
         },
         toSVG: function() {
             var objectsMarkup = [];
@@ -9469,7 +9533,7 @@ fabric.util.object.extend(fabric.Object.prototype, {
                 height: element.height
             };
         },
-        render: function(ctx, noTransform) {
+        render1: function(ctx, noTransform) {
             if (!this.visible) return;
             ctx.save();
             var m = this.transformMatrix;
@@ -9586,7 +9650,7 @@ fabric.util.object.extend(fabric.Object.prototype, {
             return this;
         },
         _render: function(ctx) {
-            ctx.drawImage(this._element, -this.width / 2, -this.height / 2, this.width, this.height);
+            ctx.drawImage(this._element, 0, 0, this.width, this.height);
         },
         _resetWidthHeight: function() {
             var element = this.getElement();
@@ -9670,7 +9734,7 @@ fabric.util.object.extend(fabric.Object.prototype, {
             this.callSuper("initialize", element, options);
         },
         _render: function(ctx) {
-            ctx.drawImage(this._element, this.x, this.y, this.width, this.height, -this.width / 2, -this.height / 2, this.width, this.height);
+            ctx.drawImage(this._element, this.x, this.y, this.width, this.height, 0, 0, this.width, this.height);
         },
         toObject: function(propertiesToInclude) {
             return extend(this.callSuper("toObject", propertiesToInclude), {
@@ -10283,44 +10347,30 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass({
             return "#<fabric.Text (" + this.complexity() + '): { "text": "' + this.text + '", "fontFamily": "' + this.fontFamily + '" }>';
         },
         _render: function(ctx) {
-            var m = this.transformMatrix;
-            if (m) {
-                ctx.save();
-                ctx.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
-            }
             if (typeof Cufon === "undefined" || this.useNative === true) {
                 this._renderViaNative(ctx);
             } else {
                 this._renderViaCufon(ctx);
             }
-            if (m) {
-                ctx.restore();
-            }
         },
         _renderViaNative: function(ctx) {
             ctx.save();
-            this.transform(ctx, fabric.isLikelyNode);
             this._setTextStyles(ctx);
             var textLines = this.text.split(/\r?\n/);
             this.width = this._getTextWidth(ctx, textLines);
             this.height = this._getTextHeight(ctx, textLines);
-            this.clipTo && fabric.util.clipContext(this, ctx);
             this._renderTextBackground(ctx, textLines);
-            if (this.textAlign !== "left" && this.textAlign !== "justify") {
-                ctx.save();
-                ctx.translate(this.textAlign === "center" ? this.width / 2 : this.width, 0);
-            }
             ctx.save();
             this._setShadow(ctx);
             this._renderTextFill(ctx, textLines);
             this._renderTextStroke(ctx, textLines);
             this._removeShadow(ctx);
+            ctx.beginPath();
+            ctx.arc(0, 0, 2, 0, 2 * Math.PI, false);
+            ctx.fillStyle = "green";
+            ctx.fill();
             ctx.restore();
-            if (this.textAlign !== "left" && this.textAlign !== "justify") {
-                ctx.restore();
-            }
             this._renderTextDecoration(ctx, textLines);
-            this.clipTo && ctx.restore();
             this._setBoundaries(ctx, textLines);
             this._totalLineHeight = 0;
             ctx.restore();
@@ -10391,12 +10441,26 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass({
             }
         },
         _getLeftOffset: function() {
-            if (fabric.isLikelyNode && (this.originX === "left" || this.originX === "center")) {
+            return 0;
+            console.log("Text align", this.textAlign, "on width", this.width, "for", this.text);
+            switch (this.textAlign) {
+              case "left":
+                return 0;
+
+              case "center":
+                return -this.width / 2;
+
+              case "right":
+                return -this.width;
+
+              default:
+                console.log("Text align", this.textAlign, "not supported");
                 return 0;
             }
-            return -this.width / 2;
         },
         _getTopOffset: function() {
+            return -this.height;
+            return 0;
             if (fabric.isLikelyNode) {
                 if (this.originY === "center") {
                     return -this.height / 2;
@@ -10500,7 +10564,7 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass({
         _getFontDeclaration: function() {
             return [ fabric.isLikelyNode ? this.fontWeight : this.fontStyle, fabric.isLikelyNode ? this.fontStyle : this.fontWeight, this.fontSize + "px", fabric.isLikelyNode ? '"' + this.fontFamily + '"' : this.fontFamily ].join(" ");
         },
-        render: function(ctx, noTransform) {
+        render1: function(ctx, noTransform) {
             if (!this.visible) return;
             ctx.save();
             this._render(ctx);
@@ -10593,18 +10657,19 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass({
             return 1;
         }
     });
-    fabric.Text.ATTRIBUTE_NAMES = fabric.SHARED_ATTRIBUTES.concat("x y font-family font-style font-weight font-size text-decoration".split(" "));
+    fabric.Text.ATTRIBUTE_NAMES = fabric.SHARED_ATTRIBUTES.concat("x y font-family font-style font-weight font-size text-decoration text-align".split(" "));
     fabric.Text.fromElement = function(element, options) {
         if (!element) {
             return null;
         }
         var parsedAttributes = fabric.parseAttributes(element, fabric.Text.ATTRIBUTE_NAMES);
+        switch (parsedAttributes.textAlign) {
+          case "end":
+            parsedAttributes.textAlign = "right";
+            break;
+        }
         options = fabric.util.object.extend(options ? fabric.util.object.clone(options) : {}, parsedAttributes);
         var text = new fabric.Text(element.textContent, options);
-        text.set({
-            left: text.getLeft() + text.getWidth() / 2,
-            top: text.getTop() - text.getHeight() / 2
-        });
         return text;
     };
     fabric.Text.fromObject = function(object) {

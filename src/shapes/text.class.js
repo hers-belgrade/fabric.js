@@ -213,20 +213,12 @@
       }
       console.log(this.text,this.transformMatrix);
       */
-      var m = this.transformMatrix;
-      if(m){
-        ctx.save();
-        ctx.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
-      }
 
       if (typeof Cufon === 'undefined' || this.useNative === true) {
         this._renderViaNative(ctx);
       }
       else {
         this._renderViaCufon(ctx);
-      }
-      if(m){
-        ctx.restore();
       }
     },
 
@@ -237,7 +229,6 @@
     _renderViaNative: function(ctx) {
 
       ctx.save();
-      this.transform(ctx, fabric.isLikelyNode);
 
       this._setTextStyles(ctx);
 
@@ -246,28 +237,20 @@
       this.width = this._getTextWidth(ctx, textLines);
       this.height = this._getTextHeight(ctx, textLines);
 
-      this.clipTo && fabric.util.clipContext(this, ctx);
-
       this._renderTextBackground(ctx, textLines);
-
-      if (this.textAlign !== 'left' && this.textAlign !== 'justify') {
-        ctx.save();
-        ctx.translate(this.textAlign === 'center' ? (this.width / 2) : this.width, 0);
-      }
 
       ctx.save();
       this._setShadow(ctx);
       this._renderTextFill(ctx, textLines);
       this._renderTextStroke(ctx, textLines);
       this._removeShadow(ctx);
+			ctx.beginPath();
+			ctx.arc(0, 0, 2, 0, 2 * Math.PI, false);
+			ctx.fillStyle = 'green';
+			ctx.fill();
       ctx.restore();
 
-      if (this.textAlign !== 'left' && this.textAlign !== 'justify') {
-        ctx.restore();
-      }
-
       this._renderTextDecoration(ctx, textLines);
-      this.clipTo && ctx.restore();
 
       this._setBoundaries(ctx, textLines);
       this._totalLineHeight = 0;
@@ -404,10 +387,24 @@
      * @return {Number} Left offset
      */
     _getLeftOffset: function() {
+			/*
       if (fabric.isLikelyNode && (this.originX === 'left' || this.originX === 'center')) {
         return 0;
       }
-      return -this.width / 2;
+			*/
+			return 0;
+			console.log('Text align',this.textAlign,'on width',this.width,'for',this.text);
+			switch(this.textAlign){
+				case 'left':
+					return 0;
+				case 'center':
+					return -this.width/2;
+				case 'right':
+					return -this.width;
+				default:
+					console.log('Text align',this.textAlign,'not supported');
+					return 0;
+			}
     },
 
     /**
@@ -415,6 +412,8 @@
      * @return {Number} Top offset
      */
     _getTopOffset: function() {
+          return -this.height;
+					return 0;
       if (fabric.isLikelyNode) {
         if (this.originY === 'center') {
           return -this.height / 2;
@@ -442,7 +441,6 @@
       for (var i = 0, len = textLines.length; i < len; i++) {
         var heightOfLine = this._getHeightOfLine(ctx, i, textLines);
         lineHeights += heightOfLine;
-
         this._drawTextLine(
           'fillText',
           ctx,
@@ -639,7 +637,7 @@
      * @param {CanvasRenderingContext2D} ctx Context to render on
      * @param {Boolean} [noTransform] When true, context is not transformed
      */
-    render: function(ctx, noTransform) {
+    render1: function(ctx, noTransform) {
       // do not render if object is not visible
       if (!this.visible) return;
 
@@ -889,7 +887,7 @@
    * @see: http://www.w3.org/TR/SVG/text.html#TextElement
    */
   fabric.Text.ATTRIBUTE_NAMES = fabric.SHARED_ATTRIBUTES.concat(
-    'x y font-family font-style font-weight font-size text-decoration'.split(' '));
+    'x y font-family font-style font-weight font-size text-decoration text-align'.split(' '));
 
   /**
    * Returns fabric.Text instance from an SVG element (<b>not yet implemented</b>)
@@ -905,20 +903,15 @@
     }
 
     var parsedAttributes = fabric.parseAttributes(element, fabric.Text.ATTRIBUTE_NAMES);
+		//tweak textAlign
+		switch(parsedAttributes.textAlign){
+			case 'end':
+				parsedAttributes.textAlign='right';
+				break;
+		}
     options = fabric.util.object.extend((options ? fabric.util.object.clone(options) : { }), parsedAttributes);
 
     var text = new fabric.Text(element.textContent, options);
-
-    /*
-      Adjust positioning:
-        x/y attributes in SVG correspond to the bottom-left corner of text bounding box
-        top/left properties in Fabric correspond to center point of text bounding box
-    */
-
-    text.set({
-      left: text.getLeft() + text.getWidth() / 2,
-      top: text.getTop() - text.getHeight() / 2
-    });
 
     return text;
   };

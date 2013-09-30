@@ -212,7 +212,7 @@
      * @param {CanvasRenderingContext2D} ctx context to render instance on
      * @param {Boolean} [noTransform] When true, context is not transformed
      */
-    render: function(ctx, noTransform) {
+    render1: function(ctx, noTransform) {
       // do not render if object is not visible
       if (!this.visible) return;
 
@@ -250,6 +250,14 @@
       ctx.restore();
       this.setCoords();
     },
+
+		_render: function(ctx, noTransform){
+      for (var i = 0, len = this._objects.length; i < len; i++) {
+        var object = this._objects[i];
+				object.render(ctx);
+				console.log(object.id,object.oCoords);
+			}
+		},
 
     /**
      * Retores original state of each of group objects (original state is that which was before group was created).
@@ -379,11 +387,11 @@
       width = (maxX - minX) || 0;
       height = (maxY - minY) || 0;
 
-      this.width = width;
-      this.height = height;
+      //this.width = 800;//width;
+      //this.height = 800;//height;
 
-      this.left = (minX + width / 2) || 0;
-      this.top = (minY + height / 2) || 0;
+      //this.left = (minX + width / 2) || 0;
+      //this.top = (minY + height / 2) || 0;
     },
 
     /* _TO_SVG_START_ */

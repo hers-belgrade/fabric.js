@@ -15,6 +15,7 @@
       multiplyTransformMatrices = fabric.util.multiplyTransformMatrices;
 
   fabric.SHARED_ATTRIBUTES = [
+		"id",
     "transform",
     "fill", "fill-opacity", "fill-rule",
     "opacity",
@@ -22,6 +23,7 @@
   ];
 
   var attributesMap = {
+		'id':								'id',
     'fill-opacity':     'fillOpacity',
     'fill-rule':        'fillRule',
     'font-family':      'fontFamily',
@@ -41,7 +43,7 @@
     'cy':               'top',
     'y':                'top',
     'transform':        'transformMatrix',
-    'gradientTransform':'transformMatrix'
+		'text-align':				'textAlign'
   };
 
   var colorAttributes = {
@@ -57,7 +59,7 @@
     return attr;
   }
 
-  function normalizeValue(attr, value, parentAttributes) {
+  function normalizeValue(attr, value/*, parentAttributes*/) {
     var isArray;
 
     if ((attr === 'fill' || attr === 'stroke') && value === 'none') {
@@ -70,6 +72,8 @@
       value = value.replace(/,/g, ' ').split(/\s+/);
     }
     else if (attr === 'transformMatrix') {
+			value = fabric.parseTransformAttribute(value);
+			/*
       if (parentAttributes && parentAttributes.transformMatrix) {
         value = multiplyTransformMatrices(
           parentAttributes.transformMatrix, fabric.parseTransformAttribute(value));
@@ -77,6 +81,7 @@
       else {
         value = fabric.parseTransformAttribute(value);
       }
+			*/
     }
 
     isArray = Object.prototype.toString.call(value) === '[object Array]';
@@ -124,10 +129,12 @@
     var value,
         parentAttributes = { };
 
-    // if there's a parent container (`g` node), parse its attributes recursively upwards
+    // if there's a parent container (`g` node), don't parse its attributes recursively upwards
+		/*
     if (element.parentNode && /^g$/i.test(element.parentNode.nodeName)) {
       parentAttributes = fabric.parseAttributes(element.parentNode, attributes);
     }
+		*/
 
     var ownAttributes = attributes.reduce(function(memo, attr) {
       value = element.getAttribute(attr);
@@ -556,73 +563,6 @@
   }
 
   /**
-   * @private
-   */
-  function hasAncestorWithNodeName(element, nodeName) {
-    while (element && (element = element.parentNode)) {
-      if (nodeName.test(element.nodeName)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /**
-   * @private
-   */
-  function produceElements(svgelemarray, cb, options, reviver) {
-
-    var reAllowedSVGTagNames = /^(path|circle|polygon|polyline|ellipse|rect|line|image|text)$/;
-
-    var elements = svgelemarray.filter(function(el) {
-      return reAllowedSVGTagNames.test(el.tagName) &&
-            !hasAncestorWithNodeName(el, /^(?:pattern|defs)$/); // http://www.w3.org/TR/SVG/struct.html#DefsElement
-    });
-
-    if (!elements || (elements && !elements.length)) return;
-
-    (function(els,_cb,_options,_reviver){
-      var elements = els,
-        cb = _cb,
-        options = _options,
-        reviver = _reviver;
-      fabric.parseElements(elements, cb, options, reviver);
-    })(elements,cb,options,reviver);
-  }
-
-  /**
-   * @private
-   */
-  function processGroup(map,elements,g,options){
-    var gmap = {};
-    var gelements = [];
-    for(var i in g.children){
-      var gc = g.children[i];
-      var gcid = gc.id;
-      if(gc.tagName!=='g'){
-        produceElements([gc],function(instances){
-          var inst = instances[0];
-          if(gcid){
-            inst.id = gcid;
-            gmap[gcid] = inst;
-          }
-          gelements.push(inst);
-        },clone(options));
-      }else{
-        processGroup(gmap,gelements,gc,options);
-      }
-    }
-    var group = new fabric.Group(gelements,{id:g.id});
-    for(var i in gmap){
-      group[i] = gmap[i];
-    }
-    elements.push(group);
-    if(g.id){
-      map[g.id] = group;
-    }
-  };
-
-  /**
    * Parses an SVG document, converts it to an array of corresponding fabric.* instances and passes them to a callback
    * @static
    * @function
@@ -632,6 +572,8 @@
    * @param {Function} [reviver] Method for further parsing of SVG elements, called after each fabric object created.
    */
   fabric.parseSVGDocument = (function() {
+
+    var reAllowedSVGTagNames = /^(path|circle|polygon|polyline|ellipse|rect|line|image|text)$/;
 
     // http://www.w3.org/TR/SVG/coords.html#ViewBoxAttribute
     // \d doesn't quite cut it (as we need to match an actual float number)
@@ -648,7 +590,138 @@
       '$'
     );
 
+    function hasAncestorWithNodeName(element, nodeName) {
+      while (element && (element = element.parentNode)) {
+        if (nodeName.test(element.nodeName)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
     return function(doc, callback, reviver) {
+      if (!doc) return;
+
+      var startTime = new Date(),
+          descendants = fabric.util.toArray(doc.getElementsByTagName('*'));
+
+      if (descendants.length === 0) {
+        // we're likely in node, where "o3-xml" library fails to gEBTN("*")
+        // https://github.com/ajaxorg/node-o3-xml/issues/21
+        descendants = doc.selectNodes("//*[name(.)!='svg']");
+        var arr = [ ];
+        for (var i = 0, len = descendants.length; i < len; i++) {
+          arr[i] = descendants[i];
+        }
+        descendants = arr;
+      }
+
+      var elements = descendants.filter(function(el) {
+        return reAllowedSVGTagNames.test(el.tagName) &&
+              !hasAncestorWithNodeName(el, /^(?:pattern|defs)$/); // http://www.w3.org/TR/SVG/struct.html#DefsElement
+      });
+
+      if (!elements || (elements && !elements.length)) return;
+
+      var viewBoxAttr = doc.getAttribute('viewBox'),
+          widthAttr = doc.getAttribute('width'),
+          heightAttr = doc.getAttribute('height'),
+          width = null,
+          height = null,
+          minX,
+          minY;
+
+      if (viewBoxAttr && (viewBoxAttr = viewBoxAttr.match(reViewBoxAttrValue))) {
+        minX = parseInt(viewBoxAttr[1], 10);
+        minY = parseInt(viewBoxAttr[2], 10);
+        width = parseInt(viewBoxAttr[3], 10);
+        height = parseInt(viewBoxAttr[4], 10);
+      }
+
+      // values of width/height attributes overwrite those extracted from viewbox attribute
+      width = widthAttr ? parseFloat(widthAttr) : width;
+      height = heightAttr ? parseFloat(heightAttr) : height;
+
+      var options = {
+        width: width,
+        height: height
+      };
+
+      fabric.gradientDefs = fabric.getGradientDefs(doc);
+      fabric.cssRules = getCSSRules(doc);
+
+      // Precedence of rules:   style > class > attribute
+
+      fabric.parseElements(elements, function(instances) {
+        fabric.documentParsingTime = new Date() - startTime;
+        if (callback) {
+          callback(instances, options);
+        }
+      }, clone(options), reviver);
+    };
+  })();
+
+  /**
+   * Parses an SVG document, converts it to a object with fabric.* objects mapped to their corresponding id's within and passes it to a callback
+   * @static
+   * @function
+   * @memberOf fabric
+   * @param {SVGDocument} doc SVG document to parse
+   * @param {Function} callback Callback to call when parsing is finished; It's being passed an array of elements (parsed from a document).
+   */
+  fabric.parseSVGDocumentHierarchical = (function() {
+    function processGroup(map,elements,g,options){
+      var gmap = {};
+      var gelements = [];
+      for(var i in g.childNodes){
+        var gc = g.childNodes[i];
+        var gcid = gc.id;
+        if(gc.tagName){
+          if(gc.tagName!=='g'){
+           if(/^(path|circle|polygon|polyline|ellipse|rect|line|image|text)$/.test(gc.tagName)){
+            fabric.parseElements([gc],function(instances){
+              var inst = instances[0];
+              if(gcid){
+                inst.id = gcid;
+                gmap[gcid] = inst;
+              }
+              gelements.push(inst);
+            },clone(options));
+           }
+          }else{
+            processGroup(gmap,gelements,gc,options);
+          }
+        }
+      }
+			var ga = fabric.parseAttributes(g,fabric.SHARED_ATTRIBUTES);
+			ga.width = ga.width || options.width;
+			ga.height = ga.height || options.height;
+      var group = new fabric.Group(gelements,ga);
+      for(var i in gmap){
+        group[i] = gmap[i];
+      }
+      elements.push(group);
+      if(g.id){
+        map[g.id] = group;
+      }
+    };
+
+    // http://www.w3.org/TR/SVG/coords.html#ViewBoxAttribute
+    // \d doesn't quite cut it (as we need to match an actual float number)
+
+    // matches, e.g.: +14.56e-12, etc.
+    var reNum = '(?:[-+]?\\d+(?:\\.\\d+)?(?:e[-+]?\\d+)?)';
+
+    var reViewBoxAttrValue = new RegExp(
+        '^' +
+        '\\s*(' + reNum + '+)\\s*,?' +
+        '\\s*(' + reNum + '+)\\s*,?' +
+        '\\s*(' + reNum + '+)\\s*,?' +
+        '\\s*(' + reNum + '+)\\s*' +
+        '$'
+        );
+
+    return function(doc, callback) {
       if (!doc) return;
 
       var startTime = new Date(),
@@ -698,7 +771,7 @@
 
       var hierarchy = {};
       var elements = [];
-      processGroup(hierarchy,elements,{children:docchildren},options);
+      processGroup(hierarchy,elements,doc,options);
 
       fabric.documentParsingTime = new Date() - startTime;
       if(callback) {
@@ -706,6 +779,7 @@
       }
     };
   })();
+
 
    /**
     * Used for caching SVG documents (loaded via `fabric.Canvas#loadSVGFromURL`)
@@ -776,6 +850,46 @@
        if (!xml.documentElement) return;
 
        fabric.parseSVGDocument(xml.documentElement, function (results, options) {
+         svgCache.set(url, {
+           objects: fabric.util.array.invoke(results, 'toObject'),
+           options: options
+         });
+         callback(results, options);
+       }, reviver);
+     }
+   }
+
+   function loadSVGHierarchicalFromURL(url, callback, reviver) {
+
+     url = url.replace(/^\n\s*/, '').trim();
+
+     svgCache.has(url, function (hasUrl) {
+       if (hasUrl) {
+         svgCache.get(url, function (value) {
+           var enlivedRecord = _enlivenCachedObject(value);
+           callback(enlivedRecord.objects, enlivedRecord.options);
+         });
+       }
+       else {
+         new fabric.util.request(url, {
+           method: 'get',
+           onComplete: onComplete
+         });
+       }
+     });
+
+     function onComplete(r) {
+
+       var xml = r.responseXML;
+       if (!xml.documentElement && fabric.window.ActiveXObject && r.responseText) {
+         xml = new ActiveXObject('Microsoft.XMLDOM');
+         xml.async = 'false';
+         //IE chokes on DOCTYPE
+         xml.loadXML(r.responseText.replace(/<!DOCTYPE[\s\S]*?(\[[\s\S]*\])*?>/i,''));
+       }
+       if (!xml.documentElement) return;
+
+       fabric.parseSVGDocumentHierarchical(xml.documentElement, function (results, options) {
          svgCache.set(url, {
            objects: fabric.util.array.invoke(results, 'toObject'),
            options: options
@@ -923,6 +1037,7 @@
     getCSSRules:                getCSSRules,
 
     loadSVGFromURL:             loadSVGFromURL,
+    loadSVGHierarchicalFromURL: loadSVGHierarchicalFromURL,
     loadSVGFromString:          loadSVGFromString,
 
     createSVGFontFacesMarkup:   createSVGFontFacesMarkup,
