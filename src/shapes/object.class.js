@@ -426,6 +426,13 @@
       this._initGradient(options);
       this._initPattern(options);
       this._initClipping(options);
+			/*
+			if(this.id==='kosilevo'){
+				console.log('options set');
+				console.log('angle',this.angle,'width',this.getWidth(),'height',this.getHeight(),'scale',this.scaleX,this.scaleY,'left',this.left,'top',this.top);
+				console.log('finally,center',fabric.util.rotatePoint(new fabric.Point(cx, cy), point, degreesToRadians(this.angle)));
+			}
+			*/
     },
 
     /**
@@ -437,7 +444,10 @@
       ctx.globalAlpha = this.opacity;
 
       var center = fromLeft ? this._getLeftTopCoords() : this.getCenterPoint();
-      ctx.translate(center.x, center.y);
+			//console.log(this.id,'translating by',center.x,center.y,'which is',(fromLeft ? 'topleft' : 'center'));
+      //ctx.translate(center.x, center.y);
+			console.log(this.id,'translating by',this.left,this.top);
+			ctx.translate(this.left,this.top);
       ctx.rotate(degreesToRadians(this.angle));
       ctx.scale(
         this.scaleX * (this.flipX ? -1 : 1),
@@ -714,9 +724,12 @@
       ctx.save();
 
       var m = this.transformMatrix;
-      if (m && !this.group) {
-        ctx.setTransform(m[0], m[1], m[2], m[3], m[4], m[5]);
-      }
+      if (m) {
+				console.log(this.id, 'matrix', m)
+        ctx.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
+      }else{
+				console.log(this.id, 'no matrix');
+			}
 
       if (!noTransform) {
         this.transform(ctx);
@@ -739,11 +752,6 @@
         ctx.fillStyle = this.fill.toLive
           ? this.fill.toLive(ctx)
           : this.fill;
-      }
-
-      if (m && this.group) {
-        ctx.translate(-this.group.width/2, -this.group.height/2);
-        ctx.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
       }
 
       this._setShadow(ctx);

@@ -94,7 +94,7 @@
      * @param {CanvasRenderingContext2D} ctx Context to render on
      * @param {Boolean} [noTransform] When true, context is not transformed
      */
-    render: function(ctx, noTransform) {
+    render1: function(ctx, noTransform) {
       // do not render if object is not visible
       if (!this.visible) return;
 
@@ -318,8 +318,8 @@
     _render: function(ctx) {
       ctx.drawImage(
         this._element,
-        -this.width / 2,
-        -this.height / 2,
+        0,//-this.width / 2,
+        0,//-this.height / 2,
         this.width,
         this.height
       );

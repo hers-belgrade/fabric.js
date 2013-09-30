@@ -43,7 +43,7 @@
   function _loadArray(type,picnamearray,cb,ctx){
     function isArray(value) { return  Object.prototype.toString.call(value) === '[object Array]' };
     if(!isArray(picnamearray)){
-      return;
+      return cb.call(ctx,{});
     }
     
     var picnamearraylen = picnamearray.length;

@@ -29,6 +29,12 @@
       }
 
       // Apply the reverse rotation to the point (it's already scaled properly)
+			/*
+			if(this.id==='kosilevo'){
+				console.log('angle',this.angle,'width',this.getWidth(),'height',this.getHeight(),'scale',this.scaleX,this.scaleY,'left',this.left,'top',this.top);
+				console.log('finally,center',fabric.util.rotatePoint(new fabric.Point(cx, cy), point, degreesToRadians(this.angle)));
+			}
+			*/
       return fabric.util.rotatePoint(new fabric.Point(cx, cy), point, degreesToRadians(this.angle));
     },
 

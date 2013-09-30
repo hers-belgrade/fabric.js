@@ -15,6 +15,7 @@
       multiplyTransformMatrices = fabric.util.multiplyTransformMatrices;
 
   fabric.SHARED_ATTRIBUTES = [
+		"id",
     "transform",
     "fill", "fill-opacity", "fill-rule",
     "opacity",
@@ -22,6 +23,7 @@
   ];
 
   var attributesMap = {
+		'id':								'id',
     'fill-opacity':     'fillOpacity',
     'fill-rule':        'fillRule',
     'font-family':      'fontFamily',
@@ -40,7 +42,8 @@
     'text-decoration':  'textDecoration',
     'cy':               'top',
     'y':                'top',
-    'transform':        'transformMatrix'
+    'transform':        'transformMatrix',
+		'text-align':				'textAlign'
   };
 
   var colorAttributes = {
@@ -56,7 +59,7 @@
     return attr;
   }
 
-  function normalizeValue(attr, value, parentAttributes) {
+  function normalizeValue(attr, value/*, parentAttributes*/) {
     var isArray;
 
     if ((attr === 'fill' || attr === 'stroke') && value === 'none') {
@@ -69,6 +72,8 @@
       value = value.replace(/,/g, ' ').split(/\s+/);
     }
     else if (attr === 'transformMatrix') {
+			value = fabric.parseTransformAttribute(value);
+			/*
       if (parentAttributes && parentAttributes.transformMatrix) {
         value = multiplyTransformMatrices(
           parentAttributes.transformMatrix, fabric.parseTransformAttribute(value));
@@ -76,6 +81,7 @@
       else {
         value = fabric.parseTransformAttribute(value);
       }
+			*/
     }
 
     isArray = Object.prototype.toString.call(value) === '[object Array]';
@@ -123,10 +129,12 @@
     var value,
         parentAttributes = { };
 
-    // if there's a parent container (`g` node), parse its attributes recursively upwards
+    // if there's a parent container (`g` node), don't parse its attributes recursively upwards
+		/*
     if (element.parentNode && /^g$/i.test(element.parentNode.nodeName)) {
       parentAttributes = fabric.parseAttributes(element.parentNode, attributes);
     }
+		*/
 
     var ownAttributes = attributes.reduce(function(memo, attr) {
       value = element.getAttribute(attr);
@@ -685,7 +693,10 @@
           }
         }
       }
-      var group = new fabric.Group(gelements,{id:g.id});
+			var ga = fabric.parseAttributes(g,fabric.SHARED_ATTRIBUTES);
+			ga.width = ga.width || options.width;
+			ga.height = ga.height || options.height;
+      var group = new fabric.Group(gelements,ga);
       for(var i in gmap){
         group[i] = gmap[i];
       }

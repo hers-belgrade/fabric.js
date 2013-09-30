@@ -6013,6 +6013,7 @@ fabric.util.string = {
       multiplyTransformMatrices = fabric.util.multiplyTransformMatrices;
 
   fabric.SHARED_ATTRIBUTES = [
+		"id",
     "transform",
     "fill", "fill-opacity", "fill-rule",
     "opacity",
@@ -6020,6 +6021,7 @@ fabric.util.string = {
   ];
 
   var attributesMap = {
+		'id':								'id',
     'fill-opacity':     'fillOpacity',
     'fill-rule':        'fillRule',
     'font-family':      'fontFamily',
@@ -6038,7 +6040,8 @@ fabric.util.string = {
     'text-decoration':  'textDecoration',
     'cy':               'top',
     'y':                'top',
-    'transform':        'transformMatrix'
+    'transform':        'transformMatrix',
+		'text-align':				'textAlign'
   };
 
   var colorAttributes = {
@@ -6054,7 +6057,7 @@ fabric.util.string = {
     return attr;
   }
 
-  function normalizeValue(attr, value, parentAttributes) {
+  function normalizeValue(attr, value/*, parentAttributes*/) {
     var isArray;
 
     if ((attr === 'fill' || attr === 'stroke') && value === 'none') {
@@ -6067,6 +6070,8 @@ fabric.util.string = {
       value = value.replace(/,/g, ' ').split(/\s+/);
     }
     else if (attr === 'transformMatrix') {
+			value = fabric.parseTransformAttribute(value);
+			/*
       if (parentAttributes && parentAttributes.transformMatrix) {
         value = multiplyTransformMatrices(
           parentAttributes.transformMatrix, fabric.parseTransformAttribute(value));
@@ -6074,6 +6079,7 @@ fabric.util.string = {
       else {
         value = fabric.parseTransformAttribute(value);
       }
+			*/
     }
 
     isArray = Object.prototype.toString.call(value) === '[object Array]';
@@ -6121,10 +6127,12 @@ fabric.util.string = {
     var value,
         parentAttributes = { };
 
-    // if there's a parent container (`g` node), parse its attributes recursively upwards
+    // if there's a parent container (`g` node), don't parse its attributes recursively upwards
+		/*
     if (element.parentNode && /^g$/i.test(element.parentNode.nodeName)) {
       parentAttributes = fabric.parseAttributes(element.parentNode, attributes);
     }
+		*/
 
     var ownAttributes = attributes.reduce(function(memo, attr) {
       value = element.getAttribute(attr);
@@ -6683,7 +6691,10 @@ fabric.util.string = {
           }
         }
       }
-      var group = new fabric.Group(gelements,{id:g.id});
+			var ga = fabric.parseAttributes(g,fabric.SHARED_ATTRIBUTES);
+			ga.width = ga.width || options.width;
+			ga.height = ga.height || options.height;
+      var group = new fabric.Group(gelements,ga);
       for(var i in gmap){
         group[i] = gmap[i];
       }
@@ -7081,7 +7092,7 @@ fabric.util.string = {
   function _loadArray(type,picnamearray,cb,ctx){
     function isArray(value) { return  Object.prototype.toString.call(value) === '[object Array]' };
     if(!isArray(picnamearray)){
-      return;
+      return cb.call(ctx,{});
     }
     
     var picnamearraylen = picnamearray.length;
@@ -12901,6 +12912,13 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
       this._initGradient(options);
       this._initPattern(options);
       this._initClipping(options);
+			/*
+			if(this.id==='kosilevo'){
+				console.log('options set');
+				console.log('angle',this.angle,'width',this.getWidth(),'height',this.getHeight(),'scale',this.scaleX,this.scaleY,'left',this.left,'top',this.top);
+				console.log('finally,center',fabric.util.rotatePoint(new fabric.Point(cx, cy), point, degreesToRadians(this.angle)));
+			}
+			*/
     },
 
     /**
@@ -12912,7 +12930,10 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
       ctx.globalAlpha = this.opacity;
 
       var center = fromLeft ? this._getLeftTopCoords() : this.getCenterPoint();
-      ctx.translate(center.x, center.y);
+			//console.log(this.id,'translating by',center.x,center.y,'which is',(fromLeft ? 'topleft' : 'center'));
+      //ctx.translate(center.x, center.y);
+			console.log(this.id,'translating by',this.left,this.top);
+			ctx.translate(this.left,this.top);
       ctx.rotate(degreesToRadians(this.angle));
       ctx.scale(
         this.scaleX * (this.flipX ? -1 : 1),
@@ -13189,9 +13210,12 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
       ctx.save();
 
       var m = this.transformMatrix;
-      if (m && !this.group) {
-        ctx.setTransform(m[0], m[1], m[2], m[3], m[4], m[5]);
-      }
+      if (m) {
+				console.log(this.id, 'matrix', m)
+        ctx.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
+      }else{
+				console.log(this.id, 'no matrix');
+			}
 
       if (!noTransform) {
         this.transform(ctx);
@@ -13214,11 +13238,6 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
         ctx.fillStyle = this.fill.toLive
           ? this.fill.toLive(ctx)
           : this.fill;
-      }
-
-      if (m && this.group) {
-        ctx.translate(-this.group.width/2, -this.group.height/2);
-        ctx.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
       }
 
       this._setShadow(ctx);
@@ -13654,6 +13673,12 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
       }
 
       // Apply the reverse rotation to the point (it's already scaled properly)
+			/*
+			if(this.id==='kosilevo'){
+				console.log('angle',this.angle,'width',this.getWidth(),'height',this.getHeight(),'scale',this.scaleX,this.scaleY,'left',this.left,'top',this.top);
+				console.log('finally,center',fabric.util.rotatePoint(new fabric.Point(cx, cy), point, degreesToRadians(this.angle)));
+			}
+			*/
       return fabric.util.rotatePoint(new fabric.Point(cx, cy), point, degreesToRadians(this.angle));
     },
 
@@ -17508,7 +17533,7 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
      * @param {CanvasRenderingContext2D} ctx context to render instance on
      * @param {Boolean} [noTransform] When true, context is not transformed
      */
-    render: function(ctx, noTransform) {
+    render1: function(ctx, noTransform) {
       // do not render if object is not visible
       if (!this.visible) return;
 
@@ -17546,6 +17571,14 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
       ctx.restore();
       this.setCoords();
     },
+
+		_render: function(ctx, noTransform){
+      for (var i = 0, len = this._objects.length; i < len; i++) {
+        var object = this._objects[i];
+				object.render(ctx);
+				console.log(object.id,object.oCoords);
+			}
+		},
 
     /**
      * Retores original state of each of group objects (original state is that which was before group was created).
@@ -17675,11 +17708,11 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
       width = (maxX - minX) || 0;
       height = (maxY - minY) || 0;
 
-      this.width = width;
-      this.height = height;
+      //this.width = 800;//width;
+      //this.height = 800;//height;
 
-      this.left = (minX + width / 2) || 0;
-      this.top = (minY + height / 2) || 0;
+      //this.left = (minX + width / 2) || 0;
+      //this.top = (minY + height / 2) || 0;
     },
 
     /* _TO_SVG_START_ */
@@ -17851,7 +17884,7 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
      * @param {CanvasRenderingContext2D} ctx Context to render on
      * @param {Boolean} [noTransform] When true, context is not transformed
      */
-    render: function(ctx, noTransform) {
+    render1: function(ctx, noTransform) {
       // do not render if object is not visible
       if (!this.visible) return;
 
@@ -18075,8 +18108,8 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
     _render: function(ctx) {
       ctx.drawImage(
         this._element,
-        -this.width / 2,
-        -this.height / 2,
+        0,//-this.width / 2,
+        0,//-this.height / 2,
         this.width,
         this.height
       );
@@ -18286,7 +18319,7 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
         this.x,this.y,
         this.width,
         this.height,
-        -this.width/2,-this.height/2,this.width,this.height
+        0,0,this.width,this.height
         );
     },
     /**
@@ -19734,20 +19767,12 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass(/** @lends fabric.Imag
       }
       console.log(this.text,this.transformMatrix);
       */
-      var m = this.transformMatrix;
-      if(m){
-        ctx.save();
-        ctx.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
-      }
 
       if (typeof Cufon === 'undefined' || this.useNative === true) {
         this._renderViaNative(ctx);
       }
       else {
         this._renderViaCufon(ctx);
-      }
-      if(m){
-        ctx.restore();
       }
     },
 
@@ -19758,7 +19783,6 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass(/** @lends fabric.Imag
     _renderViaNative: function(ctx) {
 
       ctx.save();
-      this.transform(ctx, fabric.isLikelyNode);
 
       this._setTextStyles(ctx);
 
@@ -19767,28 +19791,20 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass(/** @lends fabric.Imag
       this.width = this._getTextWidth(ctx, textLines);
       this.height = this._getTextHeight(ctx, textLines);
 
-      this.clipTo && fabric.util.clipContext(this, ctx);
-
       this._renderTextBackground(ctx, textLines);
-
-      if (this.textAlign !== 'left' && this.textAlign !== 'justify') {
-        ctx.save();
-        ctx.translate(this.textAlign === 'center' ? (this.width / 2) : this.width, 0);
-      }
 
       ctx.save();
       this._setShadow(ctx);
       this._renderTextFill(ctx, textLines);
       this._renderTextStroke(ctx, textLines);
       this._removeShadow(ctx);
+			ctx.beginPath();
+			ctx.arc(0, 0, 2, 0, 2 * Math.PI, false);
+			ctx.fillStyle = 'green';
+			ctx.fill();
       ctx.restore();
 
-      if (this.textAlign !== 'left' && this.textAlign !== 'justify') {
-        ctx.restore();
-      }
-
       this._renderTextDecoration(ctx, textLines);
-      this.clipTo && ctx.restore();
 
       this._setBoundaries(ctx, textLines);
       this._totalLineHeight = 0;
@@ -19925,10 +19941,24 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass(/** @lends fabric.Imag
      * @return {Number} Left offset
      */
     _getLeftOffset: function() {
+			/*
       if (fabric.isLikelyNode && (this.originX === 'left' || this.originX === 'center')) {
         return 0;
       }
-      return -this.width / 2;
+			*/
+			return 0;
+			console.log('Text align',this.textAlign,'on width',this.width,'for',this.text);
+			switch(this.textAlign){
+				case 'left':
+					return 0;
+				case 'center':
+					return -this.width/2;
+				case 'right':
+					return -this.width;
+				default:
+					console.log('Text align',this.textAlign,'not supported');
+					return 0;
+			}
     },
 
     /**
@@ -19936,6 +19966,8 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass(/** @lends fabric.Imag
      * @return {Number} Top offset
      */
     _getTopOffset: function() {
+          return -this.height;
+					return 0;
       if (fabric.isLikelyNode) {
         if (this.originY === 'center') {
           return -this.height / 2;
@@ -19963,7 +19995,6 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass(/** @lends fabric.Imag
       for (var i = 0, len = textLines.length; i < len; i++) {
         var heightOfLine = this._getHeightOfLine(ctx, i, textLines);
         lineHeights += heightOfLine;
-
         this._drawTextLine(
           'fillText',
           ctx,
@@ -20160,7 +20191,7 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass(/** @lends fabric.Imag
      * @param {CanvasRenderingContext2D} ctx Context to render on
      * @param {Boolean} [noTransform] When true, context is not transformed
      */
-    render: function(ctx, noTransform) {
+    render1: function(ctx, noTransform) {
       // do not render if object is not visible
       if (!this.visible) return;
 
@@ -20410,7 +20441,7 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass(/** @lends fabric.Imag
    * @see: http://www.w3.org/TR/SVG/text.html#TextElement
    */
   fabric.Text.ATTRIBUTE_NAMES = fabric.SHARED_ATTRIBUTES.concat(
-    'x y font-family font-style font-weight font-size text-decoration'.split(' '));
+    'x y font-family font-style font-weight font-size text-decoration text-align'.split(' '));
 
   /**
    * Returns fabric.Text instance from an SVG element (<b>not yet implemented</b>)
@@ -20426,20 +20457,15 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass(/** @lends fabric.Imag
     }
 
     var parsedAttributes = fabric.parseAttributes(element, fabric.Text.ATTRIBUTE_NAMES);
+		//tweak textAlign
+		switch(parsedAttributes.textAlign){
+			case 'end':
+				parsedAttributes.textAlign='right';
+				break;
+		}
     options = fabric.util.object.extend((options ? fabric.util.object.clone(options) : { }), parsedAttributes);
 
     var text = new fabric.Text(element.textContent, options);
-
-    /*
-      Adjust positioning:
-        x/y attributes in SVG correspond to the bottom-left corner of text bounding box
-        top/left properties in Fabric correspond to center point of text bounding box
-    */
-
-    text.set({
-      left: text.getLeft() + text.getWidth() / 2,
-      top: text.getTop() - text.getHeight() / 2
-    });
 
     return text;
   };
