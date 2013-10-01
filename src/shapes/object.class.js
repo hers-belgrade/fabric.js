@@ -756,10 +756,6 @@
 
       this._setShadow(ctx);
       this.clipTo && fabric.util.clipContext(this, ctx);
-			ctx.beginPath();
-			ctx.arc(0, 0, 2, 0, 2 * Math.PI, false);
-			ctx.fillStyle = 'green';
-			ctx.fill();
       this._render(ctx, noTransform);
       this.clipTo && ctx.restore();
       this._removeShadow(ctx);
@@ -768,6 +764,10 @@
         this.drawBorders(ctx);
         this.drawControls(ctx);
       }
+			ctx.beginPath();
+			ctx.arc(0, 0, 2, 0, 2 * Math.PI, false);
+			ctx.fillStyle = 'green';
+			ctx.fill();
       ctx.restore();
     },
 

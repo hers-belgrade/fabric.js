@@ -76,6 +76,7 @@
      * @private
      */
     _updateObjectsCoords: function() {
+			return;
       var groupDeltaX = this.left,
           groupDeltaY = this.top;
 
@@ -87,8 +88,8 @@
         object.set('originalLeft', objectLeft);
         object.set('originalTop', objectTop);
 
-        object.set('left', objectLeft - groupDeltaX);
-        object.set('top', objectTop - groupDeltaY);
+        //object.set('left', objectLeft - groupDeltaX);
+        //object.set('top', objectTop - groupDeltaY);
 
         object.setCoords();
 
@@ -121,13 +122,16 @@
      * @chainable
      */
     addWithUpdate: function(object) {
-      this._restoreObjectsState();
       this._objects.push(object);
       object.group = this;
       // since _restoreObjectsState set objects inactive
-      this.forEachObject(function(o){ o.set('active', true); o.group = this; }, this);
+      //this.forEachObject(function(o){ o.set('active', true); o.group = this; }, this);
       this._calcBounds();
       this._updateObjectsCoords();
+      this._setOpacityIfSame();
+
+      this.setCoords(true);
+      this.saveCoords();
       return this;
     },
 
@@ -267,6 +271,7 @@
      * @chainable
      */
     _restoreObjectsState: function() {
+			return;
       this._objects.forEach(this._restoreObjectState, this);
       return this;
     },
@@ -278,6 +283,7 @@
      * @return {fabric.Group} thisArg
      */
     _restoreObjectState: function(object) {
+			return;
 
       var groupLeft = this.get('left'),
           groupTop = this.get('top'),
@@ -319,6 +325,7 @@
      * @chainable
      */
     saveCoords: function() {
+			return this;
       this._originalLeft = this.get('left');
       this._originalTop = this.get('top');
       return this;

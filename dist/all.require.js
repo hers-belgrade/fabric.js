@@ -7265,10 +7265,6 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
             }
             this._setShadow(ctx);
             this.clipTo && fabric.util.clipContext(this, ctx);
-            ctx.beginPath();
-            ctx.arc(0, 0, 2, 0, 2 * Math.PI, false);
-            ctx.fillStyle = "green";
-            ctx.fill();
             this._render(ctx, noTransform);
             this.clipTo && ctx.restore();
             this._removeShadow(ctx);
@@ -7276,6 +7272,10 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
                 this.drawBorders(ctx);
                 this.drawControls(ctx);
             }
+            ctx.beginPath();
+            ctx.arc(0, 0, 2, 0, 2 * Math.PI, false);
+            ctx.fillStyle = "green";
+            ctx.fill();
             ctx.restore();
         },
         _setShadow: function(ctx) {
@@ -9327,13 +9327,12 @@ fabric.util.object.extend(fabric.Object.prototype, {
             this.saveCoords();
         },
         _updateObjectsCoords: function() {
+            return;
             var groupDeltaX = this.left, groupDeltaY = this.top;
             this.forEachObject(function(object) {
                 var objectLeft = object.get("left"), objectTop = object.get("top");
                 object.set("originalLeft", objectLeft);
                 object.set("originalTop", objectTop);
-                object.set("left", objectLeft - groupDeltaX);
-                object.set("top", objectTop - groupDeltaY);
                 object.setCoords();
                 object.__origHasControls = object.hasControls;
                 object.hasControls = false;
@@ -9346,15 +9345,13 @@ fabric.util.object.extend(fabric.Object.prototype, {
             return this._objects;
         },
         addWithUpdate: function(object) {
-            this._restoreObjectsState();
             this._objects.push(object);
             object.group = this;
-            this.forEachObject(function(o) {
-                o.set("active", true);
-                o.group = this;
-            }, this);
             this._calcBounds();
             this._updateObjectsCoords();
+            this._setOpacityIfSame();
+            this.setCoords(true);
+            this.saveCoords();
             return this;
         },
         removeWithUpdate: function(object) {
@@ -9434,10 +9431,12 @@ fabric.util.object.extend(fabric.Object.prototype, {
             }
         },
         _restoreObjectsState: function() {
+            return;
             this._objects.forEach(this._restoreObjectState, this);
             return this;
         },
         _restoreObjectState: function(object) {
+            return;
             var groupLeft = this.get("left"), groupTop = this.get("top"), groupAngle = this.getAngle() * (Math.PI / 180), rotatedTop = Math.cos(groupAngle) * object.get("top") * this.get("scaleY") + Math.sin(groupAngle) * object.get("left") * this.get("scaleX"), rotatedLeft = -Math.sin(groupAngle) * object.get("top") * this.get("scaleY") + Math.cos(groupAngle) * object.get("left") * this.get("scaleX");
             object.setAngle(object.getAngle() + this.getAngle());
             object.set("left", groupLeft + rotatedLeft);
@@ -9456,6 +9455,7 @@ fabric.util.object.extend(fabric.Object.prototype, {
             return this._restoreObjectsState();
         },
         saveCoords: function() {
+            return this;
             this._originalLeft = this.get("left");
             this._originalTop = this.get("top");
             return this;
