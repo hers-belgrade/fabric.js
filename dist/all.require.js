@@ -4021,7 +4021,6 @@ fabric.Collection = {
                                     return function(instances) {
                                         var inst = instances[0];
                                         if (inst.id) {
-                                            console.log(inst.id);
                                             gmap[inst.id] = inst;
                                         }
                                         gelements.push(inst);
@@ -7019,8 +7018,8 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
     }
     fabric.Object = fabric.util.createClass({
         type: "object",
-        originX: "center",
-        originY: "center",
+        originX: "left",
+        originY: "top",
         top: 0,
         left: 0,
         width: 0,
@@ -7247,11 +7246,8 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
             ctx.save();
             var m = this.transformMatrix;
             if (m) {
-                console.log(this.id, "matrix", m);
                 ctx.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
-            } else {
-                console.log(this.id, "no matrix");
-            }
+            } else {}
             if (!noTransform) {
                 this.transform(ctx);
             }
@@ -7484,29 +7480,29 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
     fabric.util.object.extend(fabric.Object.prototype, {
         translateToCenterPoint: function(point, originX, originY) {
             var cx = point.x, cy = point.y;
-            if (originX === "left") {
-                cx = point.x + (this.getWidth() + this.strokeWidth * this.scaleX) / 2;
-            } else if (originX === "right") {
+            if (originX === "center") {
                 cx = point.x - (this.getWidth() + this.strokeWidth * this.scaleX) / 2;
+            } else if (originX === "right") {
+                cx = point.x - (this.getWidth() + this.strokeWidth * this.scaleX);
             }
-            if (originY === "top") {
-                cy = point.y + (this.getHeight() + this.strokeWidth * this.scaleY) / 2;
-            } else if (originY === "bottom") {
+            if (originY === "center") {
                 cy = point.y - (this.getHeight() + this.strokeWidth * this.scaleY) / 2;
+            } else if (originY === "bottom") {
+                cy = point.y - (this.getHeight() + this.strokeWidth * this.scaleY);
             }
             return fabric.util.rotatePoint(new fabric.Point(cx, cy), point, degreesToRadians(this.angle));
         },
         translateToOriginPoint: function(center, originX, originY) {
             var x = center.x, y = center.y;
-            if (originX === "left") {
-                x = center.x - (this.getWidth() + this.strokeWidth * this.scaleX) / 2;
-            } else if (originX === "right") {
+            if (originX === "center") {
                 x = center.x + (this.getWidth() + this.strokeWidth * this.scaleX) / 2;
+            } else if (originX === "right") {
+                x = center.x + (this.getWidth() + this.strokeWidth * this.scaleX);
             }
-            if (originY === "top") {
-                y = center.y - (this.getHeight() + this.strokeWidth * this.scaleY) / 2;
-            } else if (originY === "bottom") {
+            if (originY === "center") {
                 y = center.y + (this.getHeight() + this.strokeWidth * this.scaleY) / 2;
+            } else if (originY === "bottom") {
+                y = center.y + (this.getHeight() + this.strokeWidth * this.scaleY);
             }
             return fabric.util.rotatePoint(new fabric.Point(x, y), center, degreesToRadians(this.angle));
         },
@@ -8015,12 +8011,12 @@ fabric.util.object.extend(fabric.Object.prototype, {
             ctx.lineWidth = 1 / this.borderScaleFactor;
             ctx.scale(scaleX, scaleY);
             var w = this.getWidth(), h = this.getHeight();
-            ctx.strokeRect(~~(-(w / 2) - padding - strokeWidth / 2 * this.scaleX) - .5, ~~(-(h / 2) - padding - strokeWidth / 2 * this.scaleY) - .5, ~~(w + padding2 + strokeWidth * this.scaleX) + 1, ~~(h + padding2 + strokeWidth * this.scaleY) + 1);
+            ctx.strokeRect(-.5, -.5, ~~(w + padding2 + strokeWidth * this.scaleX) + 1, ~~(h + padding2 + strokeWidth * this.scaleY) + 1);
             if (this.hasRotatingPoint && !this.get("lockRotation") && this.hasControls) {
-                var rotateHeight = (this.flipY ? h + strokeWidth * this.scaleY + padding * 2 : -h - strokeWidth * this.scaleY - padding * 2) / 2;
+                var rotateHeight = this.flipY ? h + strokeWidth * this.scaleY + padding * 2 : 0;
                 ctx.beginPath();
-                ctx.moveTo(0, rotateHeight);
-                ctx.lineTo(0, rotateHeight + (this.flipY ? this.rotatingPointOffset : -this.rotatingPointOffset));
+                ctx.moveTo(~~(w / 2 + padding + strokeWidth / 2 * this.scaleX) + .5, rotateHeight);
+                ctx.lineTo(~~(w / 2 + padding + strokeWidth / 2 * this.scaleX) + .5, rotateHeight + (this.flipY ? this.rotatingPointOffset : -this.rotatingPointOffset));
                 ctx.closePath();
                 ctx.stroke();
             }
@@ -8029,7 +8025,7 @@ fabric.util.object.extend(fabric.Object.prototype, {
         },
         drawControls: function(ctx) {
             if (!this.hasControls) return this;
-            var size = this.cornerSize, size2 = size / 2, strokeWidth2 = ~~(this.strokeWidth / 2), left = -(this.width / 2), top = -(this.height / 2), _left, _top, sizeX = size / this.scaleX, sizeY = size / this.scaleY, paddingX = this.padding / this.scaleX, paddingY = this.padding / this.scaleY, scaleOffsetY = size2 / this.scaleY, scaleOffsetX = size2 / this.scaleX, scaleOffsetSizeX = (size2 - size) / this.scaleX, scaleOffsetSizeY = (size2 - size) / this.scaleY, height = this.height, width = this.width, methodName = this.transparentCorners ? "strokeRect" : "fillRect", transparent = this.transparentCorners, isVML = typeof G_vmlCanvasManager !== "undefined";
+            var size = this.cornerSize, size2 = size / 2, strokeWidth2 = ~~(this.strokeWidth / 2), left = 0, top = 0, _left, _top, sizeX = size / this.scaleX, sizeY = size / this.scaleY, paddingX = this.padding / this.scaleX, paddingY = this.padding / this.scaleY, scaleOffsetY = size2 / this.scaleY, scaleOffsetX = size2 / this.scaleX, scaleOffsetSizeX = (size2 - size) / this.scaleX, scaleOffsetSizeY = (size2 - size) / this.scaleY, height = this.height, width = this.width, methodName = this.transparentCorners ? "strokeRect" : "fillRect", transparent = this.transparentCorners, isVML = typeof G_vmlCanvasManager !== "undefined";
             ctx.save();
             ctx.lineWidth = 1 / Math.max(this.scaleX, this.scaleY);
             ctx.globalAlpha = this.isMoving ? this.borderOpacityWhenMoving : 1;

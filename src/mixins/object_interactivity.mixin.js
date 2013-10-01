@@ -273,8 +273,8 @@
           h = this.getHeight();
 
       ctx.strokeRect(
-        ~~(-(w / 2) - padding - strokeWidth / 2 * this.scaleX) - 0.5, // offset needed to make lines look sharper
-        ~~(-(h / 2) - padding - strokeWidth / 2 * this.scaleY) - 0.5,
+        -0.5,//~~(-(w / 2) - padding - strokeWidth / 2 * this.scaleX) - 0.5, // offset needed to make lines look sharper
+        -0.5,//~~(-(h / 2) - padding - strokeWidth / 2 * this.scaleY) - 0.5,
         ~~(w + padding2 + strokeWidth * this.scaleX) + 1, // double offset needed to make lines look sharper
         ~~(h + padding2 + strokeWidth * this.scaleY) + 1
       );
@@ -284,12 +284,12 @@
         var rotateHeight = (
           this.flipY
             ? h + (strokeWidth * this.scaleY) + (padding * 2)
-            : -h - (strokeWidth * this.scaleY) - (padding * 2)
-        ) / 2;
+            : 0 //-h - (strokeWidth * this.scaleY) - (padding * 2)
+        );
 
         ctx.beginPath();
-        ctx.moveTo(0, rotateHeight);
-        ctx.lineTo(0, rotateHeight + (this.flipY ? this.rotatingPointOffset : -this.rotatingPointOffset));
+        ctx.moveTo(~~((w / 2) + padding + strokeWidth / 2 * this.scaleX) + 0.5, rotateHeight);
+        ctx.lineTo(~~((w / 2) + padding + strokeWidth / 2 * this.scaleX) + 0.5, rotateHeight + (this.flipY ? this.rotatingPointOffset : -this.rotatingPointOffset));
         ctx.closePath();
         ctx.stroke();
       }
@@ -312,8 +312,8 @@
       var size = this.cornerSize,
           size2 = size / 2,
           strokeWidth2 = ~~(this.strokeWidth / 2), // half strokeWidth rounded down
-          left = -(this.width / 2),
-          top = -(this.height / 2),
+          left = 0,//-(this.width / 2),
+          top = 0,//-(this.height / 2),
           _left,
           _top,
           sizeX = size / this.scaleX,

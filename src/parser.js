@@ -699,7 +699,6 @@
                 return function(instances){
                   var inst = instances[0];
                   if(inst.id){
-                    console.log(inst.id);
                     gmap[inst.id] = inst;
                   }
                   gelements.push(inst);

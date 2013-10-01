@@ -31,14 +31,14 @@
      * @type String
      * @default
      */
-    originX:                  'center',
+    originX:                  'left',
 
     /**
      * Vertical origin of transformation of an object (one of "top", "bottom", "center")
      * @type String
      * @default
      */
-    originY:                  'center',
+    originY:                  'top',
 
     /**
      * Top position of an object. Note that by default it's relative to object center. You can change this by setting originY={top/center/bottom}
@@ -725,10 +725,10 @@
 
       var m = this.transformMatrix;
       if (m) {
-				console.log(this.id, 'matrix', m)
+				//console.log(this.id, 'matrix', m)
         ctx.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
       }else{
-				console.log(this.id, 'no matrix');
+				//console.log(this.id, 'no matrix');
 			}
 
       if (!noTransform) {

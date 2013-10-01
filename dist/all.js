@@ -6697,7 +6697,6 @@ fabric.util.string = {
                 return function(instances){
                   var inst = instances[0];
                   if(inst.id){
-                    console.log(inst.id);
                     gmap[inst.id] = inst;
                   }
                   gelements.push(inst);
@@ -12554,14 +12553,14 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
      * @type String
      * @default
      */
-    originX:                  'center',
+    originX:                  'left',
 
     /**
      * Vertical origin of transformation of an object (one of "top", "bottom", "center")
      * @type String
      * @default
      */
-    originY:                  'center',
+    originY:                  'top',
 
     /**
      * Top position of an object. Note that by default it's relative to object center. You can change this by setting originY={top/center/bottom}
@@ -13248,10 +13247,10 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
 
       var m = this.transformMatrix;
       if (m) {
-				console.log(this.id, 'matrix', m)
+				//console.log(this.id, 'matrix', m)
         ctx.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
       }else{
-				console.log(this.id, 'no matrix');
+				//console.log(this.id, 'no matrix');
 			}
 
       if (!noTransform) {
@@ -13699,18 +13698,18 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
     translateToCenterPoint: function(point, originX, originY) {
       var cx = point.x, cy = point.y;
 
-      if ( originX === "left" ) {
-        cx = point.x + ( this.getWidth() + (this.strokeWidth*this.scaleX) )/ 2;
+      if ( originX === "center" ) {
+        cx = point.x - ( this.getWidth() + (this.strokeWidth*this.scaleX) )/ 2;
       }
       else if ( originX === "right" ) {
-        cx = point.x - ( this.getWidth() + (this.strokeWidth*this.scaleX) ) / 2;
+        cx = point.x - ( this.getWidth() + (this.strokeWidth*this.scaleX) );
       }
 
-      if ( originY === "top" ) {
-        cy = point.y +( this.getHeight() + (this.strokeWidth*this.scaleY) ) / 2;
+      if ( originY === "center" ) {
+        cy = point.y - ( this.getHeight() + (this.strokeWidth*this.scaleY) ) / 2;
       }
       else if ( originY === "bottom" ) {
-        cy = point.y - ( this.getHeight() + (this.strokeWidth*this.scaleY) )  / 2;
+        cy = point.y - ( this.getHeight() + (this.strokeWidth*this.scaleY) );
       }
 
       // Apply the reverse rotation to the point (it's already scaled properly)
@@ -13734,17 +13733,17 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
       var x = center.x, y = center.y;
 
       // Get the point coordinates
-      if ( originX === "left" ) {
-        x = center.x - ( this.getWidth() + (this.strokeWidth*this.scaleX) ) / 2;
-      }
-      else if ( originX === "right" ) {
+      if ( originX === "center" ) {
         x = center.x + ( this.getWidth() + (this.strokeWidth*this.scaleX) ) / 2;
       }
-      if ( originY === "top" ) {
-        y = center.y - ( this.getHeight() + (this.strokeWidth*this.scaleY) )/ 2;
+      else if ( originX === "right" ) {
+        x = center.x + ( this.getWidth() + (this.strokeWidth*this.scaleX) );
+      }
+      if ( originY === "center" ) {
+        y = center.y + ( this.getHeight() + (this.strokeWidth*this.scaleY) )/ 2;
       }
       else if ( originY === "bottom" ) {
-        y = center.y + ( this.getHeight() + (this.strokeWidth*this.scaleY) )/ 2;
+        y = center.y + ( this.getHeight() + (this.strokeWidth*this.scaleY) );
       }
 
       // Apply the rotation to the point (it's already scaled properly)
@@ -14630,8 +14629,8 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
           h = this.getHeight();
 
       ctx.strokeRect(
-        ~~(-(w / 2) - padding - strokeWidth / 2 * this.scaleX) - 0.5, // offset needed to make lines look sharper
-        ~~(-(h / 2) - padding - strokeWidth / 2 * this.scaleY) - 0.5,
+        -0.5,//~~(-(w / 2) - padding - strokeWidth / 2 * this.scaleX) - 0.5, // offset needed to make lines look sharper
+        -0.5,//~~(-(h / 2) - padding - strokeWidth / 2 * this.scaleY) - 0.5,
         ~~(w + padding2 + strokeWidth * this.scaleX) + 1, // double offset needed to make lines look sharper
         ~~(h + padding2 + strokeWidth * this.scaleY) + 1
       );
@@ -14641,12 +14640,12 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
         var rotateHeight = (
           this.flipY
             ? h + (strokeWidth * this.scaleY) + (padding * 2)
-            : -h - (strokeWidth * this.scaleY) - (padding * 2)
-        ) / 2;
+            : 0 //-h - (strokeWidth * this.scaleY) - (padding * 2)
+        );
 
         ctx.beginPath();
-        ctx.moveTo(0, rotateHeight);
-        ctx.lineTo(0, rotateHeight + (this.flipY ? this.rotatingPointOffset : -this.rotatingPointOffset));
+        ctx.moveTo(~~((w / 2) + padding + strokeWidth / 2 * this.scaleX) + 0.5, rotateHeight);
+        ctx.lineTo(~~((w / 2) + padding + strokeWidth / 2 * this.scaleX) + 0.5, rotateHeight + (this.flipY ? this.rotatingPointOffset : -this.rotatingPointOffset));
         ctx.closePath();
         ctx.stroke();
       }
@@ -14669,8 +14668,8 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
       var size = this.cornerSize,
           size2 = size / 2,
           strokeWidth2 = ~~(this.strokeWidth / 2), // half strokeWidth rounded down
-          left = -(this.width / 2),
-          top = -(this.height / 2),
+          left = 0,//-(this.width / 2),
+          top = 0,//-(this.height / 2),
           _left,
           _top,
           sizeX = size / this.scaleX,
