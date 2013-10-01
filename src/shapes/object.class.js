@@ -446,7 +446,7 @@
       var center = fromLeft ? this._getLeftTopCoords() : this.getCenterPoint();
 			//console.log(this.id,'translating by',center.x,center.y,'which is',(fromLeft ? 'topleft' : 'center'));
       //ctx.translate(center.x, center.y);
-			console.log(this.id,'translating by',this.left,this.top);
+			//console.log(this.id,'translating by',this.left,this.top);
 			ctx.translate(this.left,this.top);
       ctx.rotate(degreesToRadians(this.angle));
       ctx.scale(
@@ -756,6 +756,10 @@
 
       this._setShadow(ctx);
       this.clipTo && fabric.util.clipContext(this, ctx);
+			ctx.beginPath();
+			ctx.arc(0, 0, 2, 0, 2 * Math.PI, false);
+			ctx.fillStyle = 'green';
+			ctx.fill();
       this._render(ctx, noTransform);
       this.clipTo && ctx.restore();
       this._removeShadow(ctx);

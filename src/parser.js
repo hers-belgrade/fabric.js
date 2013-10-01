@@ -670,40 +670,55 @@
    * @param {Function} callback Callback to call when parsing is finished; It's being passed an array of elements (parsed from a document).
    */
   fabric.parseSVGDocumentHierarchical = (function() {
-    function processGroup(map,elements,g,options){
-      var gmap = {};
-      var gelements = [];
-      for(var i in g.childNodes){
-        var gc = g.childNodes[i];
-        var gcid = gc.id;
-        if(gc.tagName){
-          if(gc.tagName!=='g'){
-           if(/^(path|circle|polygon|polyline|ellipse|rect|line|image|text)$/.test(gc.tagName)){
-            fabric.parseElements([gc],function(instances){
-              var inst = instances[0];
-              if(gcid){
-                inst.id = gcid;
-                gmap[gcid] = inst;
-              }
-              gelements.push(inst);
-            },clone(options));
-           }
-          }else{
-            processGroup(gmap,gelements,gc,options);
+    function processGroup(map,elements,g,options,cb){
+      var processElement = (function(_cn,_cb){
+        var childNodes = _cn, gmap = {}, gelements = [], cb = _cb;
+        var worker = function(i){
+          var gc = childNodes[i];
+          if(!gc){
+            var ga = fabric.parseAttributes(g,fabric.SHARED_ATTRIBUTES.concat(['x','y']));
+            ga.width = ga.width || options.width;
+            ga.height = ga.height || options.height;
+            var group = new fabric.Group(gelements,ga);
+            for(var i in gmap){
+              group[i] = gmap[i];
+            }
+            elements.push(group);
+            if(g.id){
+              map[g.id] = group;
+            }
+            cb(g);
+            return;
           }
-        }
-      }
-			var ga = fabric.parseAttributes(g,fabric.SHARED_ATTRIBUTES);
-			ga.width = ga.width || options.width;
-			ga.height = ga.height || options.height;
-      var group = new fabric.Group(gelements,ga);
-      for(var i in gmap){
-        group[i] = gmap[i];
-      }
-      elements.push(group);
-      if(g.id){
-        map[g.id] = group;
-      }
+          var next = function(){worker(i+1);};
+          if(gc.tagName){
+            if(gc.tagName!=='g'){
+             if(/^(path|circle|polygon|polyline|ellipse|rect|line|image|text)$/.test(gc.tagName)){
+              fabric.parseElements([gc],(function(_gm,_ge,_nxt){
+                var gmap = _gm,gelements=_ge,next=_nxt;
+                return function(instances){
+                  var inst = instances[0];
+                  if(inst.id){
+                    console.log(inst.id);
+                    gmap[inst.id] = inst;
+                  }
+                  gelements.push(inst);
+                  next();
+                };
+              })(gmap,gelements,next),clone(options));
+             }else{
+               next();
+             }
+            }else{
+              processGroup(gmap,gelements,gc,options,next);
+            }
+          }else{
+            next();
+          }
+        };
+        return worker;
+      })(g.childNodes,cb);
+      processElement(0);
     };
 
     // http://www.w3.org/TR/SVG/coords.html#ViewBoxAttribute
@@ -771,12 +786,34 @@
 
       var hierarchy = {};
       var elements = [];
-      processGroup(hierarchy,elements,doc,options);
+      processGroup(hierarchy,elements,doc,options,function(){
+        fabric.documentParsingTime = new Date() - startTime;
+        if(callback) {
+          var anchor = (function(){
+            var worker = function(_e){
+              for(var i in _e._objects){
+                var o = _e._objects[i];
+                if(o.id==='anchor'){
+                  return o;
+                }else{
+                  var ret = worker(o);
+                  if(ret){
+                    return ret;
+                  }
+                }
+              }
+            };
+            return worker(elements[0]);
+          })();
+          if(anchor&&anchor.type==='rect'){
+            elements[0].anchorX = anchor.left+(anchor.width / 2);
+            elements[0].anchorY = anchor.top+(anchor.height / 2);
+            anchor.set({opacity:0});
+          }
+          callback(elements[0], options);
+        }
+      });
 
-      fabric.documentParsingTime = new Date() - startTime;
-      if(callback) {
-        callback(elements[0], options);
-      }
     };
   })();
 

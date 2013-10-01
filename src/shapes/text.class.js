@@ -244,10 +244,6 @@
       this._renderTextFill(ctx, textLines);
       this._renderTextStroke(ctx, textLines);
       this._removeShadow(ctx);
-			ctx.beginPath();
-			ctx.arc(0, 0, 2, 0, 2 * Math.PI, false);
-			ctx.fillStyle = 'green';
-			ctx.fill();
       ctx.restore();
 
       this._renderTextDecoration(ctx, textLines);

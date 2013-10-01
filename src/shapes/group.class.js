@@ -202,7 +202,7 @@
      * @return {Object} object representation of an instance
      */
     toObject: function(propertiesToInclude) {
-      return extend(this.callSuper('toObject', propertiesToInclude), {
+      return extend(this.callSuper('toObject', ['anchorX','anchorY'].concat(propertiesToInclude)), {
         objects: invoke(this._objects, 'toObject', propertiesToInclude)
       });
     },
@@ -252,10 +252,11 @@
     },
 
 		_render: function(ctx, noTransform){
+      ctx.translate(-this.anchorX||0,-this.anchorY||0);
       for (var i = 0, len = this._objects.length; i < len; i++) {
         var object = this._objects[i];
 				object.render(ctx);
-				console.log(object.id,object.oCoords);
+				//console.log(object.id,object.oCoords);
 			}
 		},
 

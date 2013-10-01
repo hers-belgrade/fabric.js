@@ -3990,40 +3990,57 @@ fabric.Collection = {
         };
     }();
     fabric.parseSVGDocumentHierarchical = function() {
-        function processGroup(map, elements, g, options) {
-            var gmap = {};
-            var gelements = [];
-            for (var i in g.childNodes) {
-                var gc = g.childNodes[i];
-                var gcid = gc.id;
-                if (gc.tagName) {
-                    if (gc.tagName !== "g") {
-                        if (/^(path|circle|polygon|polyline|ellipse|rect|line|image|text)$/.test(gc.tagName)) {
-                            fabric.parseElements([ gc ], function(instances) {
-                                var inst = instances[0];
-                                if (gcid) {
-                                    inst.id = gcid;
-                                    gmap[gcid] = inst;
-                                }
-                                gelements.push(inst);
-                            }, clone(options));
+        function processGroup(map, elements, g, options, cb) {
+            var processElement = function(_cn, _cb) {
+                var childNodes = _cn, gmap = {}, gelements = [], cb = _cb;
+                var worker = function(i) {
+                    var gc = childNodes[i];
+                    if (!gc) {
+                        var ga = fabric.parseAttributes(g, fabric.SHARED_ATTRIBUTES.concat([ "x", "y" ]));
+                        ga.width = ga.width || options.width;
+                        ga.height = ga.height || options.height;
+                        var group = new fabric.Group(gelements, ga);
+                        for (var i in gmap) {
+                            group[i] = gmap[i];
+                        }
+                        elements.push(group);
+                        if (g.id) {
+                            map[g.id] = group;
+                        }
+                        cb(g);
+                        return;
+                    }
+                    var next = function() {
+                        worker(i + 1);
+                    };
+                    if (gc.tagName) {
+                        if (gc.tagName !== "g") {
+                            if (/^(path|circle|polygon|polyline|ellipse|rect|line|image|text)$/.test(gc.tagName)) {
+                                fabric.parseElements([ gc ], function(_gm, _ge, _nxt) {
+                                    var gmap = _gm, gelements = _ge, next = _nxt;
+                                    return function(instances) {
+                                        var inst = instances[0];
+                                        if (inst.id) {
+                                            console.log(inst.id);
+                                            gmap[inst.id] = inst;
+                                        }
+                                        gelements.push(inst);
+                                        next();
+                                    };
+                                }(gmap, gelements, next), clone(options));
+                            } else {
+                                next();
+                            }
+                        } else {
+                            processGroup(gmap, gelements, gc, options, next);
                         }
                     } else {
-                        processGroup(gmap, gelements, gc, options);
+                        next();
                     }
-                }
-            }
-            var ga = fabric.parseAttributes(g, fabric.SHARED_ATTRIBUTES);
-            ga.width = ga.width || options.width;
-            ga.height = ga.height || options.height;
-            var group = new fabric.Group(gelements, ga);
-            for (var i in gmap) {
-                group[i] = gmap[i];
-            }
-            elements.push(group);
-            if (g.id) {
-                map[g.id] = group;
-            }
+                };
+                return worker;
+            }(g.childNodes, cb);
+            processElement(0);
         }
         var reNum = "(?:[-+]?\\d+(?:\\.\\d+)?(?:e[-+]?\\d+)?)";
         var reViewBoxAttrValue = new RegExp("^" + "\\s*(" + reNum + "+)\\s*,?" + "\\s*(" + reNum + "+)\\s*,?" + "\\s*(" + reNum + "+)\\s*,?" + "\\s*(" + reNum + "+)\\s*" + "$");
@@ -4058,11 +4075,35 @@ fabric.Collection = {
             });
             var hierarchy = {};
             var elements = [];
-            processGroup(hierarchy, elements, doc, options);
-            fabric.documentParsingTime = new Date() - startTime;
-            if (callback) {
-                callback(elements[0], options);
-            }
+            processGroup(hierarchy, elements, doc, options, function() {
+                fabric.documentParsingTime = new Date() - startTime;
+                if (callback) {
+                    var anchor = function() {
+                        var worker = function(_e) {
+                            for (var i in _e._objects) {
+                                var o = _e._objects[i];
+                                if (o.id === "anchor") {
+                                    return o;
+                                } else {
+                                    var ret = worker(o);
+                                    if (ret) {
+                                        return ret;
+                                    }
+                                }
+                            }
+                        };
+                        return worker(elements[0]);
+                    }();
+                    if (anchor && anchor.type === "rect") {
+                        elements[0].anchorX = anchor.left + anchor.width / 2;
+                        elements[0].anchorY = anchor.top + anchor.height / 2;
+                        anchor.set({
+                            opacity: 0
+                        });
+                    }
+                    callback(elements[0], options);
+                }
+            });
         };
     }();
     var svgCache = {
@@ -7063,7 +7104,6 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
         transform: function(ctx, fromLeft) {
             ctx.globalAlpha = this.opacity;
             var center = fromLeft ? this._getLeftTopCoords() : this.getCenterPoint();
-            console.log(this.id, "translating by", this.left, this.top);
             ctx.translate(this.left, this.top);
             ctx.rotate(degreesToRadians(this.angle));
             ctx.scale(this.scaleX * (this.flipX ? -1 : 1), this.scaleY * (this.flipY ? -1 : 1));
@@ -7229,6 +7269,10 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
             }
             this._setShadow(ctx);
             this.clipTo && fabric.util.clipContext(this, ctx);
+            ctx.beginPath();
+            ctx.arc(0, 0, 2, 0, 2 * Math.PI, false);
+            ctx.fillStyle = "green";
+            ctx.fill();
             this._render(ctx, noTransform);
             this.clipTo && ctx.restore();
             this._removeShadow(ctx);
@@ -9359,7 +9403,7 @@ fabric.util.object.extend(fabric.Object.prototype, {
             }
         },
         toObject: function(propertiesToInclude) {
-            return extend(this.callSuper("toObject", propertiesToInclude), {
+            return extend(this.callSuper("toObject", [ "anchorX", "anchorY" ].concat(propertiesToInclude)), {
                 objects: invoke(this._objects, "toObject", propertiesToInclude)
             });
         },
@@ -9387,10 +9431,10 @@ fabric.util.object.extend(fabric.Object.prototype, {
             this.setCoords();
         },
         _render: function(ctx, noTransform) {
+            ctx.translate(-this.anchorX || 0, -this.anchorY || 0);
             for (var i = 0, len = this._objects.length; i < len; i++) {
                 var object = this._objects[i];
                 object.render(ctx);
-                console.log(object.id, object.oCoords);
             }
         },
         _restoreObjectsState: function() {
@@ -10365,10 +10409,6 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass({
             this._renderTextFill(ctx, textLines);
             this._renderTextStroke(ctx, textLines);
             this._removeShadow(ctx);
-            ctx.beginPath();
-            ctx.arc(0, 0, 2, 0, 2 * Math.PI, false);
-            ctx.fillStyle = "green";
-            ctx.fill();
             ctx.restore();
             this._renderTextDecoration(ctx, textLines);
             this._setBoundaries(ctx, textLines);
