@@ -441,7 +441,12 @@
      * @param {Boolean} fromLeft When true, context is transformed to object's top/left corner. This is used when rendering text on Node
      */
     transform: function(ctx, fromLeft) {
-      ctx.globalAlpha = this.opacity;
+			if(this.opacity!==1){
+				console.log(ctx.globalCompositeOperation);
+				this.savedAlpha = ctx.globalAlpha;
+				ctx.globalAlpha = ctx.globalAlpha*this.opacity;
+				//ctx.globalAlpha = 1 - ((1-ctx.globalAlpha)+(1-this.opacity));
+			}
 
       var center = fromLeft ? this._getLeftTopCoords() : this.getCenterPoint();
 			//console.log(this.id,'translating by',center.x,center.y,'which is',(fromLeft ? 'topleft' : 'center'));
@@ -454,6 +459,14 @@
         this.scaleY * (this.flipY ? -1 : 1)
       );
     },
+
+		untransform: function(ctx){
+			if(typeof this.savedAlpha !== 'undefined'){
+				ctx.globalAlpha = this.savedAlpha;
+			}
+			delete this.savedAlpha;
+      ctx.restore();
+		},
 
     /**
      * Returns an object representation of an instance
@@ -768,7 +781,7 @@
 			ctx.arc(0, 0, 2, 0, 2 * Math.PI, false);
 			ctx.fillStyle = 'green';
 			ctx.fill();
-      ctx.restore();
+			this.untransform(ctx);
     },
 
     /**

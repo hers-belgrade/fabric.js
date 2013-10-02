@@ -6688,7 +6688,7 @@ fabric.util.string = {
             cb(g);
             return;
           }
-          var next = function(){worker(i+1);};
+          var next = function(){setTimeout(function(){worker(i+1);},1)};
           if(gc.tagName){
             if(gc.tagName!=='g'){
              if(/^(path|circle|polygon|polyline|ellipse|rect|line|image|text)$/.test(gc.tagName)){
@@ -12963,7 +12963,12 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
      * @param {Boolean} fromLeft When true, context is transformed to object's top/left corner. This is used when rendering text on Node
      */
     transform: function(ctx, fromLeft) {
-      ctx.globalAlpha = this.opacity;
+			if(this.opacity!==1){
+				console.log(ctx.globalCompositeOperation);
+				this.savedAlpha = ctx.globalAlpha;
+				ctx.globalAlpha = ctx.globalAlpha*this.opacity;
+				//ctx.globalAlpha = 1 - ((1-ctx.globalAlpha)+(1-this.opacity));
+			}
 
       var center = fromLeft ? this._getLeftTopCoords() : this.getCenterPoint();
 			//console.log(this.id,'translating by',center.x,center.y,'which is',(fromLeft ? 'topleft' : 'center'));
@@ -12976,6 +12981,14 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
         this.scaleY * (this.flipY ? -1 : 1)
       );
     },
+
+		untransform: function(ctx){
+			if(typeof this.savedAlpha !== 'undefined'){
+				ctx.globalAlpha = this.savedAlpha;
+			}
+			delete this.savedAlpha;
+      ctx.restore();
+		},
 
     /**
      * Returns an object representation of an instance
@@ -13290,7 +13303,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
 			ctx.arc(0, 0, 2, 0, 2 * Math.PI, false);
 			ctx.fillStyle = 'green';
 			ctx.fill();
-      ctx.restore();
+			this.untransform(ctx);
     },
 
     /**
@@ -17422,42 +17435,13 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
       this.callSuper('initialize');
 
       this._calcBounds();
-      this._updateObjectsCoords();
 
       if (options) {
         extend(this, options);
       }
-      this._setOpacityIfSame();
 
       this.setCoords(true);
       this.saveCoords();
-    },
-
-    /**
-     * @private
-     */
-    _updateObjectsCoords: function() {
-			return;
-      var groupDeltaX = this.left,
-          groupDeltaY = this.top;
-
-      this.forEachObject(function(object) {
-
-        var objectLeft = object.get('left'),
-            objectTop = object.get('top');
-
-        object.set('originalLeft', objectLeft);
-        object.set('originalTop', objectTop);
-
-        //object.set('left', objectLeft - groupDeltaX);
-        //object.set('top', objectTop - groupDeltaY);
-
-        object.setCoords();
-
-        // do not display corners of objects enclosed in a group
-        object.__origHasControls = object.hasControls;
-        object.hasControls = false;
-      }, this);
     },
 
     /**
@@ -17488,8 +17472,6 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
       // since _restoreObjectsState set objects inactive
       //this.forEachObject(function(o){ o.set('active', true); o.group = this; }, this);
       this._calcBounds();
-      this._updateObjectsCoords();
-      this._setOpacityIfSame();
 
       this.setCoords(true);
       this.saveCoords();
@@ -17509,7 +17491,6 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
 
       this.remove(object);
       this._calcBounds();
-      this._updateObjectsCoords();
       return this;
     },
 
@@ -17518,6 +17499,9 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
      */
     _onObjectAdded: function(object) {
       object.group = this;
+			if(object.id){
+				this[object.id] = object;
+			}
     },
 
     /**
@@ -17526,39 +17510,6 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
     _onObjectRemoved: function(object) {
       delete object.group;
       object.set('active', false);
-    },
-
-    /**
-     * Properties that are delegated to group objects when reading/writing
-     * @param {Object} delegatedProperties
-     */
-    delegatedProperties: {
-      fill:             true,
-      opacity:          true,
-      fontFamily:       true,
-      fontWeight:       true,
-      fontSize:         true,
-      fontStyle:        true,
-      lineHeight:       true,
-      textDecoration:   true,
-      textAlign:        true,
-      backgroundColor:  true
-    },
-
-    /**
-     * @private
-     */
-    _set: function(key, value) {
-      if (key in this.delegatedProperties) {
-        var i = this._objects.length;
-        this[key] = value;
-        while (i--) {
-          this._objects[i].set(key, value);
-        }
-      }
-      else {
-        this[key] = value;
-      }
     },
 
     /**
@@ -17716,22 +17667,6 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
     /**
      * @private
      */
-    _setOpacityIfSame: function() {
-      var objects = this.getObjects(),
-          firstValue = objects[0] ? objects[0].get('opacity') : 1;
-
-      var isSameOpacity = objects.every(function(o) {
-        return o.get('opacity') === firstValue;
-      });
-
-      if (isSameOpacity) {
-        this.opacity = firstValue;
-      }
-    },
-
-    /**
-     * @private
-     */
     _calcBounds: function() {
       var aX = [],
           aY = [],
@@ -17781,32 +17716,6 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
     },
     /* _TO_SVG_END_ */
 
-    /**
-     * Returns requested property
-     * @param {String} prop Property to get
-     * @return {Any}
-     */
-    get: function(prop) {
-      if (prop in _lockProperties) {
-        if (this[prop]) {
-          return this[prop];
-        }
-        else {
-          for (var i = 0, len = this._objects.length; i < len; i++) {
-            if (this._objects[i][prop]) {
-              return true;
-            }
-          }
-          return false;
-        }
-      }
-      else {
-        if (prop in this.delegatedProperties) {
-          return this._objects[0] && this._objects[0].get(prop);
-        }
-        return this[prop];
-      }
-    }
   });
 
   /**
