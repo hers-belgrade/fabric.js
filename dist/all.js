@@ -10625,6 +10625,32 @@ fabric.PatternBrush = fabric.util.createClass(fabric.PencilBrush, /** @lends fab
       this._createCacheCanvas();
 
       fabric.Canvas.activeInstance = this;
+			if(!this.allowTouchScrolling){
+				this.findTarget = (function(_originalFn,_fire) {
+					var originalFn=_originalFn,fire = _fire;
+					return function() {
+						var target = originalFn.apply(this, arguments);
+						if (target) {
+							if (this._hoveredTarget !== target) {
+								console.log('AAAAAAAAAAAAA',target);
+								fire('object:over', { target: target });
+								target.fire('object:over', {e : arguments[0] });
+								if (this._hoveredTarget) {
+									fire('object:out', { target: this._hoveredTarget });
+									this._hoveredTarget.fire('object:out', { e : arguments[0] });
+								}
+								this._hoveredTarget = target;
+							}
+						}
+						else if (this._hoveredTarget) {
+							fire('object:out', { target: this._hoveredTarget });
+							this._hoveredTarget.fire('object:out',{ e : arguments[0] });
+							this._hoveredTarget = null;
+						}
+						return target;
+					};
+				})(this.findTarget,this.fire);
+			}
     },
 
     /**
@@ -11338,6 +11364,7 @@ fabric.PatternBrush = fabric.util.createClass(fabric.PencilBrush, /** @lends fab
       var target,
           pointer = this.getPointer(e);
 
+			/*
       if (this.controlsAboveOverlay &&
           this.lastRenderedObjectWithControlsAboveOverlay &&
           this.lastRenderedObjectWithControlsAboveOverlay.visible &&
@@ -11353,6 +11380,7 @@ fabric.PatternBrush = fabric.util.createClass(fabric.PencilBrush, /** @lends fab
         target = activeGroup;
         return target;
       }
+			*/
 
       // then check all of the objects on canvas
       // Cache all targets where their bounding box contains point.
@@ -11362,7 +11390,8 @@ fabric.PatternBrush = fabric.util.createClass(fabric.PencilBrush, /** @lends fab
 
         if (this._objects[i] &&
             this._objects[i].visible &&
-            this._objects[i].selectable &&
+						this._objects[i].id!=='svg2996' &&
+            //this._objects[i].selectable &&
             this.containsPoint(e, this._objects[i])) {
 
           if (this.perPixelTargetFind || this._objects[i].perPixelTargetFind) {
@@ -11375,6 +11404,7 @@ fabric.PatternBrush = fabric.util.createClass(fabric.PencilBrush, /** @lends fab
           }
         }
       }
+			console.log('target',target,possibleTargets.length,'possibleTargets');
       for (var j = 0, len = possibleTargets.length; j < len; j++) {
         pointer = this.getPointer(e);
         var isTransparent = this.isTargetTransparent(possibleTargets[j], pointer.x, pointer.y);
@@ -12964,7 +12994,6 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
      */
     transform: function(ctx, fromLeft) {
 			if(this.opacity!==1){
-				console.log(ctx.globalCompositeOperation);
 				this.savedAlpha = ctx.globalAlpha;
 				ctx.globalAlpha = ctx.globalAlpha*this.opacity;
 				//ctx.globalAlpha = 1 - ((1-ctx.globalAlpha)+(1-this.opacity));
@@ -13299,6 +13328,17 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
         this.drawBorders(ctx);
         this.drawControls(ctx);
       }
+			if(this.id==='paytable'){
+       ctx.fillStyle = 'black';
+       ctx.fillRect(this.oCoords.mb.x, this.oCoords.mb.y, 3, 3);
+       ctx.fillRect(this.oCoords.bl.x, this.oCoords.bl.y, 3, 3);
+       ctx.fillRect(this.oCoords.br.x, this.oCoords.br.y, 3, 3);
+       ctx.fillRect(this.oCoords.tl.x, this.oCoords.tl.y, 3, 3);
+       ctx.fillRect(this.oCoords.tr.x, this.oCoords.tr.y, 3, 3);
+       ctx.fillRect(this.oCoords.ml.x, this.oCoords.ml.y, 3, 3);
+       ctx.fillRect(this.oCoords.mr.x, this.oCoords.mr.y, 3, 3);
+       ctx.fillRect(this.oCoords.mt.x, this.oCoords.mt.y, 3, 3);
+			}
 			ctx.beginPath();
 			ctx.arc(0, 0, 2, 0, 2 * Math.PI, false);
 			ctx.fillStyle = 'green';
@@ -14020,6 +14060,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
           xPoints = this._findCrossPoints(point, lines);
 
       // if xPoints is odd then point is inside the object
+			console.log(point.x,'.',point.y,'in',this.oCoords.tl.x,this.oCoords.tl.y,this.oCoords.br.x-this.oCoords.tl.x,this.oCoords.br.y-this.oCoords.tl.y);
       return (xPoints !== 0 && xPoints % 2 === 1);
     },
 
@@ -14252,8 +14293,8 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
 
       var coords = this.getCenterPoint();
       var tl = {
-        x: coords.x - offsetX,
-        y: coords.y - offsetY
+        x: coords.x,// - offsetX,
+        y: coords.y// - offsetY
       };
       var tr = {
         x: tl.x + (this.currentWidth * cosTh),

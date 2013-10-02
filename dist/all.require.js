@@ -5949,6 +5949,43 @@ fabric.PatternBrush = fabric.util.createClass(fabric.PencilBrush, {
             this._initInteractive();
             this._createCacheCanvas();
             fabric.Canvas.activeInstance = this;
+            if (!this.allowTouchScrolling) {
+                this.findTarget = function(_originalFn, _fire) {
+                    var originalFn = _originalFn, fire = _fire;
+                    return function() {
+                        var target = originalFn.apply(this, arguments);
+                        if (target) {
+                            if (this._hoveredTarget !== target) {
+                                console.log("AAAAAAAAAAAAA", target);
+                                fire("object:over", {
+                                    target: target
+                                });
+                                target.fire("object:over", {
+                                    e: arguments[0]
+                                });
+                                if (this._hoveredTarget) {
+                                    fire("object:out", {
+                                        target: this._hoveredTarget
+                                    });
+                                    this._hoveredTarget.fire("object:out", {
+                                        e: arguments[0]
+                                    });
+                                }
+                                this._hoveredTarget = target;
+                            }
+                        } else if (this._hoveredTarget) {
+                            fire("object:out", {
+                                target: this._hoveredTarget
+                            });
+                            this._hoveredTarget.fire("object:out", {
+                                e: arguments[0]
+                            });
+                            this._hoveredTarget = null;
+                        }
+                        return target;
+                    };
+                }(this.findTarget, this.fire);
+            }
         },
         uniScaleTransform: false,
         centerTransform: false,
@@ -6292,18 +6329,9 @@ fabric.PatternBrush = fabric.util.createClass(fabric.PencilBrush, {
         findTarget: function(e, skipGroup) {
             if (this.skipTargetFind) return;
             var target, pointer = this.getPointer(e);
-            if (this.controlsAboveOverlay && this.lastRenderedObjectWithControlsAboveOverlay && this.lastRenderedObjectWithControlsAboveOverlay.visible && this.containsPoint(e, this.lastRenderedObjectWithControlsAboveOverlay) && this.lastRenderedObjectWithControlsAboveOverlay._findTargetCorner(e, this._offset)) {
-                target = this.lastRenderedObjectWithControlsAboveOverlay;
-                return target;
-            }
-            var activeGroup = this.getActiveGroup();
-            if (activeGroup && !skipGroup && this.containsPoint(e, activeGroup)) {
-                target = activeGroup;
-                return target;
-            }
             var possibleTargets = [];
             for (var i = this._objects.length; i--; ) {
-                if (this._objects[i] && this._objects[i].visible && this._objects[i].selectable && this.containsPoint(e, this._objects[i])) {
+                if (this._objects[i] && this._objects[i].visible && this._objects[i].id !== "svg2996" && this.containsPoint(e, this._objects[i])) {
                     if (this.perPixelTargetFind || this._objects[i].perPixelTargetFind) {
                         possibleTargets[possibleTargets.length] = this._objects[i];
                     } else {
@@ -6313,6 +6341,7 @@ fabric.PatternBrush = fabric.util.createClass(fabric.PencilBrush, {
                     }
                 }
             }
+            console.log("target", target, possibleTargets.length, "possibleTargets");
             for (var j = 0, len = possibleTargets.length; j < len; j++) {
                 pointer = this.getPointer(e);
                 var isTransparent = this.isTargetTransparent(possibleTargets[j], pointer.x, pointer.y);
@@ -7104,7 +7133,6 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
         },
         transform: function(ctx, fromLeft) {
             if (this.opacity !== 1) {
-                console.log(ctx.globalCompositeOperation);
                 this.savedAlpha = ctx.globalAlpha;
                 ctx.globalAlpha = ctx.globalAlpha * this.opacity;
             }
@@ -7284,6 +7312,17 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
             if (this.active && !noTransform) {
                 this.drawBorders(ctx);
                 this.drawControls(ctx);
+            }
+            if (this.id === "paytable") {
+                ctx.fillStyle = "black";
+                ctx.fillRect(this.oCoords.mb.x, this.oCoords.mb.y, 3, 3);
+                ctx.fillRect(this.oCoords.bl.x, this.oCoords.bl.y, 3, 3);
+                ctx.fillRect(this.oCoords.br.x, this.oCoords.br.y, 3, 3);
+                ctx.fillRect(this.oCoords.tl.x, this.oCoords.tl.y, 3, 3);
+                ctx.fillRect(this.oCoords.tr.x, this.oCoords.tr.y, 3, 3);
+                ctx.fillRect(this.oCoords.ml.x, this.oCoords.ml.y, 3, 3);
+                ctx.fillRect(this.oCoords.mr.x, this.oCoords.mr.y, 3, 3);
+                ctx.fillRect(this.oCoords.mt.x, this.oCoords.mt.y, 3, 3);
             }
             ctx.beginPath();
             ctx.arc(0, 0, 2, 0, 2 * Math.PI, false);
@@ -7629,6 +7668,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
         },
         containsPoint: function(point) {
             var lines = this._getImageLines(this.oCoords), xPoints = this._findCrossPoints(point, lines);
+            console.log(point.x, ".", point.y, "in", this.oCoords.tl.x, this.oCoords.tl.y, this.oCoords.br.x - this.oCoords.tl.x, this.oCoords.br.y - this.oCoords.tl.y);
             return xPoints !== 0 && xPoints % 2 === 1;
         },
         _getImageLines: function(oCoords) {
@@ -7748,8 +7788,8 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
             var offsetX = Math.cos(_angle + theta) * _hypotenuse, offsetY = Math.sin(_angle + theta) * _hypotenuse, sinTh = Math.sin(theta), cosTh = Math.cos(theta);
             var coords = this.getCenterPoint();
             var tl = {
-                x: coords.x - offsetX,
-                y: coords.y - offsetY
+                x: coords.x,
+                y: coords.y
             };
             var tr = {
                 x: tl.x + this.currentWidth * cosTh,

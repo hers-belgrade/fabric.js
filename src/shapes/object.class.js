@@ -442,7 +442,6 @@
      */
     transform: function(ctx, fromLeft) {
 			if(this.opacity!==1){
-				console.log(ctx.globalCompositeOperation);
 				this.savedAlpha = ctx.globalAlpha;
 				ctx.globalAlpha = ctx.globalAlpha*this.opacity;
 				//ctx.globalAlpha = 1 - ((1-ctx.globalAlpha)+(1-this.opacity));
@@ -777,6 +776,17 @@
         this.drawBorders(ctx);
         this.drawControls(ctx);
       }
+			if(this.id==='paytable'){
+       ctx.fillStyle = 'black';
+       ctx.fillRect(this.oCoords.mb.x, this.oCoords.mb.y, 3, 3);
+       ctx.fillRect(this.oCoords.bl.x, this.oCoords.bl.y, 3, 3);
+       ctx.fillRect(this.oCoords.br.x, this.oCoords.br.y, 3, 3);
+       ctx.fillRect(this.oCoords.tl.x, this.oCoords.tl.y, 3, 3);
+       ctx.fillRect(this.oCoords.tr.x, this.oCoords.tr.y, 3, 3);
+       ctx.fillRect(this.oCoords.ml.x, this.oCoords.ml.y, 3, 3);
+       ctx.fillRect(this.oCoords.mr.x, this.oCoords.mr.y, 3, 3);
+       ctx.fillRect(this.oCoords.mt.x, this.oCoords.mt.y, 3, 3);
+			}
 			ctx.beginPath();
 			ctx.arc(0, 0, 2, 0, 2 * Math.PI, false);
 			ctx.fillStyle = 'green';

@@ -98,6 +98,7 @@
           xPoints = this._findCrossPoints(point, lines);
 
       // if xPoints is odd then point is inside the object
+			console.log(point.x,'.',point.y,'in',this.oCoords.tl.x,this.oCoords.tl.y,this.oCoords.br.x-this.oCoords.tl.x,this.oCoords.br.y-this.oCoords.tl.y);
       return (xPoints !== 0 && xPoints % 2 === 1);
     },
 
@@ -330,8 +331,8 @@
 
       var coords = this.getCenterPoint();
       var tl = {
-        x: coords.x - offsetX,
-        y: coords.y - offsetY
+        x: coords.x,// - offsetX,
+        y: coords.y// - offsetY
       };
       var tr = {
         x: tl.x + (this.currentWidth * cosTh),
