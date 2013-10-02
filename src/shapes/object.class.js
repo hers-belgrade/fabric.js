@@ -760,6 +760,9 @@
       this.clipTo && ctx.restore();
       this._removeShadow(ctx);
 
+      var xl = 0, xr = xl+this.width, yt = 0, yb = yt+this.height;
+      var tl = fabric.pointInSpace(new Point(xl,yl),canvas._currentTransform);
+      var br = fabric.pointInSpace(new Point(xr,yb),canvas._currentTransform);
       if (this.active && !noTransform) {
         this.drawBorders(ctx);
         this.drawControls(ctx);

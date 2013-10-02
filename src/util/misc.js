@@ -351,6 +351,41 @@
   }
 
   /**
+   * Point in space of transform matrix
+   * @static
+   * @memberOf fabric.util
+   * @param  {Array} matrix transformMatrix
+   * @param  {Point} point to be transformed into space
+   * @return {Point} The resulting point in matrix's space
+   */
+  function pointInSpace(matrix, point) {
+    // Matrix multiply matrixA * matrixB
+    var m = [
+      [matrix[0], matrix[2], matrix[4]],
+      [matrix[1], matrix[3], matrix[5]],
+      [0         , 0         , 1         ]
+    ];
+
+    var p = [
+      point.x,
+      point.y,
+      1
+    ];
+
+    var result = [];
+    for (var r=0; r<3; r++) {
+      result[r] = [];
+      var sum = 0;
+      for (var k=0; k<3; k++) {
+        sum += a[r][k]*p[k];
+      }
+      result[r] = sum;
+    }
+
+    return new fabric.Point(p[0],p[1]);
+  }
+
+  /**
    * Multiply matrix A by matrix B to nest transformations
    * @static
    * @memberOf fabric.util
@@ -526,6 +561,7 @@
   fabric.util.createImage = createImage;
   fabric.util.createAccessors = createAccessors;
   fabric.util.clipContext = clipContext;
+  fabric.util.pointInSpace = pointInSpace;
   fabric.util.multiplyTransformMatrices = multiplyTransformMatrices;
   fabric.util.getFunctionBody = getFunctionBody;
   fabric.util.drawArc = drawArc;
