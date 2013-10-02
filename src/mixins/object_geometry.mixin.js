@@ -94,12 +94,26 @@
      * @return {Boolean} true if point is inside the object
      */
     containsPoint: function(point) {
+      if(!this.oCoords){return false;}
       var lines = this._getImageLines(this.oCoords),
           xPoints = this._findCrossPoints(point, lines);
 
       // if xPoints is odd then point is inside the object
-			console.log(point.x,'.',point.y,'in',this.oCoords.tl.x,this.oCoords.tl.y,this.oCoords.br.x-this.oCoords.tl.x,this.oCoords.br.y-this.oCoords.tl.y);
-      return (xPoints !== 0 && xPoints % 2 === 1);
+      var ret = (xPoints !== 0 && xPoints % 2 === 1);
+      if(!fabric.isTouchSupported){
+        if(ret){
+          if(!this.foundContaining){
+            this.foundContaining=true;
+            this.fire('object:over',{e:point});
+          }
+        }else{
+          if(this.foundContaining){
+            delete this.foundContaining;
+            this.fire('object:out',{e:point});
+          }
+        }
+      }
+      return ret;
     },
 
     /**
@@ -304,6 +318,7 @@
      * @chainable
      */
     setCoords: function() {
+      return;
 
       var strokeWidth = this.strokeWidth > 1 ? this.strokeWidth : 0,
           padding = this.padding,

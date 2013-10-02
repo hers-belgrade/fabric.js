@@ -359,7 +359,6 @@
    * @return {Point} The resulting point in matrix's space
    */
   function pointInSpace(matrix, point) {
-    // Matrix multiply matrixA * matrixB
     var m = [
       [matrix[0], matrix[2], matrix[4]],
       [matrix[1], matrix[3], matrix[5]],
@@ -377,12 +376,12 @@
       result[r] = [];
       var sum = 0;
       for (var k=0; k<3; k++) {
-        sum += a[r][k]*p[k];
+        sum += m[r][k]*p[k];
       }
       result[r] = sum;
     }
 
-    return new fabric.Point(p[0],p[1]);
+    return new fabric.Point(result[0],result[1]);
   }
 
   /**

@@ -3910,7 +3910,57 @@ fabric.Collection = {
     return this.forEachObject(function(obj) {
       obj.toGrayscale();
     });
-  }
+  },
+
+	/**
+	 * Method that determines what object we are clicking on
+	 * @param {Event} e mouse event
+	 * @param {Boolean} skipGroup when true, group is skipped and only objects are traversed through
+	 */
+	findTarget: function (e) {
+		if (this.skipTargetFind) return;
+
+		var target;
+		// then check all of the objects
+		// Cache all targets where their bounding box contains point.
+		var possibleTargets = [];
+
+		for (var i = this._objects.length; i--; ) {
+
+			if (this._objects[i] &&
+					this._objects[i].visible &&
+          this._objects[i].containsPoint(e)) {
+
+				if (this.perPixelTargetFind || this._objects[i].perPixelTargetFind) {
+					possibleTargets[possibleTargets.length] = this._objects[i];
+				}
+				else {
+					target = this._objects[i];
+					this.relatedTarget = target;
+					if(target.findTarget){
+            var targetcandidate = target.findTarget(e);
+            if(targetcandidate){
+              target = targetcandidate;
+            }
+          }
+					break;
+				}
+			}
+		}
+		//console.log('target',target,possibleTargets.length,'possibleTargets');
+		for (var j = 0, len = possibleTargets.length; j < len; j++) {
+			pointer = this.getPointer(e);
+			var isTransparent = this.isTargetTransparent(possibleTargets[j], pointer.x, pointer.y);
+			if (!isTransparent) {
+				target = possibleTargets[j];
+				this.relatedTarget = target;
+				break;
+			}
+		}
+
+		return target;
+	},
+
 };
 
 
@@ -4275,7 +4325,6 @@ fabric.Collection = {
    * @return {Point} The resulting point in matrix's space
    */
   function pointInSpace(matrix, point) {
-    // Matrix multiply matrixA * matrixB
     var m = [
       [matrix[0], matrix[2], matrix[4]],
       [matrix[1], matrix[3], matrix[5]],
@@ -4293,12 +4342,12 @@ fabric.Collection = {
       result[r] = [];
       var sum = 0;
       for (var k=0; k<3; k++) {
-        sum += a[r][k]*p[k];
+        sum += m[r][k]*p[k];
       }
       result[r] = sum;
     }
 
-    return new fabric.Point(p[0],p[1]);
+    return new fabric.Point(result[0],result[1]);
   }
 
   /**
@@ -9379,6 +9428,7 @@ fabric.Pattern = fabric.util.createClass(/** @lends fabric.Pattern.prototype */ 
       }
 
       var activeGroup = this.getActiveGroup();
+      canvasToDrawOn._currentTransform = [1,0,0,1,0,0];
       for (var i = 0, length = this._objects.length; i < length; ++i) {
         if (!activeGroup ||
             (activeGroup && this._objects[i] && !activeGroup.contains(this._objects[i]))) {
@@ -9386,6 +9436,7 @@ fabric.Pattern = fabric.util.createClass(/** @lends fabric.Pattern.prototype */ 
         }
       }
 
+      /*
       // delegate rendering to group selection (if one exists)
       if (activeGroup) {
         //Store objects in group preserving order, then replace
@@ -9398,6 +9449,7 @@ fabric.Pattern = fabric.util.createClass(/** @lends fabric.Pattern.prototype */ 
         activeGroup._set('objects', sortedObjects);
         this._draw(canvasToDrawOn, activeGroup);
       }
+      */
 
       if (this.clipTo) {
         canvasToDrawOn.restore();
@@ -10668,7 +10720,6 @@ fabric.PatternBrush = fabric.util.createClass(fabric.PencilBrush, /** @lends fab
 						var target = originalFn.apply(this, arguments);
 						if (target) {
 							if (this._hoveredTarget !== target) {
-								console.log('AAAAAAAAAAAAA',target);
 								fire('object:over', { target: target });
 								target.fire('object:over', {e : arguments[0] });
 								if (this._hoveredTarget) {
@@ -10863,19 +10914,8 @@ fabric.PatternBrush = fabric.util.createClass(fabric.PencilBrush, /** @lends fab
       }
     },
 
-    /**
-     * Checks if point is contained within an area of given object
-     * @param {Event} e Event object
-     * @param {fabric.Object} target Object to test against
-     * @return {Boolean} true if point is contained within an area of given object
-     */
-    containsPoint: function (e, target) {
-      var pointer = this.getPointer(e),
-          xy = this._normalizePointer(target, pointer);
-
-      // http://www.geog.ubc.ca/courses/klink/gis.notes/ncgia/u32.html
-      // http://idav.ucdavis.edu/~okreylos/TAship/Spring2000/PointInPolygon.html
-      return (target.containsPoint(xy) || target._findTargetCorner(e, this._offset));
+    findTarget : function(e){
+      return this.callSuper('findTarget',this.getPointer(e));
     },
 
     /**
@@ -11346,6 +11386,7 @@ fabric.PatternBrush = fabric.util.createClass(fabric.PencilBrush, /** @lends fab
      * @private
      */
     _findSelectedObjects: function (e) {
+      return;
       var group = [ ],
           x1 = this._groupSelector.ex,
           y1 = this._groupSelector.ey,
@@ -11389,70 +11430,6 @@ fabric.PatternBrush = fabric.util.createClass(fabric.PencilBrush, /** @lends fab
       }
     },
 
-    /**
-     * Method that determines what object we are clicking on
-     * @param {Event} e mouse event
-     * @param {Boolean} skipGroup when true, group is skipped and only objects are traversed through
-     */
-    findTarget: function (e, skipGroup) {
-      if (this.skipTargetFind) return;
-
-      var target,
-          pointer = this.getPointer(e);
-
-			/*
-      if (this.controlsAboveOverlay &&
-          this.lastRenderedObjectWithControlsAboveOverlay &&
-          this.lastRenderedObjectWithControlsAboveOverlay.visible &&
-          this.containsPoint(e, this.lastRenderedObjectWithControlsAboveOverlay) &&
-          this.lastRenderedObjectWithControlsAboveOverlay._findTargetCorner(e, this._offset)) {
-        target = this.lastRenderedObjectWithControlsAboveOverlay;
-        return target;
-      }
-
-      // first check current group (if one exists)
-      var activeGroup = this.getActiveGroup();
-      if (activeGroup && !skipGroup && this.containsPoint(e, activeGroup)) {
-        target = activeGroup;
-        return target;
-      }
-			*/
-
-      // then check all of the objects on canvas
-      // Cache all targets where their bounding box contains point.
-      var possibleTargets = [];
-
-      for (var i = this._objects.length; i--; ) {
-
-        if (this._objects[i] &&
-            this._objects[i].visible &&
-						this._objects[i].id!=='svg2996' &&
-            //this._objects[i].selectable &&
-            this.containsPoint(e, this._objects[i])) {
-
-          if (this.perPixelTargetFind || this._objects[i].perPixelTargetFind) {
-            possibleTargets[possibleTargets.length] = this._objects[i];
-          }
-          else {
-            target = this._objects[i];
-            this.relatedTarget = target;
-            break;
-          }
-        }
-      }
-			console.log('target',target,possibleTargets.length,'possibleTargets');
-      for (var j = 0, len = possibleTargets.length; j < len; j++) {
-        pointer = this.getPointer(e);
-        var isTransparent = this.isTargetTransparent(possibleTargets[j], pointer.x, pointer.y);
-        if (!isTransparent) {
-          target = possibleTargets[j];
-          this.relatedTarget = target;
-          break;
-        }
-      }
-
-      return target;
-    },
 
     /**
      * Returns pointer coordinates relative to canvas.
@@ -12594,6 +12571,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
       extend = fabric.util.object.extend,
       toFixed = fabric.util.toFixed,
       capitalize = fabric.util.string.capitalize,
+      matmult = fabric.util.multiplyTransformMatrices,
       degreesToRadians = fabric.util.degreesToRadians,
       supportsLineDash = fabric.StaticCanvas.supports('setLineDash');
 
@@ -13029,6 +13007,16 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
      * @param {Boolean} fromLeft When true, context is transformed to object's top/left corner. This is used when rendering text on Node
      */
     transform: function(ctx, fromLeft) {
+      var m = this.transformMatrix;
+      this._currentTransform = ctx._currentTransform;
+      if (m) {
+				//console.log(this.id, 'matrix', m)
+        ctx.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
+      }else{
+				//console.log(this.id, 'no matrix');
+        m = [1,0,0,1,0,0];
+			}
+
 			if(this.opacity!==1){
 				this.savedAlpha = ctx.globalAlpha;
 				ctx.globalAlpha = ctx.globalAlpha*this.opacity;
@@ -13039,15 +13027,40 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
 			//console.log(this.id,'translating by',center.x,center.y,'which is',(fromLeft ? 'topleft' : 'center'));
       //ctx.translate(center.x, center.y);
 			//console.log(this.id,'translating by',this.left,this.top);
-			ctx.translate(this.left,this.top);
-      ctx.rotate(degreesToRadians(this.angle));
-      ctx.scale(
-        this.scaleX * (this.flipX ? -1 : 1),
-        this.scaleY * (this.flipY ? -1 : 1)
-      );
+      var em = this._extraTransformations();
+      if(em){
+        m = matmult(m,em);
+      }
+      if(this.left || this.top){
+        ctx.translate(this.left,this.top);
+        m = matmult(m,[1,0,0,1,this.left,this.top]);
+      }
+      if(this.angle){
+        var rad = degreesToRadians(this.angle),sin = Math.sin(rad),cos = Math.cos(rad);
+        ctx.rotate(rad);
+        m = matmult(m,[cos,-sin,sin,cos,0,0]);
+      }
+      var sx = this.scaleX * (this.flipX ? -1 : 1), sy = this.scaleY * (this.flipY ? -1 : 1);
+      if((sx!==1)||(sx!==1)){
+        ctx.scale( sx, sy );
+        m = matmult(m,[sx,0,0,sy,0,0]);
+      }
+      ctx._currentTransform = matmult(ctx._currentTransform,m);
+      var xl = 0, xr = xl+this.width, yt = 0, yb = yt+this.height;
+      var tl = fabric.util.pointInSpace(ctx._currentTransform,new fabric.Point(xl,yt));
+      var br = fabric.util.pointInSpace(ctx._currentTransform,new fabric.Point(xr,yb));
+      var mx = (tl.x+br.x)/2, my = (tl.y+br.y)/2;
+      this.oCoords = {
+        tl:{x:tl.x,y:tl.y},tr:{x:br.x,y:tl.y},br:{x:br.x,y:br.y},bl:{x:tl.x,y:br.y},
+        ml:{x:tl.x,y:my},mt:{x:mx,y:tl.y},mr:{x:br.x,y:my},mb:{x:mx,y:br.y}
+      };
+    },
+
+    _extraTransformations : function(ctx){
     },
 
 		untransform: function(ctx){
+      ctx._currentTransform = this._currentTransform;
 			if(typeof this.savedAlpha !== 'undefined'){
 				ctx.globalAlpha = this.savedAlpha;
 			}
@@ -13319,21 +13332,13 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
      */
     render: function(ctx, noTransform) {
       // do not render if width/height are zeros or object is not visible
-      if (this.width === 0 || this.height === 0 || !this.visible) return;
+      //if (this.width === 0 || this.height === 0 || !this.visible) return;
+      if (!this.visible) return;
+      if (this.opacity===0) return;
 
       ctx.save();
 
-      var m = this.transformMatrix;
-      if (m) {
-				//console.log(this.id, 'matrix', m)
-        ctx.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
-      }else{
-				//console.log(this.id, 'no matrix');
-			}
-
-      if (!noTransform) {
-        this.transform(ctx);
-      }
+      this.transform(ctx);
 
       if (this.stroke) {
         ctx.lineWidth = this.strokeWidth;
@@ -13360,23 +13365,10 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
       this.clipTo && ctx.restore();
       this._removeShadow(ctx);
 
-      var xl = 0, xr = xl+this.width, yt = 0, yb = yt+this.height;
-      var tl = fabric.pointInSpace(new Point(xl,yl),canvas._currentTransform);
       if (this.active && !noTransform) {
         this.drawBorders(ctx);
         this.drawControls(ctx);
       }
-			if(this.id==='paytable'){
-       ctx.fillStyle = 'black';
-       ctx.fillRect(this.oCoords.mb.x, this.oCoords.mb.y, 3, 3);
-       ctx.fillRect(this.oCoords.bl.x, this.oCoords.bl.y, 3, 3);
-       ctx.fillRect(this.oCoords.br.x, this.oCoords.br.y, 3, 3);
-       ctx.fillRect(this.oCoords.tl.x, this.oCoords.tl.y, 3, 3);
-       ctx.fillRect(this.oCoords.tr.x, this.oCoords.tr.y, 3, 3);
-       ctx.fillRect(this.oCoords.ml.x, this.oCoords.ml.y, 3, 3);
-       ctx.fillRect(this.oCoords.mr.x, this.oCoords.mr.y, 3, 3);
-       ctx.fillRect(this.oCoords.mt.x, this.oCoords.mt.y, 3, 3);
-			}
 			ctx.beginPath();
 			ctx.arc(0, 0, 2, 0, 2 * Math.PI, false);
 			ctx.fillStyle = 'green';
@@ -14094,12 +14086,26 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
      * @return {Boolean} true if point is inside the object
      */
     containsPoint: function(point) {
+      if(!this.oCoords){return false;}
       var lines = this._getImageLines(this.oCoords),
           xPoints = this._findCrossPoints(point, lines);
 
       // if xPoints is odd then point is inside the object
-			console.log(point.x,'.',point.y,'in',this.oCoords.tl.x,this.oCoords.tl.y,this.oCoords.br.x-this.oCoords.tl.x,this.oCoords.br.y-this.oCoords.tl.y);
-      return (xPoints !== 0 && xPoints % 2 === 1);
+      var ret = (xPoints !== 0 && xPoints % 2 === 1);
+      if(!fabric.isTouchSupported){
+        if(ret){
+          if(!this.foundContaining){
+            this.foundContaining=true;
+            this.fire('object:over',{e:point});
+          }
+        }else{
+          if(this.foundContaining){
+            delete this.foundContaining;
+            this.fire('object:out',{e:point});
+          }
+        }
+      }
+      return ret;
     },
 
     /**
@@ -14304,6 +14310,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
      * @chainable
      */
     setCoords: function() {
+      return;
 
       var strokeWidth = this.strokeWidth > 1 ? this.strokeWidth : 0,
           padding = this.padding,
@@ -17550,7 +17557,6 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
       object.group = this;
       // since _restoreObjectsState set objects inactive
       //this.forEachObject(function(o){ o.set('active', true); o.group = this; }, this);
-      this._calcBounds();
 
       this.setCoords(true);
       this.saveCoords();
@@ -17569,7 +17575,6 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
       this.forEachObject(function(o){ o.set('active', true); o.group = this; }, this);
 
       this.remove(object);
-      this._calcBounds();
       return this;
     },
 
@@ -17581,6 +17586,7 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
 			if(object.id){
 				this[object.id] = object;
 			}
+      this._calcBounds();
     },
 
     /**
@@ -17589,6 +17595,7 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
     _onObjectRemoved: function(object) {
       delete object.group;
       object.set('active', false);
+      this._calcBounds();
     },
 
     /**
@@ -17644,6 +17651,12 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
       }
       ctx.restore();
       this.setCoords();
+    },
+
+    _extraTransformations: function(){
+      if(this.anchorX || this.anchorY){
+        return [1,0,0,1,-this.anchorX,-this.anchorY];
+      }
     },
 
 		_render: function(ctx, noTransform){
@@ -17770,8 +17783,8 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
       width = (maxX - minX) || 0;
       height = (maxY - minY) || 0;
 
-      //this.width = 800;//width;
-      //this.height = 800;//height;
+      this.width = width;
+      this.height = height;
 
       //this.left = (minX + width / 2) || 0;
       //this.top = (minY + height / 2) || 0;
@@ -19785,6 +19798,19 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass(/** @lends fabric.Imag
     toString: function() {
       return '#<fabric.Text (' + this.complexity() +
         '): { "text": "' + this.text + '", "fontFamily": "' + this.fontFamily + '" }>';
+    },
+
+    _extraTransformations: function(){
+      var ty = -this.height, tx = 0;
+      switch(this.textAlign){
+      case 'center':
+        tx = -this.width/2;
+        break;
+      case 'right':
+        tx = -this.width;
+        break;
+      }
+      return [1,0,0,1,tx,ty];
     },
 
     /**

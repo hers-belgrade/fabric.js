@@ -6,6 +6,7 @@
       extend = fabric.util.object.extend,
       toFixed = fabric.util.toFixed,
       capitalize = fabric.util.string.capitalize,
+      matmult = fabric.util.multiplyTransformMatrices,
       degreesToRadians = fabric.util.degreesToRadians,
       supportsLineDash = fabric.StaticCanvas.supports('setLineDash');
 
@@ -441,6 +442,16 @@
      * @param {Boolean} fromLeft When true, context is transformed to object's top/left corner. This is used when rendering text on Node
      */
     transform: function(ctx, fromLeft) {
+      var m = this.transformMatrix;
+      this._currentTransform = ctx._currentTransform;
+      if (m) {
+				//console.log(this.id, 'matrix', m)
+        ctx.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
+      }else{
+				//console.log(this.id, 'no matrix');
+        m = [1,0,0,1,0,0];
+			}
+
 			if(this.opacity!==1){
 				this.savedAlpha = ctx.globalAlpha;
 				ctx.globalAlpha = ctx.globalAlpha*this.opacity;
@@ -451,15 +462,40 @@
 			//console.log(this.id,'translating by',center.x,center.y,'which is',(fromLeft ? 'topleft' : 'center'));
       //ctx.translate(center.x, center.y);
 			//console.log(this.id,'translating by',this.left,this.top);
-			ctx.translate(this.left,this.top);
-      ctx.rotate(degreesToRadians(this.angle));
-      ctx.scale(
-        this.scaleX * (this.flipX ? -1 : 1),
-        this.scaleY * (this.flipY ? -1 : 1)
-      );
+      var em = this._extraTransformations();
+      if(em){
+        m = matmult(m,em);
+      }
+      if(this.left || this.top){
+        ctx.translate(this.left,this.top);
+        m = matmult(m,[1,0,0,1,this.left,this.top]);
+      }
+      if(this.angle){
+        var rad = degreesToRadians(this.angle),sin = Math.sin(rad),cos = Math.cos(rad);
+        ctx.rotate(rad);
+        m = matmult(m,[cos,-sin,sin,cos,0,0]);
+      }
+      var sx = this.scaleX * (this.flipX ? -1 : 1), sy = this.scaleY * (this.flipY ? -1 : 1);
+      if((sx!==1)||(sx!==1)){
+        ctx.scale( sx, sy );
+        m = matmult(m,[sx,0,0,sy,0,0]);
+      }
+      ctx._currentTransform = matmult(ctx._currentTransform,m);
+      var xl = 0, xr = xl+this.width, yt = 0, yb = yt+this.height;
+      var tl = fabric.util.pointInSpace(ctx._currentTransform,new fabric.Point(xl,yt));
+      var br = fabric.util.pointInSpace(ctx._currentTransform,new fabric.Point(xr,yb));
+      var mx = (tl.x+br.x)/2, my = (tl.y+br.y)/2;
+      this.oCoords = {
+        tl:{x:tl.x,y:tl.y},tr:{x:br.x,y:tl.y},br:{x:br.x,y:br.y},bl:{x:tl.x,y:br.y},
+        ml:{x:tl.x,y:my},mt:{x:mx,y:tl.y},mr:{x:br.x,y:my},mb:{x:mx,y:br.y}
+      };
+    },
+
+    _extraTransformations : function(ctx){
     },
 
 		untransform: function(ctx){
+      ctx._currentTransform = this._currentTransform;
 			if(typeof this.savedAlpha !== 'undefined'){
 				ctx.globalAlpha = this.savedAlpha;
 			}
@@ -731,21 +767,13 @@
      */
     render: function(ctx, noTransform) {
       // do not render if width/height are zeros or object is not visible
-      if (this.width === 0 || this.height === 0 || !this.visible) return;
+      //if (this.width === 0 || this.height === 0 || !this.visible) return;
+      if (!this.visible) return;
+      if (this.opacity===0) return;
 
       ctx.save();
 
-      var m = this.transformMatrix;
-      if (m) {
-				//console.log(this.id, 'matrix', m)
-        ctx.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
-      }else{
-				//console.log(this.id, 'no matrix');
-			}
-
-      if (!noTransform) {
-        this.transform(ctx);
-      }
+      this.transform(ctx);
 
       if (this.stroke) {
         ctx.lineWidth = this.strokeWidth;
@@ -772,24 +800,10 @@
       this.clipTo && ctx.restore();
       this._removeShadow(ctx);
 
-      var xl = 0, xr = xl+this.width, yt = 0, yb = yt+this.height;
-      var tl = fabric.pointInSpace(new Point(xl,yl),canvas._currentTransform);
-      var br = fabric.pointInSpace(new Point(xr,yb),canvas._currentTransform);
       if (this.active && !noTransform) {
         this.drawBorders(ctx);
         this.drawControls(ctx);
       }
-			if(this.id==='paytable'){
-       ctx.fillStyle = 'black';
-       ctx.fillRect(this.oCoords.mb.x, this.oCoords.mb.y, 3, 3);
-       ctx.fillRect(this.oCoords.bl.x, this.oCoords.bl.y, 3, 3);
-       ctx.fillRect(this.oCoords.br.x, this.oCoords.br.y, 3, 3);
-       ctx.fillRect(this.oCoords.tl.x, this.oCoords.tl.y, 3, 3);
-       ctx.fillRect(this.oCoords.tr.x, this.oCoords.tr.y, 3, 3);
-       ctx.fillRect(this.oCoords.ml.x, this.oCoords.ml.y, 3, 3);
-       ctx.fillRect(this.oCoords.mr.x, this.oCoords.mr.y, 3, 3);
-       ctx.fillRect(this.oCoords.mt.x, this.oCoords.mt.y, 3, 3);
-			}
 			ctx.beginPath();
 			ctx.arc(0, 0, 2, 0, 2 * Math.PI, false);
 			ctx.fillStyle = 'green';

@@ -97,7 +97,6 @@
       object.group = this;
       // since _restoreObjectsState set objects inactive
       //this.forEachObject(function(o){ o.set('active', true); o.group = this; }, this);
-      this._calcBounds();
 
       this.setCoords(true);
       this.saveCoords();
@@ -116,7 +115,6 @@
       this.forEachObject(function(o){ o.set('active', true); o.group = this; }, this);
 
       this.remove(object);
-      this._calcBounds();
       return this;
     },
 
@@ -128,6 +126,7 @@
 			if(object.id){
 				this[object.id] = object;
 			}
+      this._calcBounds();
     },
 
     /**
@@ -136,6 +135,7 @@
     _onObjectRemoved: function(object) {
       delete object.group;
       object.set('active', false);
+      this._calcBounds();
     },
 
     /**
@@ -191,6 +191,12 @@
       }
       ctx.restore();
       this.setCoords();
+    },
+
+    _extraTransformations: function(){
+      if(this.anchorX || this.anchorY){
+        return [1,0,0,1,-this.anchorX,-this.anchorY];
+      }
     },
 
 		_render: function(ctx, noTransform){
@@ -317,8 +323,8 @@
       width = (maxX - minX) || 0;
       height = (maxY - minY) || 0;
 
-      //this.width = 800;//width;
-      //this.height = 800;//height;
+      this.width = width;
+      this.height = height;
 
       //this.left = (minX + width / 2) || 0;
       //this.top = (minY + height / 2) || 0;

@@ -197,6 +197,19 @@
         '): { "text": "' + this.text + '", "fontFamily": "' + this.fontFamily + '" }>';
     },
 
+    _extraTransformations: function(){
+      var ty = -this.height, tx = 0;
+      switch(this.textAlign){
+      case 'center':
+        tx = -this.width/2;
+        break;
+      case 'right':
+        tx = -this.width;
+        break;
+      }
+      return [1,0,0,1,tx,ty];
+    },
+
     /**
      * @private
      * @param {CanvasRenderingContext2D} ctx Context to render on

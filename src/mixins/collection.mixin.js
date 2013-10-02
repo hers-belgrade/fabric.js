@@ -151,7 +151,7 @@ fabric.Collection = {
 
 			if (this._objects[i] &&
 					this._objects[i].visible &&
-					this.containsPoint(e, this._objects[i])) {
+          this._objects[i].containsPoint(e)) {
 
 				if (this.perPixelTargetFind || this._objects[i].perPixelTargetFind) {
 					possibleTargets[possibleTargets.length] = this._objects[i];
@@ -159,12 +159,17 @@ fabric.Collection = {
 				else {
 					target = this._objects[i];
 					this.relatedTarget = target;
-					target.findTarget && (target = target.findTarget(e));
+					if(target.findTarget){
+            var targetcandidate = target.findTarget(e);
+            if(targetcandidate){
+              target = targetcandidate;
+            }
+          }
 					break;
 				}
 			}
 		}
-		console.log('target',target,possibleTargets.length,'possibleTargets');
+		//console.log('target',target,possibleTargets.length,'possibleTargets');
 		for (var j = 0, len = possibleTargets.length; j < len; j++) {
 			pointer = this.getPointer(e);
 			var isTransparent = this.isTargetTransparent(possibleTargets[j], pointer.x, pointer.y);

@@ -38,7 +38,6 @@
 						var target = originalFn.apply(this, arguments);
 						if (target) {
 							if (this._hoveredTarget !== target) {
-								console.log('AAAAAAAAAAAAA',target);
 								fire('object:over', { target: target });
 								target.fire('object:over', {e : arguments[0] });
 								if (this._hoveredTarget) {
@@ -233,19 +232,8 @@
       }
     },
 
-    /**
-     * Checks if point is contained within an area of given object
-     * @param {Event} e Event object
-     * @param {fabric.Object} target Object to test against
-     * @return {Boolean} true if point is contained within an area of given object
-     */
-    containsPoint: function (e, target) {
-      var pointer = this.getPointer(e),
-          xy = this._normalizePointer(target, pointer);
-
-      // http://www.geog.ubc.ca/courses/klink/gis.notes/ncgia/u32.html
-      // http://idav.ucdavis.edu/~okreylos/TAship/Spring2000/PointInPolygon.html
-      return (target.containsPoint(xy) || target._findTargetCorner(e, this._offset));
+    findTarget : function(e){
+      return this.callSuper('findTarget',this.getPointer(e));
     },
 
     /**
@@ -716,6 +704,7 @@
      * @private
      */
     _findSelectedObjects: function (e) {
+      return;
       var group = [ ],
           x1 = this._groupSelector.ex,
           y1 = this._groupSelector.ey,

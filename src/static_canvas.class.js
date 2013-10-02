@@ -546,6 +546,7 @@
       }
 
       var activeGroup = this.getActiveGroup();
+      canvasToDrawOn._currentTransform = [1,0,0,1,0,0];
       for (var i = 0, length = this._objects.length; i < length; ++i) {
         if (!activeGroup ||
             (activeGroup && this._objects[i] && !activeGroup.contains(this._objects[i]))) {
@@ -553,6 +554,7 @@
         }
       }
 
+      /*
       // delegate rendering to group selection (if one exists)
       if (activeGroup) {
         //Store objects in group preserving order, then replace
@@ -565,6 +567,7 @@
         activeGroup._set('objects', sortedObjects);
         this._draw(canvasToDrawOn, activeGroup);
       }
+      */
 
       if (this.clipTo) {
         canvasToDrawOn.restore();
