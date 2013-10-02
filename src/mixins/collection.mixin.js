@@ -132,5 +132,50 @@ fabric.Collection = {
     return this.forEachObject(function(obj) {
       obj.toGrayscale();
     });
-  }
+  },
+
+	/**
+	 * Method that determines what object we are clicking on
+	 * @param {Event} e mouse event
+	 * @param {Boolean} skipGroup when true, group is skipped and only objects are traversed through
+	 */
+	findTarget: function (e) {
+		if (this.skipTargetFind) return;
+
+		var target;
+		// then check all of the objects
+		// Cache all targets where their bounding box contains point.
+		var possibleTargets = [];
+
+		for (var i = this._objects.length; i--; ) {
+
+			if (this._objects[i] &&
+					this._objects[i].visible &&
+					this.containsPoint(e, this._objects[i])) {
+
+				if (this.perPixelTargetFind || this._objects[i].perPixelTargetFind) {
+					possibleTargets[possibleTargets.length] = this._objects[i];
+				}
+				else {
+					target = this._objects[i];
+					this.relatedTarget = target;
+					target.findTarget && (target = target.findTarget(e));
+					break;
+				}
+			}
+		}
+		console.log('target',target,possibleTargets.length,'possibleTargets');
+		for (var j = 0, len = possibleTargets.length; j < len; j++) {
+			pointer = this.getPointer(e);
+			var isTransparent = this.isTargetTransparent(possibleTargets[j], pointer.x, pointer.y);
+			if (!isTransparent) {
+				target = possibleTargets[j];
+				this.relatedTarget = target;
+				break;
+			}
+		}
+
+		return target;
+	},
+
 };

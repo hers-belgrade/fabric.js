@@ -61,42 +61,13 @@
       this.callSuper('initialize');
 
       this._calcBounds();
-      this._updateObjectsCoords();
 
       if (options) {
         extend(this, options);
       }
-      this._setOpacityIfSame();
 
       this.setCoords(true);
       this.saveCoords();
-    },
-
-    /**
-     * @private
-     */
-    _updateObjectsCoords: function() {
-			return;
-      var groupDeltaX = this.left,
-          groupDeltaY = this.top;
-
-      this.forEachObject(function(object) {
-
-        var objectLeft = object.get('left'),
-            objectTop = object.get('top');
-
-        object.set('originalLeft', objectLeft);
-        object.set('originalTop', objectTop);
-
-        //object.set('left', objectLeft - groupDeltaX);
-        //object.set('top', objectTop - groupDeltaY);
-
-        object.setCoords();
-
-        // do not display corners of objects enclosed in a group
-        object.__origHasControls = object.hasControls;
-        object.hasControls = false;
-      }, this);
     },
 
     /**
@@ -127,8 +98,6 @@
       // since _restoreObjectsState set objects inactive
       //this.forEachObject(function(o){ o.set('active', true); o.group = this; }, this);
       this._calcBounds();
-      this._updateObjectsCoords();
-      this._setOpacityIfSame();
 
       this.setCoords(true);
       this.saveCoords();
@@ -148,7 +117,6 @@
 
       this.remove(object);
       this._calcBounds();
-      this._updateObjectsCoords();
       return this;
     },
 
@@ -157,6 +125,9 @@
      */
     _onObjectAdded: function(object) {
       object.group = this;
+			if(object.id){
+				this[object.id] = object;
+			}
     },
 
     /**
@@ -165,39 +136,6 @@
     _onObjectRemoved: function(object) {
       delete object.group;
       object.set('active', false);
-    },
-
-    /**
-     * Properties that are delegated to group objects when reading/writing
-     * @param {Object} delegatedProperties
-     */
-    delegatedProperties: {
-      fill:             true,
-      opacity:          true,
-      fontFamily:       true,
-      fontWeight:       true,
-      fontSize:         true,
-      fontStyle:        true,
-      lineHeight:       true,
-      textDecoration:   true,
-      textAlign:        true,
-      backgroundColor:  true
-    },
-
-    /**
-     * @private
-     */
-    _set: function(key, value) {
-      if (key in this.delegatedProperties) {
-        var i = this._objects.length;
-        this[key] = value;
-        while (i--) {
-          this._objects[i].set(key, value);
-        }
-      }
-      else {
-        this[key] = value;
-      }
     },
 
     /**
@@ -355,22 +293,6 @@
     /**
      * @private
      */
-    _setOpacityIfSame: function() {
-      var objects = this.getObjects(),
-          firstValue = objects[0] ? objects[0].get('opacity') : 1;
-
-      var isSameOpacity = objects.every(function(o) {
-        return o.get('opacity') === firstValue;
-      });
-
-      if (isSameOpacity) {
-        this.opacity = firstValue;
-      }
-    },
-
-    /**
-     * @private
-     */
     _calcBounds: function() {
       var aX = [],
           aY = [],
@@ -420,32 +342,6 @@
     },
     /* _TO_SVG_END_ */
 
-    /**
-     * Returns requested property
-     * @param {String} prop Property to get
-     * @return {Any}
-     */
-    get: function(prop) {
-      if (prop in _lockProperties) {
-        if (this[prop]) {
-          return this[prop];
-        }
-        else {
-          for (var i = 0, len = this._objects.length; i < len; i++) {
-            if (this._objects[i][prop]) {
-              return true;
-            }
-          }
-          return false;
-        }
-      }
-      else {
-        if (prop in this.delegatedProperties) {
-          return this._objects[0] && this._objects[0].get(prop);
-        }
-        return this[prop];
-      }
-    }
   });
 
   /**

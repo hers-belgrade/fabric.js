@@ -31,6 +31,32 @@
       this._createCacheCanvas();
 
       fabric.Canvas.activeInstance = this;
+			if(!this.allowTouchScrolling){
+				this.findTarget = (function(_originalFn,_fire) {
+					var originalFn=_originalFn,fire = _fire;
+					return function() {
+						var target = originalFn.apply(this, arguments);
+						if (target) {
+							if (this._hoveredTarget !== target) {
+								console.log('AAAAAAAAAAAAA',target);
+								fire('object:over', { target: target });
+								target.fire('object:over', {e : arguments[0] });
+								if (this._hoveredTarget) {
+									fire('object:out', { target: this._hoveredTarget });
+									this._hoveredTarget.fire('object:out', { e : arguments[0] });
+								}
+								this._hoveredTarget = target;
+							}
+						}
+						else if (this._hoveredTarget) {
+							fire('object:out', { target: this._hoveredTarget });
+							this._hoveredTarget.fire('object:out',{ e : arguments[0] });
+							this._hoveredTarget = null;
+						}
+						return target;
+					};
+				})(this.findTarget,this.fire);
+			}
     },
 
     /**
@@ -733,66 +759,6 @@
       }
     },
 
-    /**
-     * Method that determines what object we are clicking on
-     * @param {Event} e mouse event
-     * @param {Boolean} skipGroup when true, group is skipped and only objects are traversed through
-     */
-    findTarget: function (e, skipGroup) {
-      if (this.skipTargetFind) return;
-
-      var target,
-          pointer = this.getPointer(e);
-
-      if (this.controlsAboveOverlay &&
-          this.lastRenderedObjectWithControlsAboveOverlay &&
-          this.lastRenderedObjectWithControlsAboveOverlay.visible &&
-          this.containsPoint(e, this.lastRenderedObjectWithControlsAboveOverlay) &&
-          this.lastRenderedObjectWithControlsAboveOverlay._findTargetCorner(e, this._offset)) {
-        target = this.lastRenderedObjectWithControlsAboveOverlay;
-        return target;
-      }
-
-      // first check current group (if one exists)
-      var activeGroup = this.getActiveGroup();
-      if (activeGroup && !skipGroup && this.containsPoint(e, activeGroup)) {
-        target = activeGroup;
-        return target;
-      }
-
-      // then check all of the objects on canvas
-      // Cache all targets where their bounding box contains point.
-      var possibleTargets = [];
-
-      for (var i = this._objects.length; i--; ) {
-
-        if (this._objects[i] &&
-            this._objects[i].visible &&
-            this._objects[i].selectable &&
-            this.containsPoint(e, this._objects[i])) {
-
-          if (this.perPixelTargetFind || this._objects[i].perPixelTargetFind) {
-            possibleTargets[possibleTargets.length] = this._objects[i];
-          }
-          else {
-            target = this._objects[i];
-            this.relatedTarget = target;
-            break;
-          }
-        }
-      }
-      for (var j = 0, len = possibleTargets.length; j < len; j++) {
-        pointer = this.getPointer(e);
-        var isTransparent = this.isTargetTransparent(possibleTargets[j], pointer.x, pointer.y);
-        if (!isTransparent) {
-          target = possibleTargets[j];
-          this.relatedTarget = target;
-          break;
-        }
-      }
-
-      return target;
-    },
 
     /**
      * Returns pointer coordinates relative to canvas.

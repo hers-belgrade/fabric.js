@@ -441,7 +441,11 @@
      * @param {Boolean} fromLeft When true, context is transformed to object's top/left corner. This is used when rendering text on Node
      */
     transform: function(ctx, fromLeft) {
-      ctx.globalAlpha = this.opacity;
+			if(this.opacity!==1){
+				this.savedAlpha = ctx.globalAlpha;
+				ctx.globalAlpha = ctx.globalAlpha*this.opacity;
+				//ctx.globalAlpha = 1 - ((1-ctx.globalAlpha)+(1-this.opacity));
+			}
 
       var center = fromLeft ? this._getLeftTopCoords() : this.getCenterPoint();
 			//console.log(this.id,'translating by',center.x,center.y,'which is',(fromLeft ? 'topleft' : 'center'));
@@ -454,6 +458,14 @@
         this.scaleY * (this.flipY ? -1 : 1)
       );
     },
+
+		untransform: function(ctx){
+			if(typeof this.savedAlpha !== 'undefined'){
+				ctx.globalAlpha = this.savedAlpha;
+			}
+			delete this.savedAlpha;
+      ctx.restore();
+		},
 
     /**
      * Returns an object representation of an instance
@@ -767,11 +779,22 @@
         this.drawBorders(ctx);
         this.drawControls(ctx);
       }
+			if(this.id==='paytable'){
+       ctx.fillStyle = 'black';
+       ctx.fillRect(this.oCoords.mb.x, this.oCoords.mb.y, 3, 3);
+       ctx.fillRect(this.oCoords.bl.x, this.oCoords.bl.y, 3, 3);
+       ctx.fillRect(this.oCoords.br.x, this.oCoords.br.y, 3, 3);
+       ctx.fillRect(this.oCoords.tl.x, this.oCoords.tl.y, 3, 3);
+       ctx.fillRect(this.oCoords.tr.x, this.oCoords.tr.y, 3, 3);
+       ctx.fillRect(this.oCoords.ml.x, this.oCoords.ml.y, 3, 3);
+       ctx.fillRect(this.oCoords.mr.x, this.oCoords.mr.y, 3, 3);
+       ctx.fillRect(this.oCoords.mt.x, this.oCoords.mt.y, 3, 3);
+			}
 			ctx.beginPath();
 			ctx.arc(0, 0, 2, 0, 2 * Math.PI, false);
 			ctx.fillStyle = 'green';
 			ctx.fill();
-      ctx.restore();
+			this.untransform(ctx);
     },
 
     /**

@@ -690,7 +690,7 @@
             cb(g);
             return;
           }
-          var next = function(){worker(i+1);};
+          var next = function(){setTimeout(function(){worker(i+1);},1)};
           if(gc.tagName){
             if(gc.tagName!=='g'){
              if(/^(path|circle|polygon|polyline|ellipse|rect|line|image|text)$/.test(gc.tagName)){
