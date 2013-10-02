@@ -13049,11 +13049,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
       var xl = 0, xr = xl+this.width, yt = 0, yb = yt+this.height;
       var tl = fabric.util.pointInSpace(ctx._currentTransform,new fabric.Point(xl,yt));
       var br = fabric.util.pointInSpace(ctx._currentTransform,new fabric.Point(xr,yb));
-      var mx = (tl.x+br.x)/2, my = (tl.y+br.y)/2;
-      this.oCoords = {
-        tl:{x:tl.x,y:tl.y},tr:{x:br.x,y:tl.y},br:{x:br.x,y:br.y},bl:{x:tl.x,y:br.y},
-        ml:{x:tl.x,y:my},mt:{x:mx,y:tl.y},mr:{x:br.x,y:my},mb:{x:mx,y:br.y}
-      };
+      this.setCoords(tl,br);
     },
 
     _extraTransformations : function(ctx){
@@ -14309,7 +14305,15 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
      * @return {fabric.Object} thisArg
      * @chainable
      */
-    setCoords: function() {
+    setCoords: function(tl,br) {
+      if(!(tl&&br)){
+        return;
+      }
+      var mx = (tl.x+br.x)/2, my = (tl.y+br.y)/2;
+      this.oCoords = {
+        tl:{x:tl.x,y:tl.y},tr:{x:br.x,y:tl.y},br:{x:br.x,y:br.y},bl:{x:tl.x,y:br.y},
+        ml:{x:tl.x,y:my},mt:{x:mx,y:tl.y},mr:{x:br.x,y:my},mb:{x:mx,y:br.y}
+      };
       return;
 
       var strokeWidth = this.strokeWidth > 1 ? this.strokeWidth : 0,
@@ -16610,6 +16614,7 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
      * @param {CanvasRenderingContext2D} ctx context to render path on
      */
     _render: function(ctx) {
+      ctx.beginPath();
       var current, // current instruction
           previous = null,
           x = 0, // current x
@@ -16885,6 +16890,8 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
         }
         previous = current;
       }
+      this._renderFill(ctx);
+      this._renderStroke(ctx);
     },
 
     /**
@@ -16892,7 +16899,7 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
      * @param {CanvasRenderingContext2D} ctx context to render path on
      * @param {Boolean} [noTransform] When true, context is not transformed
      */
-    render: function(ctx, noTransform) {
+    render1: function(ctx, noTransform) {
       // do not render if object is not visible
       if (!this.visible) return;
 
@@ -17666,6 +17673,7 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
 				object.render(ctx);
 				//console.log(object.id,object.oCoords);
 			}
+      this._calcBounds();
 		},
 
     /**
@@ -17760,6 +17768,7 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
      * @private
      */
     _calcBounds: function() {
+      return;
       var aX = [],
           aY = [],
           minX, minY, maxX, maxY, o, width, height,
@@ -17768,7 +17777,6 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
 
       for (; i < len; ++i) {
         o = this._objects[i];
-        o.setCoords();
         for (var prop in o.oCoords) {
           aX.push(o.oCoords[prop].x);
           aY.push(o.oCoords[prop].y);
@@ -17783,8 +17791,11 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
       width = (maxX - minX) || 0;
       height = (maxY - minY) || 0;
 
-      this.width = width;
-      this.height = height;
+      this.width = this.width || width;
+      this.height = this.height || height;
+      if(typeof minX==='number' && typeof minY==='number' && typeof maxX==='number' && typeof maxY==='number'){
+        this.setCoords(new fabric.Point(minX,minY), new fabric.Point(maxY,maxY));
+      }
 
       //this.left = (minX + width / 2) || 0;
       //this.top = (minY + height / 2) || 0;

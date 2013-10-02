@@ -7176,41 +7176,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
             var xl = 0, xr = xl + this.width, yt = 0, yb = yt + this.height;
             var tl = fabric.util.pointInSpace(ctx._currentTransform, new fabric.Point(xl, yt));
             var br = fabric.util.pointInSpace(ctx._currentTransform, new fabric.Point(xr, yb));
-            var mx = (tl.x + br.x) / 2, my = (tl.y + br.y) / 2;
-            this.oCoords = {
-                tl: {
-                    x: tl.x,
-                    y: tl.y
-                },
-                tr: {
-                    x: br.x,
-                    y: tl.y
-                },
-                br: {
-                    x: br.x,
-                    y: br.y
-                },
-                bl: {
-                    x: tl.x,
-                    y: br.y
-                },
-                ml: {
-                    x: tl.x,
-                    y: my
-                },
-                mt: {
-                    x: mx,
-                    y: tl.y
-                },
-                mr: {
-                    x: br.x,
-                    y: my
-                },
-                mb: {
-                    x: mx,
-                    y: br.y
-                }
-            };
+            this.setCoords(tl, br);
         },
         _extraTransformations: function(ctx) {},
         untransform: function(ctx) {
@@ -7853,7 +7819,45 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
             var boundingRectFactor = this.getBoundingRectHeight() / this.getHeight();
             return this.scale(value / this.height / boundingRectFactor);
         },
-        setCoords: function() {
+        setCoords: function(tl, br) {
+            if (!(tl && br)) {
+                return;
+            }
+            var mx = (tl.x + br.x) / 2, my = (tl.y + br.y) / 2;
+            this.oCoords = {
+                tl: {
+                    x: tl.x,
+                    y: tl.y
+                },
+                tr: {
+                    x: br.x,
+                    y: tl.y
+                },
+                br: {
+                    x: br.x,
+                    y: br.y
+                },
+                bl: {
+                    x: tl.x,
+                    y: br.y
+                },
+                ml: {
+                    x: tl.x,
+                    y: my
+                },
+                mt: {
+                    x: mx,
+                    y: tl.y
+                },
+                mr: {
+                    x: br.x,
+                    y: my
+                },
+                mb: {
+                    x: mx,
+                    y: br.y
+                }
+            };
             return;
             var strokeWidth = this.strokeWidth > 1 ? this.strokeWidth : 0, padding = this.padding, theta = degreesToRadians(this.angle);
             this.currentWidth = (this.width + strokeWidth) * this.scaleX + padding * 2;
@@ -8978,6 +8982,7 @@ fabric.util.object.extend(fabric.Object.prototype, {
             };
         },
         _render: function(ctx) {
+            ctx.beginPath();
             var current, previous = null, x = 0, y = 0, controlX = 0, controlY = 0, tempX, tempY, tempControlX, tempControlY, l = -(this.width / 2 + this.pathOffset.x), t = -(this.height / 2 + this.pathOffset.y);
             for (var i = 0, len = this.path.length; i < len; ++i) {
                 current = this.path[i];
@@ -9139,8 +9144,10 @@ fabric.util.object.extend(fabric.Object.prototype, {
                 }
                 previous = current;
             }
+            this._renderFill(ctx);
+            this._renderStroke(ctx);
         },
-        render: function(ctx, noTransform) {
+        render1: function(ctx, noTransform) {
             if (!this.visible) return;
             ctx.save();
             var m = this.transformMatrix;
@@ -9528,6 +9535,7 @@ fabric.util.object.extend(fabric.Object.prototype, {
                 var object = this._objects[i];
                 object.render(ctx);
             }
+            this._calcBounds();
         },
         _restoreObjectsState: function() {
             return;
@@ -9569,10 +9577,10 @@ fabric.util.object.extend(fabric.Object.prototype, {
             return this;
         },
         _calcBounds: function() {
+            return;
             var aX = [], aY = [], minX, minY, maxX, maxY, o, width, height, i = 0, len = this._objects.length;
             for (;i < len; ++i) {
                 o = this._objects[i];
-                o.setCoords();
                 for (var prop in o.oCoords) {
                     aX.push(o.oCoords[prop].x);
                     aY.push(o.oCoords[prop].y);
@@ -9584,8 +9592,11 @@ fabric.util.object.extend(fabric.Object.prototype, {
             maxY = max(aY);
             width = maxX - minX || 0;
             height = maxY - minY || 0;
-            this.width = width;
-            this.height = height;
+            this.width = this.width || width;
+            this.height = this.height || height;
+            if (typeof minX === "number" && typeof minY === "number" && typeof maxX === "number" && typeof maxY === "number") {
+                this.setCoords(new fabric.Point(minX, minY), new fabric.Point(maxY, maxY));
+            }
         },
         toSVG: function() {
             var objectsMarkup = [];

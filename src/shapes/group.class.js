@@ -206,6 +206,7 @@
 				object.render(ctx);
 				//console.log(object.id,object.oCoords);
 			}
+      this._calcBounds();
 		},
 
     /**
@@ -300,6 +301,7 @@
      * @private
      */
     _calcBounds: function() {
+      return;
       var aX = [],
           aY = [],
           minX, minY, maxX, maxY, o, width, height,
@@ -308,7 +310,6 @@
 
       for (; i < len; ++i) {
         o = this._objects[i];
-        o.setCoords();
         for (var prop in o.oCoords) {
           aX.push(o.oCoords[prop].x);
           aY.push(o.oCoords[prop].y);
@@ -323,8 +324,11 @@
       width = (maxX - minX) || 0;
       height = (maxY - minY) || 0;
 
-      this.width = width;
-      this.height = height;
+      this.width = this.width || width;
+      this.height = this.height || height;
+      if(typeof minX==='number' && typeof minY==='number' && typeof maxX==='number' && typeof maxY==='number'){
+        this.setCoords(new fabric.Point(minX,minY), new fabric.Point(maxY,maxY));
+      }
 
       //this.left = (minX + width / 2) || 0;
       //this.top = (minY + height / 2) || 0;

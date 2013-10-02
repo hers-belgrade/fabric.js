@@ -142,6 +142,7 @@
      * @param {CanvasRenderingContext2D} ctx context to render path on
      */
     _render: function(ctx) {
+      ctx.beginPath();
       var current, // current instruction
           previous = null,
           x = 0, // current x
@@ -417,6 +418,8 @@
         }
         previous = current;
       }
+      this._renderFill(ctx);
+      this._renderStroke(ctx);
     },
 
     /**
@@ -424,7 +427,7 @@
      * @param {CanvasRenderingContext2D} ctx context to render path on
      * @param {Boolean} [noTransform] When true, context is not transformed
      */
-    render: function(ctx, noTransform) {
+    render1: function(ctx, noTransform) {
       // do not render if object is not visible
       if (!this.visible) return;
 
