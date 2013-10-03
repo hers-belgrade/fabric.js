@@ -148,7 +148,7 @@ fabric.Collection = {
 		var possibleTargets = [];
 
 		for (var i = this._objects.length; i--; ) {
-
+      var object = this._objects[i];
 			if (this._objects[i] &&
 					this._objects[i].visible &&
           this._objects[i].containsPoint(e)) {

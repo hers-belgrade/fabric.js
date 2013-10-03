@@ -31,31 +31,6 @@
       this._createCacheCanvas();
 
       fabric.Canvas.activeInstance = this;
-			if(!this.allowTouchScrolling){
-				this.findTarget = (function(_originalFn,_fire) {
-					var originalFn=_originalFn,fire = _fire;
-					return function() {
-						var target = originalFn.apply(this, arguments);
-						if (target) {
-							if (this._hoveredTarget !== target) {
-								fire('object:over', { target: target });
-								target.fire('object:over', {e : arguments[0] });
-								if (this._hoveredTarget) {
-									fire('object:out', { target: this._hoveredTarget });
-									this._hoveredTarget.fire('object:out', { e : arguments[0] });
-								}
-								this._hoveredTarget = target;
-							}
-						}
-						else if (this._hoveredTarget) {
-							fire('object:out', { target: this._hoveredTarget });
-							this._hoveredTarget.fire('object:out',{ e : arguments[0] });
-							this._hoveredTarget = null;
-						}
-						return target;
-					};
-				})(this.findTarget,this.fire);
-			}
     },
 
     /**
