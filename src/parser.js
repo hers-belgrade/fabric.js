@@ -18,7 +18,7 @@
 		"id",
     "transform",
     "fill", "fill-opacity", "fill-rule",
-    "opacity",
+    "opacity","display",
     "stroke", "stroke-dasharray", "stroke-linecap", "stroke-linejoin", "stroke-miterlimit", "stroke-opacity", "stroke-width"
   ];
 
