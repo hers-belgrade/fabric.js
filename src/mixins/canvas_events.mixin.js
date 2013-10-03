@@ -24,18 +24,34 @@
   removeListener = fabric.util.removeListener,
   getPointer = fabric.util.getPointer;
 
+  function canvasPositionEventListener(canvas,eventname,eventalias) {
+    var cnvas=canvas, 
+    cnvasel = cnvas.upperCanvasEl, 
+    evntname = eventname, 
+    evntalias = eventalias;
+    var evnthandler = function(e){
+      var p = getPointer(e,cnvasel);
+      p.x = p.x - cnvas._offset.left;
+      p.y = p.y - cnvas._offset.top;
+      cnvas.distributePositionEvent(p,evntalias);
+    };
+    addListener(cnvasel, evntname, evnthandler);
+    cnvas._positionEventDisposers[evntname] = function(){
+      removeListener(cnvasel,eventname,evnthandler);
+      delete cnvas._positionEventDisposers[evntname];
+    };
+  };
+
   fabric.util.object.extend(fabric.Canvas.prototype, /** @lends fabric.Canvas.prototype */ {
 
     /**
      * Adds mouse listeners to canvas
      * @private
      */
+    _positionEventDisposers: {},
     _initEvents: function () {
       var _this = this;
 
-      this._onMouseDown = this._onMouseDown.bind(this);
-      this._onMouseMove = this._onMouseMove.bind(this);
-      this._onMouseUp = this._onMouseUp.bind(this);
       this._onResize = this._onResize.bind(this);
 
       this._onGesture = function(e, s) {
@@ -45,17 +61,42 @@
       addListener(fabric.window, 'resize', this._onResize);
 
       if (fabric.isTouchSupported) {
-        addListener(this.upperCanvasEl, 'touchstart', this._onMouseDown);
-        addListener(this.upperCanvasEl, 'touchmove', this._onMouseMove);
+        canvasPositionEventListener(this,'touchstart','mouse:down');
+        canvasPositionEventListener(this,'touchmove','mouse:move');
 
         if (typeof Event !== 'undefined' && 'add' in Event) {
           Event.add(this.upperCanvasEl, 'gesture', this._onGesture);
         }
       }
       else {
-        addListener(this.upperCanvasEl, 'mousedown', this._onMouseDown);
-        addListener(this.upperCanvasEl, 'mousemove', this._onMouseMove);
+        canvasPositionEventListener(this,'mousedown','mouse:down');
+        canvasPositionEventListener(this,'mousemove','mouse:move');
       }
+    },
+
+    /**
+     * Clears a canvas element and removes all event handlers.
+     * @return {fabric.Canvas} thisArg
+     * @chainable
+     */
+    dispose: function () {
+      this.clear();
+
+      if (!this.interactive) return this;
+
+      if (fabric.isTouchSupported) {
+        this._positionEventDisposers['touchstart']();
+        this._positionEventDisposers['touchmove']();
+        if (typeof Event !== 'undefined' && 'remove' in Event) {
+          Event.remove(this.upperCanvasEl, 'gesture', this._onGesture);
+        }
+      }
+      else {
+        this._positionEventDisposers['mousedown']();
+        this._positionEventDisposers['mousemove']();
+        removeListener(fabric.window, 'resize', this._onResize);
+      }
+      return this;
     },
 
     /**

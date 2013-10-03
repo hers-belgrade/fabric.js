@@ -193,6 +193,11 @@
       this.setCoords();
     },
 
+    processPositionEvent : function(e,eventname){
+      this.callSuper('processPositionEvent',e,eventname);
+      this.distributePositionEvent(e,eventname);
+    },
+
     _extraTransformations: function(){
       if(this.anchorX || this.anchorY){
         return [1,0,0,1,-this.anchorX,-this.anchorY];

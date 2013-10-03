@@ -312,110 +312,21 @@
       return this.scale(value / this.height / boundingRectFactor);
     },
 
+    processPositionEvent : function(e,eventname){
+      if(!(this.visible && this.opacity>0)){
+        return;
+      }
+      if(this.containsPoint(e)){
+        this.fire(eventname,{e:e});
+      }
+    },
+
     /**
      * Sets corner position coordinates based on current angle, width and height
      * @return {fabric.Object} thisArg
      * @chainable
      */
     setCoords: function(tl,br) {
-      if(!(tl&&br)){
-        return;
-      }
-      var mx = (tl.x+br.x)/2, my = (tl.y+br.y)/2;
-      this.oCoords = {
-        tl:{x:tl.x,y:tl.y},tr:{x:br.x,y:tl.y},br:{x:br.x,y:br.y},bl:{x:tl.x,y:br.y},
-        ml:{x:tl.x,y:my},mt:{x:mx,y:tl.y},mr:{x:br.x,y:my},mb:{x:mx,y:br.y}
-      };
-      return;
-
-      var strokeWidth = this.strokeWidth > 1 ? this.strokeWidth : 0,
-          padding = this.padding,
-          theta = degreesToRadians(this.angle);
-
-      this.currentWidth = (this.width + strokeWidth) * this.scaleX + padding * 2;
-      this.currentHeight = (this.height + strokeWidth) * this.scaleY + padding * 2;
-
-      // If width is negative, make postive. Fixes path selection issue
-      if (this.currentWidth < 0) {
-        this.currentWidth = Math.abs(this.currentWidth);
-      }
-
-      var _hypotenuse = Math.sqrt(
-        Math.pow(this.currentWidth / 2, 2) +
-        Math.pow(this.currentHeight / 2, 2));
-
-      var _angle = Math.atan(isFinite(this.currentHeight / this.currentWidth) ? this.currentHeight / this.currentWidth : 0);
-
-      // offset added for rotate and scale actions
-      var offsetX = Math.cos(_angle + theta) * _hypotenuse,
-          offsetY = Math.sin(_angle + theta) * _hypotenuse,
-          sinTh = Math.sin(theta),
-          cosTh = Math.cos(theta);
-
-      var coords = this.getCenterPoint();
-      var tl = {
-        x: coords.x,// - offsetX,
-        y: coords.y// - offsetY
-      };
-      var tr = {
-        x: tl.x + (this.currentWidth * cosTh),
-        y: tl.y + (this.currentWidth * sinTh)
-      };
-      var br = {
-        x: tr.x - (this.currentHeight * sinTh),
-        y: tr.y + (this.currentHeight * cosTh)
-      };
-      var bl = {
-        x: tl.x - (this.currentHeight * sinTh),
-        y: tl.y + (this.currentHeight * cosTh)
-      };
-      var ml = {
-        x: tl.x - (this.currentHeight/2 * sinTh),
-        y: tl.y + (this.currentHeight/2 * cosTh)
-      };
-      var mt = {
-        x: tl.x + (this.currentWidth/2 * cosTh),
-        y: tl.y + (this.currentWidth/2 * sinTh)
-      };
-      var mr = {
-        x: tr.x - (this.currentHeight/2 * sinTh),
-        y: tr.y + (this.currentHeight/2 * cosTh)
-      };
-      var mb = {
-        x: bl.x + (this.currentWidth/2 * cosTh),
-        y: bl.y + (this.currentWidth/2 * sinTh)
-      };
-      var mtr = {
-        x: mt.x,
-        y: mt.y
-      };
-
-      // debugging
-
-      // setTimeout(function() {
-      //   canvas.contextTop.fillStyle = 'green';
-      //   canvas.contextTop.fillRect(mb.x, mb.y, 3, 3);
-      //   canvas.contextTop.fillRect(bl.x, bl.y, 3, 3);
-      //   canvas.contextTop.fillRect(br.x, br.y, 3, 3);
-      //   canvas.contextTop.fillRect(tl.x, tl.y, 3, 3);
-      //   canvas.contextTop.fillRect(tr.x, tr.y, 3, 3);
-      //   canvas.contextTop.fillRect(ml.x, ml.y, 3, 3);
-      //   canvas.contextTop.fillRect(mr.x, mr.y, 3, 3);
-      //   canvas.contextTop.fillRect(mt.x, mt.y, 3, 3);
-      // }, 50);
-
-      this.oCoords = {
-        // corners
-        tl: tl, tr: tr, br: br, bl: bl,
-        // middle
-        ml: ml, mt: mt, mr: mr, mb: mb,
-        // rotating point
-        mtr: mtr
-      };
-
-      // set coordinates of the draggable boxes in the corners used to scale/rotate the image
-      this._setCornerCoords && this._setCornerCoords();
-
       return this;
     }
   });

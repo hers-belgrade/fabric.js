@@ -2425,7 +2425,11 @@ fabric.Collection = {
             obj.toGrayscale();
         });
     },
-    findTarget: function(e) {
+    distributePositionEvent: function(e, eventname) {
+        for (var i = this._objects.length - 1; i >= 0; i--) {
+            this._objects[i].processPositionEvent(e, eventname);
+        }
+        return;
         if (this.skipTargetFind) return;
         var target;
         var possibleTargets = [];
@@ -5565,22 +5569,6 @@ fabric.Pattern = fabric.util.createClass({
             this._objects.splice(index, 0, object);
             return this.renderAll && this.renderAll();
         },
-        dispose: function() {
-            this.clear();
-            if (!this.interactive) return this;
-            if (fabric.isTouchSupported) {
-                removeListener(this.upperCanvasEl, "touchstart", this._onMouseDown);
-                removeListener(this.upperCanvasEl, "touchmove", this._onMouseMove);
-                if (typeof Event !== "undefined" && "remove" in Event) {
-                    Event.remove(this.upperCanvasEl, "gesture", this._onGesture);
-                }
-            } else {
-                removeListener(this.upperCanvasEl, "mousedown", this._onMouseDown);
-                removeListener(this.upperCanvasEl, "mousemove", this._onMouseMove);
-                removeListener(fabric.window, "resize", this._onResize);
-            }
-            return this;
-        },
         toString: function() {
             return "#<fabric.Canvas (" + this.complexity() + "): " + "{ objects: " + this.getObjects().length + " }>";
         }
@@ -6043,9 +6031,6 @@ fabric.PatternBrush = fabric.util.createClass(fabric.PencilBrush, {
                 t.originY = t.original.originY;
             }
         },
-        findTarget: function(e) {
-            return this.callSuper("findTarget", this.getPointer(e));
-        },
         _normalizePointer: function(object, pointer) {
             var activeGroup = this.getActiveGroup(), x = pointer.x, y = pointer.y;
             var isObjectInGroup = activeGroup && object.type !== "group" && activeGroup.contains(object);
@@ -6087,246 +6072,6 @@ fabric.PatternBrush = fabric.util.createClass(fabric.PencilBrush, {
             imageData = null;
             this.clearContext(cacheContext);
             return isTransparent;
-        },
-        _shouldClearSelection: function(e, target) {
-            var activeGroup = this.getActiveGroup();
-            return !target || target && activeGroup && !activeGroup.contains(target) && activeGroup !== target && !e.shiftKey || target && !target.selectable;
-        },
-        _setupCurrentTransform: function(e, target) {
-            if (!target) return;
-            var action = "drag", corner, pointer = getPointer(e, target.canvas.upperCanvasEl);
-            corner = target._findTargetCorner(e, this._offset);
-            if (corner) {
-                action = corner === "ml" || corner === "mr" ? "scaleX" : corner === "mt" || corner === "mb" ? "scaleY" : corner === "mtr" ? "rotate" : "scale";
-            }
-            var originX = target.originX, originY = target.originY;
-            if (corner === "ml" || corner === "tl" || corner === "bl") {
-                originX = "right";
-            } else if (corner === "mr" || corner === "tr" || corner === "br") {
-                originX = "left";
-            }
-            if (corner === "tl" || corner === "mt" || corner === "tr") {
-                originY = "bottom";
-            } else if (corner === "bl" || corner === "mb" || corner === "br") {
-                originY = "top";
-            }
-            this._currentTransform = {
-                target: target,
-                action: action,
-                scaleX: target.scaleX,
-                scaleY: target.scaleY,
-                offsetX: pointer.x - target.left,
-                offsetY: pointer.y - target.top,
-                originX: originX,
-                originY: originY,
-                ex: pointer.x,
-                ey: pointer.y,
-                left: target.left,
-                top: target.top,
-                theta: degreesToRadians(target.angle),
-                width: target.width * target.scaleX,
-                mouseXSign: 1,
-                mouseYSign: 1
-            };
-            this._currentTransform.original = {
-                left: target.left,
-                top: target.top,
-                scaleX: target.scaleX,
-                scaleY: target.scaleY,
-                originX: originX,
-                originY: originY
-            };
-            this._resetCurrentTransform(e);
-        },
-        _shouldHandleGroupLogic: function(e, target) {
-            var activeObject = this.getActiveObject();
-            return e.shiftKey && (this.getActiveGroup() || activeObject && activeObject !== target) && this.selection;
-        },
-        _handleGroupLogic: function(e, target) {
-            if (target === this.getActiveGroup()) {
-                target = this.findTarget(e, true);
-                if (!target || target.isType("group")) {
-                    return;
-                }
-            }
-            var activeGroup = this.getActiveGroup();
-            if (activeGroup) {
-                if (activeGroup.contains(target)) {
-                    activeGroup.removeWithUpdate(target);
-                    this._resetObjectTransform(activeGroup);
-                    target.set("active", false);
-                    if (activeGroup.size() === 1) {
-                        this.discardActiveGroup();
-                    }
-                } else {
-                    activeGroup.addWithUpdate(target);
-                    this._resetObjectTransform(activeGroup);
-                }
-                this.fire("selection:created", {
-                    target: activeGroup,
-                    e: e
-                });
-                activeGroup.set("active", true);
-            } else {
-                if (this._activeObject) {
-                    if (target !== this._activeObject) {
-                        var objects = this.getObjects();
-                        var isActiveLower = objects.indexOf(this._activeObject) < objects.indexOf(target);
-                        var group = new fabric.Group(isActiveLower ? [ target, this._activeObject ] : [ this._activeObject, target ]);
-                        this.setActiveGroup(group);
-                        this._activeObject = null;
-                        activeGroup = this.getActiveGroup();
-                        this.fire("selection:created", {
-                            target: activeGroup,
-                            e: e
-                        });
-                    }
-                }
-                target.set("active", true);
-            }
-            if (activeGroup) {
-                activeGroup.saveCoords();
-            }
-        },
-        _translateObject: function(x, y) {
-            var target = this._currentTransform.target;
-            if (!target.get("lockMovementX")) {
-                target.set("left", x - this._currentTransform.offsetX);
-            }
-            if (!target.get("lockMovementY")) {
-                target.set("top", y - this._currentTransform.offsetY);
-            }
-        },
-        _scaleObject: function(x, y, by) {
-            var t = this._currentTransform, offset = this._offset, target = t.target;
-            var lockScalingX = target.get("lockScalingX"), lockScalingY = target.get("lockScalingY");
-            if (lockScalingX && lockScalingY) return;
-            var constraintPosition = target.translateToOriginPoint(target.getCenterPoint(), t.originX, t.originY);
-            var localMouse = target.toLocalPoint(new fabric.Point(x - offset.left, y - offset.top), t.originX, t.originY);
-            if (t.originX === "right") {
-                localMouse.x *= -1;
-            } else if (t.originX === "center") {
-                localMouse.x *= t.mouseXSign * 2;
-                if (localMouse.x < 0) {
-                    t.mouseXSign = -t.mouseXSign;
-                }
-            }
-            if (t.originY === "bottom") {
-                localMouse.y *= -1;
-            } else if (t.originY === "center") {
-                localMouse.y *= t.mouseYSign * 2;
-                if (localMouse.y < 0) {
-                    t.mouseYSign = -t.mouseYSign;
-                }
-            }
-            if (abs(localMouse.x) > target.padding) {
-                if (localMouse.x < 0) {
-                    localMouse.x += target.padding;
-                } else {
-                    localMouse.x -= target.padding;
-                }
-            } else {
-                localMouse.x = 0;
-            }
-            if (abs(localMouse.y) > target.padding) {
-                if (localMouse.y < 0) {
-                    localMouse.y += target.padding;
-                } else {
-                    localMouse.y -= target.padding;
-                }
-            } else {
-                localMouse.y = 0;
-            }
-            var newScaleX = target.scaleX, newScaleY = target.scaleY;
-            if (by === "equally" && !lockScalingX && !lockScalingY) {
-                var dist = localMouse.y + localMouse.x;
-                var lastDist = (target.height + target.strokeWidth) * t.original.scaleY + (target.width + target.strokeWidth) * t.original.scaleX;
-                newScaleX = t.original.scaleX * dist / lastDist;
-                newScaleY = t.original.scaleY * dist / lastDist;
-                target.set("scaleX", newScaleX);
-                target.set("scaleY", newScaleY);
-            } else if (!by) {
-                newScaleX = localMouse.x / (target.width + target.strokeWidth);
-                newScaleY = localMouse.y / (target.height + target.strokeWidth);
-                lockScalingX || target.set("scaleX", newScaleX);
-                lockScalingY || target.set("scaleY", newScaleY);
-            } else if (by === "x" && !target.get("lockUniScaling")) {
-                newScaleX = localMouse.x / (target.width + target.strokeWidth);
-                lockScalingX || target.set("scaleX", newScaleX);
-            } else if (by === "y" && !target.get("lockUniScaling")) {
-                newScaleY = localMouse.y / (target.height + target.strokeWidth);
-                lockScalingY || target.set("scaleY", newScaleY);
-            }
-            if (newScaleX < 0) {
-                if (t.originX === "left") t.originX = "right"; else if (t.originX === "right") t.originX = "left";
-            }
-            if (newScaleY < 0) {
-                if (t.originY === "top") t.originY = "bottom"; else if (t.originY === "bottom") t.originY = "top";
-            }
-            target.setPositionByOrigin(constraintPosition, t.originX, t.originY);
-        },
-        _rotateObject: function(x, y) {
-            var t = this._currentTransform, o = this._offset;
-            if (t.target.get("lockRotation")) return;
-            var lastAngle = atan2(t.ey - t.top - o.top, t.ex - t.left - o.left), curAngle = atan2(y - t.top - o.top, x - t.left - o.left), angle = radiansToDegrees(curAngle - lastAngle + t.theta);
-            if (angle < 0) {
-                angle = 360 + angle;
-            }
-            t.target.angle = angle;
-        },
-        _setCursor: function(value) {
-            this.upperCanvasEl.style.cursor = value;
-        },
-        _resetObjectTransform: function(target) {
-            target.scaleX = 1;
-            target.scaleY = 1;
-            target.setAngle(0);
-        },
-        _drawSelection: function() {
-            var ctx = this.contextTop, groupSelector = this._groupSelector, left = groupSelector.left, top = groupSelector.top, aleft = abs(left), atop = abs(top);
-            ctx.fillStyle = this.selectionColor;
-            ctx.fillRect(groupSelector.ex - (left > 0 ? 0 : -left), groupSelector.ey - (top > 0 ? 0 : -top), aleft, atop);
-            ctx.lineWidth = this.selectionLineWidth;
-            ctx.strokeStyle = this.selectionBorderColor;
-            if (this.selectionDashArray.length > 1) {
-                var px = groupSelector.ex + STROKE_OFFSET - (left > 0 ? 0 : aleft);
-                var py = groupSelector.ey + STROKE_OFFSET - (top > 0 ? 0 : atop);
-                ctx.beginPath();
-                fabric.util.drawDashedLine(ctx, px, py, px + aleft, py, this.selectionDashArray);
-                fabric.util.drawDashedLine(ctx, px, py + atop - 1, px + aleft, py + atop - 1, this.selectionDashArray);
-                fabric.util.drawDashedLine(ctx, px, py, px, py + atop, this.selectionDashArray);
-                fabric.util.drawDashedLine(ctx, px + aleft - 1, py, px + aleft - 1, py + atop, this.selectionDashArray);
-                ctx.closePath();
-                ctx.stroke();
-            } else {
-                ctx.strokeRect(groupSelector.ex + STROKE_OFFSET - (left > 0 ? 0 : aleft), groupSelector.ey + STROKE_OFFSET - (top > 0 ? 0 : atop), aleft, atop);
-            }
-        },
-        _findSelectedObjects: function(e) {
-            return;
-            var group = [], x1 = this._groupSelector.ex, y1 = this._groupSelector.ey, x2 = x1 + this._groupSelector.left, y2 = y1 + this._groupSelector.top, currentObject, selectionX1Y1 = new fabric.Point(min(x1, x2), min(y1, y2)), selectionX2Y2 = new fabric.Point(max(x1, x2), max(y1, y2)), isClick = x1 === x2 && y1 === y2;
-            for (var i = this._objects.length; i--; ) {
-                currentObject = this._objects[i];
-                if (!currentObject) continue;
-                if (currentObject.intersectsWithRect(selectionX1Y1, selectionX2Y2) || currentObject.isContainedWithinRect(selectionX1Y1, selectionX2Y2) || currentObject.containsPoint(selectionX1Y1) || currentObject.containsPoint(selectionX2Y2)) {
-                    if (this.selection && currentObject.selectable) {
-                        currentObject.set("active", true);
-                        group.push(currentObject);
-                        if (isClick) break;
-                    }
-                }
-            }
-            if (group.length === 1) {
-                this.setActiveObject(group[0], e);
-            } else if (group.length > 1) {
-                group = new fabric.Group(group.reverse());
-                this.setActiveGroup(group);
-                group.saveCoords();
-                this.fire("selection:created", {
-                    target: group
-                });
-                this.renderAll();
-            }
         },
         getPointer: function(e) {
             var pointer = getPointer(e, this.upperCanvasEl);
@@ -6490,27 +6235,55 @@ fabric.PatternBrush = fabric.util.createClass(fabric.PencilBrush, {
         ml: 6,
         tl: 7
     }, addListener = fabric.util.addListener, removeListener = fabric.util.removeListener, getPointer = fabric.util.getPointer;
+    function canvasPositionEventListener(canvas, eventname, eventalias) {
+        var cnvas = canvas, cnvasel = cnvas.upperCanvasEl, evntname = eventname, evntalias = eventalias;
+        var evnthandler = function(e) {
+            var p = getPointer(e, cnvasel);
+            p.x = p.x - cnvas._offset.left;
+            p.y = p.y - cnvas._offset.top;
+            cnvas.distributePositionEvent(p, evntalias);
+        };
+        addListener(cnvasel, evntname, evnthandler);
+        cnvas._positionEventDisposers[evntname] = function() {
+            removeListener(cnvasel, eventname, evnthandler);
+            delete cnvas._positionEventDisposers[evntname];
+        };
+    }
     fabric.util.object.extend(fabric.Canvas.prototype, {
+        _positionEventDisposers: {},
         _initEvents: function() {
             var _this = this;
-            this._onMouseDown = this._onMouseDown.bind(this);
-            this._onMouseMove = this._onMouseMove.bind(this);
-            this._onMouseUp = this._onMouseUp.bind(this);
             this._onResize = this._onResize.bind(this);
             this._onGesture = function(e, s) {
                 _this.__onTransformGesture(e, s);
             };
             addListener(fabric.window, "resize", this._onResize);
             if (fabric.isTouchSupported) {
-                addListener(this.upperCanvasEl, "touchstart", this._onMouseDown);
-                addListener(this.upperCanvasEl, "touchmove", this._onMouseMove);
+                canvasPositionEventListener(this, "touchstart", "mouse:down");
+                canvasPositionEventListener(this, "touchmove", "mouse:move");
                 if (typeof Event !== "undefined" && "add" in Event) {
                     Event.add(this.upperCanvasEl, "gesture", this._onGesture);
                 }
             } else {
-                addListener(this.upperCanvasEl, "mousedown", this._onMouseDown);
-                addListener(this.upperCanvasEl, "mousemove", this._onMouseMove);
+                canvasPositionEventListener(this, "mousedown", "mouse:down");
+                canvasPositionEventListener(this, "mousemove", "mouse:move");
             }
+        },
+        dispose: function() {
+            this.clear();
+            if (!this.interactive) return this;
+            if (fabric.isTouchSupported) {
+                this._positionEventDisposers["touchstart"]();
+                this._positionEventDisposers["touchmove"]();
+                if (typeof Event !== "undefined" && "remove" in Event) {
+                    Event.remove(this.upperCanvasEl, "gesture", this._onGesture);
+                }
+            } else {
+                this._positionEventDisposers["mousedown"]();
+                this._positionEventDisposers["mousemove"]();
+                removeListener(fabric.window, "resize", this._onResize);
+            }
+            return this;
         },
         _onMouseDown: function(e) {
             this.__onMouseDown(e);
@@ -7141,7 +6914,41 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
             var xl = 0, xr = xl + this.width, yt = 0, yb = yt + this.height;
             var tl = fabric.util.pointInSpace(ctx._currentTransform, new fabric.Point(xl, yt));
             var br = fabric.util.pointInSpace(ctx._currentTransform, new fabric.Point(xr, yb));
-            this.setCoords(tl, br);
+            var mx = (tl.x + br.x) / 2, my = (tl.y + br.y) / 2;
+            this.oCoords = {
+                tl: {
+                    x: tl.x,
+                    y: tl.y
+                },
+                tr: {
+                    x: br.x,
+                    y: tl.y
+                },
+                br: {
+                    x: br.x,
+                    y: br.y
+                },
+                bl: {
+                    x: tl.x,
+                    y: br.y
+                },
+                ml: {
+                    x: tl.x,
+                    y: my
+                },
+                mt: {
+                    x: mx,
+                    y: tl.y
+                },
+                mr: {
+                    x: br.x,
+                    y: my
+                },
+                mb: {
+                    x: mx,
+                    y: br.y
+                }
+            };
         },
         _extraTransformations: function(ctx) {},
         untransform: function(ctx) {
@@ -7784,104 +7591,17 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
             var boundingRectFactor = this.getBoundingRectHeight() / this.getHeight();
             return this.scale(value / this.height / boundingRectFactor);
         },
-        setCoords: function(tl, br) {
-            if (!(tl && br)) {
+        processPositionEvent: function(e, eventname) {
+            if (!(this.visible && this.opacity > 0)) {
                 return;
             }
-            var mx = (tl.x + br.x) / 2, my = (tl.y + br.y) / 2;
-            this.oCoords = {
-                tl: {
-                    x: tl.x,
-                    y: tl.y
-                },
-                tr: {
-                    x: br.x,
-                    y: tl.y
-                },
-                br: {
-                    x: br.x,
-                    y: br.y
-                },
-                bl: {
-                    x: tl.x,
-                    y: br.y
-                },
-                ml: {
-                    x: tl.x,
-                    y: my
-                },
-                mt: {
-                    x: mx,
-                    y: tl.y
-                },
-                mr: {
-                    x: br.x,
-                    y: my
-                },
-                mb: {
-                    x: mx,
-                    y: br.y
-                }
-            };
-            return;
-            var strokeWidth = this.strokeWidth > 1 ? this.strokeWidth : 0, padding = this.padding, theta = degreesToRadians(this.angle);
-            this.currentWidth = (this.width + strokeWidth) * this.scaleX + padding * 2;
-            this.currentHeight = (this.height + strokeWidth) * this.scaleY + padding * 2;
-            if (this.currentWidth < 0) {
-                this.currentWidth = Math.abs(this.currentWidth);
+            if (this.containsPoint(e)) {
+                this.fire(eventname, {
+                    e: e
+                });
             }
-            var _hypotenuse = Math.sqrt(Math.pow(this.currentWidth / 2, 2) + Math.pow(this.currentHeight / 2, 2));
-            var _angle = Math.atan(isFinite(this.currentHeight / this.currentWidth) ? this.currentHeight / this.currentWidth : 0);
-            var offsetX = Math.cos(_angle + theta) * _hypotenuse, offsetY = Math.sin(_angle + theta) * _hypotenuse, sinTh = Math.sin(theta), cosTh = Math.cos(theta);
-            var coords = this.getCenterPoint();
-            var tl = {
-                x: coords.x,
-                y: coords.y
-            };
-            var tr = {
-                x: tl.x + this.currentWidth * cosTh,
-                y: tl.y + this.currentWidth * sinTh
-            };
-            var br = {
-                x: tr.x - this.currentHeight * sinTh,
-                y: tr.y + this.currentHeight * cosTh
-            };
-            var bl = {
-                x: tl.x - this.currentHeight * sinTh,
-                y: tl.y + this.currentHeight * cosTh
-            };
-            var ml = {
-                x: tl.x - this.currentHeight / 2 * sinTh,
-                y: tl.y + this.currentHeight / 2 * cosTh
-            };
-            var mt = {
-                x: tl.x + this.currentWidth / 2 * cosTh,
-                y: tl.y + this.currentWidth / 2 * sinTh
-            };
-            var mr = {
-                x: tr.x - this.currentHeight / 2 * sinTh,
-                y: tr.y + this.currentHeight / 2 * cosTh
-            };
-            var mb = {
-                x: bl.x + this.currentWidth / 2 * cosTh,
-                y: bl.y + this.currentWidth / 2 * sinTh
-            };
-            var mtr = {
-                x: mt.x,
-                y: mt.y
-            };
-            this.oCoords = {
-                tl: tl,
-                tr: tr,
-                br: br,
-                bl: bl,
-                ml: ml,
-                mt: mt,
-                mr: mr,
-                mb: mb,
-                mtr: mtr
-            };
-            this._setCornerCoords && this._setCornerCoords();
+        },
+        setCoords: function(tl, br) {
             return this;
         }
     });
@@ -9488,6 +9208,10 @@ fabric.util.object.extend(fabric.Object.prototype, {
             }
             ctx.restore();
             this.setCoords();
+        },
+        processPositionEvent: function(e, eventname) {
+            this.callSuper("processPositionEvent", e, eventname);
+            this.distributePositionEvent(e, eventname);
         },
         _extraTransformations: function() {
             if (this.anchorX || this.anchorY) {

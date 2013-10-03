@@ -484,7 +484,11 @@
       var xl = 0, xr = xl+this.width, yt = 0, yb = yt+this.height;
       var tl = fabric.util.pointInSpace(ctx._currentTransform,new fabric.Point(xl,yt));
       var br = fabric.util.pointInSpace(ctx._currentTransform,new fabric.Point(xr,yb));
-      this.setCoords(tl,br);
+      var mx = (tl.x+br.x)/2, my = (tl.y+br.y)/2;
+      this.oCoords = {
+        tl:{x:tl.x,y:tl.y},tr:{x:br.x,y:tl.y},br:{x:br.x,y:br.y},bl:{x:tl.x,y:br.y},
+        ml:{x:tl.x,y:my},mt:{x:mx,y:tl.y},mr:{x:br.x,y:my},mb:{x:mx,y:br.y}
+      };
     },
 
     _extraTransformations : function(ctx){

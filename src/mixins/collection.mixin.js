@@ -139,7 +139,11 @@ fabric.Collection = {
 	 * @param {Event} e mouse event
 	 * @param {Boolean} skipGroup when true, group is skipped and only objects are traversed through
 	 */
-	findTarget: function (e) {
+	distributePositionEvent: function (e,eventname) {
+    for (var i = this._objects.length-1; i>=0; i--){
+      this._objects[i].processPositionEvent(e,eventname);
+    }
+    return;
 		if (this.skipTargetFind) return;
 
 		var target;
