@@ -76,6 +76,10 @@
       return this;
     },
 
+    _extraTransformations: function(){
+      return [1,0,0,1,-((this.width / 2)),-((this.height / 2))];
+    },
+
     /**
      * @private
      * @param {CanvasRenderingContext2D} ctx Context to render on

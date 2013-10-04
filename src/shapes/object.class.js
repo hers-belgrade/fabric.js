@@ -361,6 +361,8 @@
      */
     lockUniScaling:           false,
 
+    borderRectColor:          '#000000',
+
     /**
      * List of properties to consider when checking if state
      * of an object is changed (fabric.Object#hasStateChanged)
@@ -760,12 +762,28 @@
       return this;
     },
 
+    drawBorderRect : function(ctx){
+      if(!this.oCoords){return;}
+      if( this.oCoords.tl.x &&
+          this.oCoords.tl.y &&
+          (this.oCoords.br.x-this.oCoords.tl.x) > 0 &&
+          (this.oCoords.br.y-this.oCoords.tl.y) > 0){
+        ctx.strokeStyle = this.borderRectColor;
+        ctx.strokeRect(
+          this.oCoords.tl.x,
+          this.oCoords.tl.y,
+          this.oCoords.br.x-this.oCoords.tl.x,
+          this.oCoords.br.y-this.oCoords.tl.y
+        );
+      }
+    },
+
     /**
      * Renders an object on a specified context
      * @param {CanvasRenderingContext2D} ctx context to render on
      * @param {Boolean} [noTransform] When true, context is not transformed
      */
-    render: function(ctx, noTransform) {
+    render: function(ctx, topctx) {
       // do not render if width/height are zeros or object is not visible
       //if (this.width === 0 || this.height === 0 || !this.visible) return;
       if (!this.visible) return;
@@ -775,6 +793,9 @@
       ctx.save();
 
       this.transform(ctx);
+      if(topctx){
+        this.drawBorderRect(topctx);
+      }
 
       if (this.stroke) {
         ctx.lineWidth = this.strokeWidth;
@@ -797,18 +818,10 @@
 
       this._setShadow(ctx);
       this.clipTo && fabric.util.clipContext(this, ctx);
-      this._render(ctx, noTransform);
+      this._render(ctx, topctx);
       this.clipTo && ctx.restore();
       this._removeShadow(ctx);
 
-      if (this.active && !noTransform) {
-        this.drawBorders(ctx);
-        this.drawControls(ctx);
-      }
-			ctx.beginPath();
-			ctx.arc(0, 0, 2, 0, 2 * Math.PI, false);
-			ctx.fillStyle = 'green';
-			ctx.fill();
 			this.untransform(ctx);
     },
 

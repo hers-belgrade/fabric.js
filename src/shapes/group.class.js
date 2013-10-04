@@ -39,6 +39,8 @@
      */
     type: 'group',
 
+    borderRectColor:          '#00FF00',
+
     /**
      * Constructor
      * @param {Object} objects Group objects
@@ -194,7 +196,9 @@
     },
 
     processPositionEvent : function(e,eventname){
-      this.callSuper('processPositionEvent',e,eventname);
+      if(-1===this.callSuper('processPositionEvent',e,eventname)){
+        return;
+      }
       this.distributePositionEvent(e,eventname);
     },
 
@@ -204,12 +208,11 @@
       }
     },
 
-		_render: function(ctx, noTransform){
+		_render: function(ctx, topctx){
       ctx.translate(-this.anchorX||0,-this.anchorY||0);
       for (var i = 0, len = this._objects.length; i < len; i++) {
         var object = this._objects[i];
-				object.render(ctx);
-				//console.log(object.id,object.oCoords);
+				object.render(ctx, topctx);
 			}
       this._calcBounds();
 		},

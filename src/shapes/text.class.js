@@ -161,6 +161,8 @@
      */
     shadow:               null,
 
+    borderRectColor:      '#0000FF',
+
     /**
      * Constructor
      * @param {String} text Text string

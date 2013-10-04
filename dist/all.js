@@ -9357,9 +9357,9 @@ fabric.Pattern = fabric.util.createClass(/** @lends fabric.Pattern.prototype */ 
      */
     renderAll: function (allOnTop) {
 
-      var canvasToDrawOn = this[(allOnTop === true && this.interactive) ? 'contextTop' : 'contextContainer'];
+      var canvasToDrawOn = this.contextContainer;
 
-      if (this.contextTop && this.selection && !this._groupSelector) {
+      if (this.contextTop && this.selection) {
         this.clearContext(this.contextTop);
       }
 
@@ -9389,29 +9389,12 @@ fabric.Pattern = fabric.util.createClass(/** @lends fabric.Pattern.prototype */ 
         this._drawBackroundImage(canvasToDrawOn);
       }
 
-      var activeGroup = this.getActiveGroup();
       canvasToDrawOn._currentTransform = [1,0,0,1,0,0];
+      var debugctx = this.debug ? this.contextTop : null;
       for (var i = 0, length = this._objects.length; i < length; ++i) {
-        if (!activeGroup ||
-            (activeGroup && this._objects[i] && !activeGroup.contains(this._objects[i]))) {
-          this._draw(canvasToDrawOn, this._objects[i]);
-        }
+        var object = this._objects[i];
+        object.render(canvasToDrawOn,debugctx);
       }
-
-      /*
-      // delegate rendering to group selection (if one exists)
-      if (activeGroup) {
-        //Store objects in group preserving order, then replace
-        var sortedObjects = [];
-        this.forEachObject(function (object) {
-            if (activeGroup.contains(object)) {
-                sortedObjects.push(object);
-            }
-        });
-        activeGroup._set('objects', sortedObjects);
-        this._draw(canvasToDrawOn, activeGroup);
-      }
-      */
 
       if (this.clipTo) {
         canvasToDrawOn.restore();
@@ -9457,7 +9440,7 @@ fabric.Pattern = fabric.util.createClass(/** @lends fabric.Pattern.prototype */ 
       this.clearContext(ctx);
 
       // we render the top context - last object
-      if (this.selection && this._groupSelector) {
+      if (this.selection) {
         this._drawSelection();
       }
 
@@ -10776,7 +10759,6 @@ fabric.PatternBrush = fabric.util.createClass(fabric.PencilBrush, /** @lends fab
      */
     _initInteractive: function() {
       this._currentTransform = null;
-      this._groupSelector = null;
       this._initWrapperElement();
       this._createUpperCanvas();
       this._initEvents();
@@ -11228,6 +11210,7 @@ fabric.PatternBrush = fabric.util.createClass(fabric.PencilBrush, /** @lends fab
       if (fabric.isTouchSupported) {
         canvasPositionEventListener(this,'touchstart','mouse:down');
         canvasPositionEventListener(this,'touchmove','mouse:move');
+        canvasPositionEventListener(this,'touchend','mouse:up');
 
         if (typeof Event !== 'undefined' && 'add' in Event) {
           Event.add(this.upperCanvasEl, 'gesture', this._onGesture);
@@ -11236,6 +11219,7 @@ fabric.PatternBrush = fabric.util.createClass(fabric.PencilBrush, /** @lends fab
       else {
         canvasPositionEventListener(this,'mousedown','mouse:down');
         canvasPositionEventListener(this,'mousemove','mouse:move');
+        canvasPositionEventListener(this,'mouseup','mouse:up');
       }
     },
 
@@ -11252,6 +11236,7 @@ fabric.PatternBrush = fabric.util.createClass(fabric.PencilBrush, /** @lends fab
       if (fabric.isTouchSupported) {
         this._positionEventDisposers['touchstart']();
         this._positionEventDisposers['touchmove']();
+        this._positionEventDisposers['touchend']();
         if (typeof Event !== 'undefined' && 'remove' in Event) {
           Event.remove(this.upperCanvasEl, 'gesture', this._onGesture);
         }
@@ -11259,6 +11244,7 @@ fabric.PatternBrush = fabric.util.createClass(fabric.PencilBrush, /** @lends fab
       else {
         this._positionEventDisposers['mousedown']();
         this._positionEventDisposers['mousemove']();
+        this._positionEventDisposers['mouseup']();
         removeListener(fabric.window, 'resize', this._onResize);
       }
       return this;
@@ -11314,304 +11300,6 @@ fabric.PatternBrush = fabric.util.createClass(fabric.PencilBrush, /** @lends fab
       this.calcOffset();
     },
 
-    /**
-     * Method that defines the actions when mouse is released on canvas.
-     * The method resets the currentTransform parameters, store the image corner
-     * position in the image object and render the canvas on top.
-     * @private
-     * @param {Event} e Event object fired on mouseup
-     */
-    __onMouseUp: function (e) {
-
-      var target;
-
-      if (this.isDrawingMode && this._isCurrentlyDrawing) {
-        this._isCurrentlyDrawing = false;
-        if (this.clipTo) {
-          this.contextTop.restore();
-        }
-        this.freeDrawingBrush.onMouseUp();
-        this.fire('mouse:up', { e: e });
-        return;
-      }
-
-      if (this._currentTransform) {
-
-        var transform = this._currentTransform;
-
-        target = transform.target;
-        if (target._scaling) {
-          target._scaling = false;
-        }
-
-        target.isMoving = false;
-        target.setCoords();
-
-        // only fire :modified event if target coordinates were changed during mousedown-mouseup
-        if (this.stateful && target.hasStateChanged()) {
-          this.fire('object:modified', { target: target });
-          target.fire('modified');
-        }
-
-        if (this._previousOriginX && this._previousOriginY) {
-
-          var originPoint = target.translateToOriginPoint(
-            target.getCenterPoint(),
-            this._previousOriginX,
-            this._previousOriginY);
-
-          target.originX = this._previousOriginX;
-          target.originY = this._previousOriginY;
-
-          target.left = originPoint.x;
-          target.top = originPoint.y;
-
-          this._previousOriginX = null;
-          this._previousOriginY = null;
-        }
-      }
-
-      this._currentTransform = null;
-
-      if (this.selection && this._groupSelector) {
-        // group selection was completed, determine its bounds
-        this._findSelectedObjects(e);
-      }
-      var activeGroup = this.getActiveGroup();
-      if (activeGroup) {
-        activeGroup.setObjectsCoords();
-        activeGroup.set('isMoving', false);
-        this._setCursor(this.defaultCursor);
-      }
-
-      // clear selection
-      this._groupSelector = null;
-      this.renderAll();
-
-      this._setCursorFromEvent(e, target);
-
-      var _this = this;
-      setTimeout(function () {
-        _this._setCursorFromEvent(e, target);
-      }, 50);
-
-      this.fire('mouse:up', { target: target, e: e });
-      target && target.fire('mouseup', { e: e });
-    },
-
-    /**
-     * Method that defines the actions when mouse is clic ked on canvas.
-     * The method inits the currentTransform parameters and renders all the
-     * canvas so the current image can be placed on the top canvas and the rest
-     * in on the container one.
-     * @private
-     * @param {Event} e Event object fired on mousedown
-     */
-    __onMouseDown: function (e) {
-
-      var pointer;
-
-      // accept only left clicks
-      var isLeftClick  = 'which' in e ? e.which === 1 : e.button === 1;
-      if (!isLeftClick && !fabric.isTouchSupported) return;
-
-      if (this.isDrawingMode) {
-        pointer = this.getPointer(e);
-        this._isCurrentlyDrawing = true;
-        this.discardActiveObject().renderAll();
-        if (this.clipTo) {
-          fabric.util.clipContext(this, this.contextTop);
-        }
-        this.freeDrawingBrush.onMouseDown(pointer);
-        this.fire('mouse:down', { e: e });
-        return;
-      }
-
-      // ignore if some object is being transformed at this moment
-      if (this._currentTransform) return;
-
-      var target = this.findTarget(e), corner;
-      pointer = this.getPointer(e);
-
-      if (this._shouldClearSelection(e, target)) {
-        this._groupSelector = {
-          ex: pointer.x,
-          ey: pointer.y,
-          top: 0,
-          left: 0
-        };
-        this.deactivateAllWithDispatch();
-        target && target.selectable && this.setActiveObject(target, e);
-      }
-      else if (this._shouldHandleGroupLogic(e, target)) {
-        this._handleGroupLogic(e, target);
-        target = this.getActiveGroup();
-      }
-      else {
-        // determine if it's a drag or rotate case
-        this.stateful && target.saveState();
-
-        if ((corner = target._findTargetCorner(e, this._offset))) {
-          this.onBeforeScaleRotate(target);
-        }
-
-        if (target !== this.getActiveGroup() && target !== this.getActiveObject()) {
-          this.deactivateAll();
-          this.setActiveObject(target, e);
-        }
-
-        this._setupCurrentTransform(e, target);
-      }
-      // we must renderAll so that active image is placed on the top canvas
-      this.renderAll();
-
-      this.fire('mouse:down', { target: target, e: e });
-      target && target.fire('mousedown', { e: e });
-
-      if (corner === 'mtr' && target.centerTransform) {
-
-        this._previousOriginX = this._currentTransform.target.originX;
-        this._previousOriginY = this._currentTransform.target.originY;
-
-        var center = target.getCenterPoint();
-
-        target.originX = 'center';
-        target.originY = 'center';
-
-        target.left = center.x;
-        target.top = center.y;
-
-        this._currentTransform.left = target.left;
-        this._currentTransform.top = target.top;
-      }
-    },
-
-    /**
-      * Method that defines the actions when mouse is hovering the canvas.
-      * The currentTransform parameter will definde whether the user is rotating/scaling/translating
-      * an image or neither of them (only hovering). A group selection is also possible and would cancel
-      * all any other type of action.
-      * In case of an image transformation only the top canvas will be rendered.
-      * @private
-      * @param {Event} e Event object fired on mousemove
-      */
-    __onMouseMove: function (e) {
-
-      var target, pointer;
-
-      if (this.isDrawingMode) {
-        if (this._isCurrentlyDrawing) {
-          pointer = this.getPointer(e);
-          this.freeDrawingBrush.onMouseMove(pointer);
-        }
-        this.upperCanvasEl.style.cursor = this.freeDrawingCursor;
-        this.fire('mouse:move', { e: e });
-        return;
-      }
-
-      var groupSelector = this._groupSelector;
-
-      // We initially clicked in an empty area, so we draw a box for multiple selection.
-      if (groupSelector) {
-        pointer = getPointer(e, this.upperCanvasEl);
-
-        groupSelector.left = pointer.x - this._offset.left - groupSelector.ex;
-        groupSelector.top = pointer.y - this._offset.top - groupSelector.ey;
-        this.renderTop();
-      }
-      else if (!this._currentTransform) {
-
-        // alias style to elimintate unnecessary lookup
-        var style = this.upperCanvasEl.style;
-
-        // Here we are hovering the canvas then we will determine
-        // what part of the pictures we are hovering to change the caret symbol.
-        // We won't do that while dragging or rotating in order to improve the
-        // performance.
-        target = this.findTarget(e);
-
-        if (!target || target && !target.selectable) {
-          // no target - set default cursor
-          style.cursor = this.defaultCursor;
-        }
-        else {
-          // set proper cursor
-          this._setCursorFromEvent(e, target);
-        }
-      }
-      else {
-        // object is being transformed (scaled/rotated/moved/etc.)
-        pointer = getPointer(e, this.upperCanvasEl);
-
-        var x = pointer.x,
-            y = pointer.y,
-            reset = false,
-            transform = this._currentTransform;
-
-        target = transform.target;
-        target.isMoving = true;
-
-        if ((transform.action === 'scale' || transform.action === 'scaleX' || transform.action === 'scaleY') &&
-           // Switch from a normal resize to center-based
-           ((e.altKey && (transform.originX !== 'center' || transform.originY !== 'center')) ||
-           // Switch from center-based resize to normal one
-           (!e.altKey && transform.originX === 'center' && transform.originY === 'center'))
-        ) {
-          this._resetCurrentTransform(e);
-          reset = true;
-        }
-
-        if (transform.action === 'rotate') {
-          this._rotateObject(x, y);
-
-          this.fire('object:rotating', { target: target, e: e });
-          target.fire('rotating', { e: e });
-        }
-        else if (transform.action === 'scale') {
-          // rotate object only if shift key is not pressed
-          // and if it is not a group we are transforming
-          if ((e.shiftKey || this.uniScaleTransform) && !target.get('lockUniScaling')) {
-            transform.currentAction = 'scale';
-            this._scaleObject(x, y);
-          }
-          else {
-            // Switch from a normal resize to proportional
-            if (!reset && transform.currentAction === 'scale') {
-              this._resetCurrentTransform(e);
-            }
-
-            transform.currentAction = 'scaleEqually';
-            this._scaleObject(x, y, 'equally');
-          }
-
-          this.fire('object:scaling', { target: target, e: e });
-          target.fire('scaling', { e: e });
-        }
-        else if (transform.action === 'scaleX') {
-          this._scaleObject(x, y, 'x');
-
-          this.fire('object:scaling', { target: target, e: e});
-          target.fire('scaling', { e: e });
-        }
-        else if (transform.action === 'scaleY') {
-          this._scaleObject(x, y, 'y');
-
-          this.fire('object:scaling', { target: target, e: e});
-          target.fire('scaling', { e: e });
-        }
-        else {
-          this._translateObject(x, y);
-
-          this.fire('object:moving', { target: target, e: e});
-          target.fire('moving', { e: e });
-          this._setCursor(this.moveCursor);
-        }
-
-        this.renderAll();
-      }
-      this.fire('mouse:move', { target: target, e: e });
-      target && target.fire('mousemove', { e: e });
-    },
     /**
      * Sets the cursor depending on where the canvas is being hovered.
      * Note: very buggy in Opera
@@ -12436,6 +12124,8 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
      */
     lockUniScaling:           false,
 
+    borderRectColor:          '#000000',
+
     /**
      * List of properties to consider when checking if state
      * of an object is changed (fabric.Object#hasStateChanged)
@@ -12835,12 +12525,28 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
       return this;
     },
 
+    drawBorderRect : function(ctx){
+      if(!this.oCoords){return;}
+      if( this.oCoords.tl.x &&
+          this.oCoords.tl.y &&
+          (this.oCoords.br.x-this.oCoords.tl.x) > 0 &&
+          (this.oCoords.br.y-this.oCoords.tl.y) > 0){
+        ctx.strokeStyle = this.borderRectColor;
+        ctx.strokeRect(
+          this.oCoords.tl.x,
+          this.oCoords.tl.y,
+          this.oCoords.br.x-this.oCoords.tl.x,
+          this.oCoords.br.y-this.oCoords.tl.y
+        );
+      }
+    },
+
     /**
      * Renders an object on a specified context
      * @param {CanvasRenderingContext2D} ctx context to render on
      * @param {Boolean} [noTransform] When true, context is not transformed
      */
-    render: function(ctx, noTransform) {
+    render: function(ctx, topctx) {
       // do not render if width/height are zeros or object is not visible
       //if (this.width === 0 || this.height === 0 || !this.visible) return;
       if (!this.visible) return;
@@ -12850,6 +12556,9 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
       ctx.save();
 
       this.transform(ctx);
+      if(topctx){
+        this.drawBorderRect(topctx);
+      }
 
       if (this.stroke) {
         ctx.lineWidth = this.strokeWidth;
@@ -12872,18 +12581,10 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
 
       this._setShadow(ctx);
       this.clipTo && fabric.util.clipContext(this, ctx);
-      this._render(ctx, noTransform);
+      this._render(ctx, topctx);
       this.clipTo && ctx.restore();
       this._removeShadow(ctx);
 
-      if (this.active && !noTransform) {
-        this.drawBorders(ctx);
-        this.drawControls(ctx);
-      }
-			ctx.beginPath();
-			ctx.arc(0, 0, 2, 0, 2 * Math.PI, false);
-			ctx.fillStyle = 'green';
-			ctx.fill();
 			this.untransform(ctx);
     },
 
@@ -13817,7 +13518,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
 
     processPositionEvent : function(e,eventname){
       if(!(this.visible && this.opacity>0)){
-        return;
+        return -1; //void function returning -1 for child classes
       }
       if(this.containsPoint(e)){
         this.fire(eventname,{e:e});
@@ -14593,6 +14294,10 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
         this._setWidthHeight();
       }
       return this;
+    },
+
+    _extraTransformations: function(){
+      return [1,0,0,1,-((this.width / 2)),-((this.height / 2))];
     },
 
     /**
@@ -15958,6 +15663,8 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
      */
     type: 'path',
 
+    borderRectColor:      '#FFFF00',
+
     /**
      * Constructor
      * @param {Array|String} path Path data (sequence of coordinates and corresponding "command" tokens)
@@ -16035,11 +15742,16 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
       };
     },
 
+    _extraTransformations: function(){
+      return [1,0,0,1,-((this.width / 2) + this.pathOffset.x),-((this.height / 2) + this.pathOffset.y)];
+    },
+
     /**
      * @private
      * @param {CanvasRenderingContext2D} ctx context to render path on
      */
     _render: function(ctx) {
+      ctx.translate(-((this.width / 2) + this.pathOffset.x),-((this.height / 2) + this.pathOffset.y));
       ctx.beginPath();
       var current, // current instruction
           previous = null,
@@ -16051,8 +15763,8 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
           tempY,
           tempControlX,
           tempControlY,
-          l = -((this.width / 2) + this.pathOffset.x),
-          t = -((this.height / 2) + this.pathOffset.y);
+          l = 0,//-((this.width / 2) + this.pathOffset.x),
+          t = 0;//-((this.height / 2) + this.pathOffset.y);
 
       for (var i = 0, len = this.path.length; i < len; ++i) {
 
@@ -16932,6 +16644,8 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
      */
     type: 'group',
 
+    borderRectColor:          '#00FF00',
+
     /**
      * Constructor
      * @param {Object} objects Group objects
@@ -17087,7 +16801,9 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
     },
 
     processPositionEvent : function(e,eventname){
-      this.callSuper('processPositionEvent',e,eventname);
+      if(-1===this.callSuper('processPositionEvent',e,eventname)){
+        return;
+      }
       this.distributePositionEvent(e,eventname);
     },
 
@@ -17097,12 +16813,11 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
       }
     },
 
-		_render: function(ctx, noTransform){
+		_render: function(ctx, topctx){
       ctx.translate(-this.anchorX||0,-this.anchorY||0);
       for (var i = 0, len = this._objects.length; i < len; i++) {
         var object = this._objects[i];
-				object.render(ctx);
-				//console.log(object.id,object.oCoords);
+				object.render(ctx, topctx);
 			}
       this._calcBounds();
 		},
@@ -17307,6 +17022,8 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
      * @default
      */
     type: 'image',
+
+    borderRectColor:          '#FF0000',
 
     /**
      * Constructor
@@ -19205,6 +18922,8 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass(/** @lends fabric.Imag
      * @default
      */
     shadow:               null,
+
+    borderRectColor:      '#0000FF',
 
     /**
      * Constructor
