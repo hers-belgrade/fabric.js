@@ -313,7 +313,7 @@
     },
 
     processPositionEvent : function(e,eventname){
-      if(!(this.visible && this.opacity>0)){
+      if((!(this.visible && this.opacity>0))||(this.display==='none')){
         return -1; //void function returning -1 for child classes
       }
       if(this.containsPoint(e)){
