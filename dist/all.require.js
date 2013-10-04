@@ -3677,7 +3677,7 @@ fabric.Collection = {
 (function(global) {
     "use strict";
     var fabric = global.fabric || (global.fabric = {}), extend = fabric.util.object.extend, capitalize = fabric.util.string.capitalize, clone = fabric.util.object.clone, toFixed = fabric.util.toFixed, multiplyTransformMatrices = fabric.util.multiplyTransformMatrices;
-    fabric.SHARED_ATTRIBUTES = [ "id", "transform", "fill", "fill-opacity", "fill-rule", "opacity", "stroke", "stroke-dasharray", "stroke-linecap", "stroke-linejoin", "stroke-miterlimit", "stroke-opacity", "stroke-width" ];
+    fabric.SHARED_ATTRIBUTES = [ "id", "transform", "fill", "fill-opacity", "fill-rule", "opacity", "stroke", "stroke-dasharray", "stroke-linecap", "stroke-linejoin", "stroke-miterlimit", "stroke-opacity", "stroke-width", "inkscape:label", "inkscape:groupmode" ];
     var attributesMap = {
         id: "id",
         "fill-opacity": "fillOpacity",
@@ -3699,7 +3699,9 @@ fabric.Collection = {
         cy: "top",
         y: "top",
         transform: "transformMatrix",
-        "text-align": "textAlign"
+        "text-align": "textAlign",
+        "inkscape:label": "inkscapeLabel",
+        "inkscape:groupmode": "inkscapeGroupMode"
     };
     var colorAttributes = {
         stroke: "strokeOpacity",
@@ -4048,9 +4050,9 @@ fabric.Collection = {
                 var worker = function(i) {
                     var gc = childNodes[i];
                     if (!gc) {
-                        var ga = fabric.parseAttributes(g, fabric.SHARED_ATTRIBUTES.concat([ "x", "y" ]));
-                        ga.width = ga.width || options.width;
-                        ga.height = ga.height || options.height;
+                        var ga = fabric.parseAttributes(g, fabric.SHARED_ATTRIBUTES.concat([ "x", "y", "width", "height" ]));
+                        ga.width = ga.width;
+                        ga.height = ga.height;
                         var group = new fabric.Group(gelements, ga);
                         for (var i in gmap) {
                             group[i] = gmap[i];
