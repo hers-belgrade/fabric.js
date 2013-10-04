@@ -18,7 +18,7 @@
 		"id",
     "transform",
     "fill", "fill-opacity", "fill-rule",
-    "opacity",
+    "opacity","display",
     "stroke", "stroke-dasharray", "stroke-linecap", "stroke-linejoin", "stroke-miterlimit", "stroke-opacity", "stroke-width",
 		"inkscape:label",
 		"inkscape:groupmode",
@@ -680,9 +680,9 @@
         var worker = function(i){
           var gc = childNodes[i];
           if(!gc){
-            var ga = fabric.parseAttributes(g,fabric.SHARED_ATTRIBUTES.concat(['x','y','width','height']));
-            ga.width = ga.width;// || options.width;
-            ga.height = ga.height;// || options.height;
+            var ga = fabric.parseAttributes(g,fabric.SHARED_ATTRIBUTES.concat(['x','y']));//,'width','height']));
+            ga.width = ga.width || options.width;
+            ga.height = ga.height || options.height;
             var group = new fabric.Group(gelements,ga);
             for(var i in gmap){
               group[i] = gmap[i];

@@ -770,6 +770,7 @@
       //if (this.width === 0 || this.height === 0 || !this.visible) return;
       if (!this.visible) return;
       if (this.opacity===0) return;
+      if (this.display==='none') return;
 
       ctx.save();
 

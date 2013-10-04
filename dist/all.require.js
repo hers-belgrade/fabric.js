@@ -2429,38 +2429,6 @@ fabric.Collection = {
         for (var i = this._objects.length - 1; i >= 0; i--) {
             this._objects[i].processPositionEvent(e, eventname);
         }
-        return;
-        if (this.skipTargetFind) return;
-        var target;
-        var possibleTargets = [];
-        for (var i = this._objects.length; i--; ) {
-            var object = this._objects[i];
-            if (this._objects[i] && this._objects[i].visible && this._objects[i].containsPoint(e)) {
-                if (this.perPixelTargetFind || this._objects[i].perPixelTargetFind) {
-                    possibleTargets[possibleTargets.length] = this._objects[i];
-                } else {
-                    target = this._objects[i];
-                    this.relatedTarget = target;
-                    if (target.findTarget) {
-                        var targetcandidate = target.findTarget(e);
-                        if (targetcandidate) {
-                            target = targetcandidate;
-                        }
-                    }
-                    break;
-                }
-            }
-        }
-        for (var j = 0, len = possibleTargets.length; j < len; j++) {
-            pointer = this.getPointer(e);
-            var isTransparent = this.isTargetTransparent(possibleTargets[j], pointer.x, pointer.y);
-            if (!isTransparent) {
-                target = possibleTargets[j];
-                this.relatedTarget = target;
-                break;
-            }
-        }
-        return target;
     }
 };
 
@@ -3677,7 +3645,7 @@ fabric.Collection = {
 (function(global) {
     "use strict";
     var fabric = global.fabric || (global.fabric = {}), extend = fabric.util.object.extend, capitalize = fabric.util.string.capitalize, clone = fabric.util.object.clone, toFixed = fabric.util.toFixed, multiplyTransformMatrices = fabric.util.multiplyTransformMatrices;
-    fabric.SHARED_ATTRIBUTES = [ "id", "transform", "fill", "fill-opacity", "fill-rule", "opacity", "stroke", "stroke-dasharray", "stroke-linecap", "stroke-linejoin", "stroke-miterlimit", "stroke-opacity", "stroke-width", "inkscape:label", "inkscape:groupmode" ];
+    fabric.SHARED_ATTRIBUTES = [ "id", "transform", "fill", "fill-opacity", "fill-rule", "opacity", "display", "stroke", "stroke-dasharray", "stroke-linecap", "stroke-linejoin", "stroke-miterlimit", "stroke-opacity", "stroke-width", "inkscape:label", "inkscape:groupmode" ];
     var attributesMap = {
         id: "id",
         "fill-opacity": "fillOpacity",
@@ -4050,9 +4018,9 @@ fabric.Collection = {
                 var worker = function(i) {
                     var gc = childNodes[i];
                     if (!gc) {
-                        var ga = fabric.parseAttributes(g, fabric.SHARED_ATTRIBUTES.concat([ "x", "y", "width", "height" ]));
-                        ga.width = ga.width;
-                        ga.height = ga.height;
+                        var ga = fabric.parseAttributes(g, fabric.SHARED_ATTRIBUTES.concat([ "x", "y" ]));
+                        ga.width = ga.width || options.width;
+                        ga.height = ga.height || options.height;
                         var group = new fabric.Group(gelements, ga);
                         for (var i in gmap) {
                             group[i] = gmap[i];
@@ -7098,6 +7066,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
         render: function(ctx, noTransform) {
             if (!this.visible) return;
             if (this.opacity === 0) return;
+            if (this.display === "none") return;
             ctx.save();
             this.transform(ctx);
             if (this.stroke) {

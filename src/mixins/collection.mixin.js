@@ -143,48 +143,6 @@ fabric.Collection = {
     for (var i = this._objects.length-1; i>=0; i--){
       this._objects[i].processPositionEvent(e,eventname);
     }
-    return;
-		if (this.skipTargetFind) return;
-
-		var target;
-		// then check all of the objects
-		// Cache all targets where their bounding box contains point.
-		var possibleTargets = [];
-
-		for (var i = this._objects.length; i--; ) {
-      var object = this._objects[i];
-			if (this._objects[i] &&
-					this._objects[i].visible &&
-          this._objects[i].containsPoint(e)) {
-
-				if (this.perPixelTargetFind || this._objects[i].perPixelTargetFind) {
-					possibleTargets[possibleTargets.length] = this._objects[i];
-				}
-				else {
-					target = this._objects[i];
-					this.relatedTarget = target;
-					if(target.findTarget){
-            var targetcandidate = target.findTarget(e);
-            if(targetcandidate){
-              target = targetcandidate;
-            }
-          }
-					break;
-				}
-			}
-		}
-		//console.log('target',target,possibleTargets.length,'possibleTargets');
-		for (var j = 0, len = possibleTargets.length; j < len; j++) {
-			pointer = this.getPointer(e);
-			var isTransparent = this.isTargetTransparent(possibleTargets[j], pointer.x, pointer.y);
-			if (!isTransparent) {
-				target = possibleTargets[j];
-				this.relatedTarget = target;
-				break;
-			}
-		}
-
-		return target;
 	},
 
 };
