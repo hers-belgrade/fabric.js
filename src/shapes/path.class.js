@@ -60,6 +60,8 @@
      */
     type: 'path',
 
+    borderRectColor:      '#FFFF00',
+
     /**
      * Constructor
      * @param {Array|String} path Path data (sequence of coordinates and corresponding "command" tokens)
@@ -137,11 +139,16 @@
       };
     },
 
+    _extraTransformations: function(){
+      return [1,0,0,1,-((this.width / 2) + this.pathOffset.x),-((this.height / 2) + this.pathOffset.y)];
+    },
+
     /**
      * @private
      * @param {CanvasRenderingContext2D} ctx context to render path on
      */
     _render: function(ctx) {
+      ctx.translate(-((this.width / 2) + this.pathOffset.x),-((this.height / 2) + this.pathOffset.y));
       ctx.beginPath();
       var current, // current instruction
           previous = null,
@@ -153,8 +160,8 @@
           tempY,
           tempControlX,
           tempControlY,
-          l = -((this.width / 2) + this.pathOffset.x),
-          t = -((this.height / 2) + this.pathOffset.y);
+          l = 0,//-((this.width / 2) + this.pathOffset.x),
+          t = 0;//-((this.height / 2) + this.pathOffset.y);
 
       for (var i = 0, len = this.path.length; i < len; ++i) {
 

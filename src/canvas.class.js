@@ -157,7 +157,6 @@
      */
     _initInteractive: function() {
       this._currentTransform = null;
-      this._groupSelector = null;
       this._initWrapperElement();
       this._createUpperCanvas();
       this._initEvents();

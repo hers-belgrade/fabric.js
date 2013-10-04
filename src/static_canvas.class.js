@@ -513,9 +513,9 @@
      */
     renderAll: function (allOnTop) {
 
-      var canvasToDrawOn = this[(allOnTop === true && this.interactive) ? 'contextTop' : 'contextContainer'];
+      var canvasToDrawOn = this.contextContainer;
 
-      if (this.contextTop && this.selection && !this._groupSelector) {
+      if (this.contextTop && this.selection) {
         this.clearContext(this.contextTop);
       }
 
@@ -545,29 +545,12 @@
         this._drawBackroundImage(canvasToDrawOn);
       }
 
-      var activeGroup = this.getActiveGroup();
       canvasToDrawOn._currentTransform = [1,0,0,1,0,0];
+      var debugctx = this.debug ? this.contextTop : null;
       for (var i = 0, length = this._objects.length; i < length; ++i) {
-        if (!activeGroup ||
-            (activeGroup && this._objects[i] && !activeGroup.contains(this._objects[i]))) {
-          this._draw(canvasToDrawOn, this._objects[i]);
-        }
+        var object = this._objects[i];
+        object.render(canvasToDrawOn,debugctx);
       }
-
-      /*
-      // delegate rendering to group selection (if one exists)
-      if (activeGroup) {
-        //Store objects in group preserving order, then replace
-        var sortedObjects = [];
-        this.forEachObject(function (object) {
-            if (activeGroup.contains(object)) {
-                sortedObjects.push(object);
-            }
-        });
-        activeGroup._set('objects', sortedObjects);
-        this._draw(canvasToDrawOn, activeGroup);
-      }
-      */
 
       if (this.clipTo) {
         canvasToDrawOn.restore();
@@ -613,7 +596,7 @@
       this.clearContext(ctx);
 
       // we render the top context - last object
-      if (this.selection && this._groupSelector) {
+      if (this.selection) {
         this._drawSelection();
       }
 

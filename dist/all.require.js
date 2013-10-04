@@ -5308,8 +5308,8 @@ fabric.Pattern = fabric.util.createClass({
             return this;
         },
         renderAll: function(allOnTop) {
-            var canvasToDrawOn = this[allOnTop === true && this.interactive ? "contextTop" : "contextContainer"];
-            if (this.contextTop && this.selection && !this._groupSelector) {
+            var canvasToDrawOn = this.contextContainer;
+            if (this.contextTop && this.selection) {
                 this.clearContext(this.contextTop);
             }
             if (!allOnTop) {
@@ -5326,12 +5326,11 @@ fabric.Pattern = fabric.util.createClass({
             if (typeof this.backgroundImage === "object") {
                 this._drawBackroundImage(canvasToDrawOn);
             }
-            var activeGroup = this.getActiveGroup();
             canvasToDrawOn._currentTransform = [ 1, 0, 0, 1, 0, 0 ];
+            var debugctx = this.debug ? this.contextTop : null;
             for (var i = 0, length = this._objects.length; i < length; ++i) {
-                if (!activeGroup || activeGroup && this._objects[i] && !activeGroup.contains(this._objects[i])) {
-                    this._draw(canvasToDrawOn, this._objects[i]);
-                }
+                var object = this._objects[i];
+                object.render(canvasToDrawOn, debugctx);
             }
             if (this.clipTo) {
                 canvasToDrawOn.restore();
@@ -5358,7 +5357,7 @@ fabric.Pattern = fabric.util.createClass({
         renderTop: function() {
             var ctx = this.contextTop || this.contextContainer;
             this.clearContext(ctx);
-            if (this.selection && this._groupSelector) {
+            if (this.selection) {
                 this._drawSelection();
             }
             var activeGroup = this.getActiveGroup();
@@ -5966,7 +5965,6 @@ fabric.PatternBrush = fabric.util.createClass(fabric.PencilBrush, {
         skipTargetFind: false,
         _initInteractive: function() {
             this._currentTransform = null;
-            this._groupSelector = null;
             this._initWrapperElement();
             this._createUpperCanvas();
             this._initEvents();
@@ -6231,12 +6229,14 @@ fabric.PatternBrush = fabric.util.createClass(fabric.PencilBrush, {
             if (fabric.isTouchSupported) {
                 canvasPositionEventListener(this, "touchstart", "mouse:down");
                 canvasPositionEventListener(this, "touchmove", "mouse:move");
+                canvasPositionEventListener(this, "touchend", "mouse:up");
                 if (typeof Event !== "undefined" && "add" in Event) {
                     Event.add(this.upperCanvasEl, "gesture", this._onGesture);
                 }
             } else {
                 canvasPositionEventListener(this, "mousedown", "mouse:down");
                 canvasPositionEventListener(this, "mousemove", "mouse:move");
+                canvasPositionEventListener(this, "mouseup", "mouse:up");
             }
         },
         dispose: function() {
@@ -6245,12 +6245,14 @@ fabric.PatternBrush = fabric.util.createClass(fabric.PencilBrush, {
             if (fabric.isTouchSupported) {
                 this._positionEventDisposers["touchstart"]();
                 this._positionEventDisposers["touchmove"]();
+                this._positionEventDisposers["touchend"]();
                 if (typeof Event !== "undefined" && "remove" in Event) {
                     Event.remove(this.upperCanvasEl, "gesture", this._onGesture);
                 }
             } else {
                 this._positionEventDisposers["mousedown"]();
                 this._positionEventDisposers["mousemove"]();
+                this._positionEventDisposers["mouseup"]();
                 removeListener(fabric.window, "resize", this._onResize);
             }
             return this;
@@ -6279,233 +6281,6 @@ fabric.PatternBrush = fabric.util.createClass(fabric.PencilBrush, {
         },
         _onResize: function() {
             this.calcOffset();
-        },
-        __onMouseUp: function(e) {
-            var target;
-            if (this.isDrawingMode && this._isCurrentlyDrawing) {
-                this._isCurrentlyDrawing = false;
-                if (this.clipTo) {
-                    this.contextTop.restore();
-                }
-                this.freeDrawingBrush.onMouseUp();
-                this.fire("mouse:up", {
-                    e: e
-                });
-                return;
-            }
-            if (this._currentTransform) {
-                var transform = this._currentTransform;
-                target = transform.target;
-                if (target._scaling) {
-                    target._scaling = false;
-                }
-                target.isMoving = false;
-                target.setCoords();
-                if (this.stateful && target.hasStateChanged()) {
-                    this.fire("object:modified", {
-                        target: target
-                    });
-                    target.fire("modified");
-                }
-                if (this._previousOriginX && this._previousOriginY) {
-                    var originPoint = target.translateToOriginPoint(target.getCenterPoint(), this._previousOriginX, this._previousOriginY);
-                    target.originX = this._previousOriginX;
-                    target.originY = this._previousOriginY;
-                    target.left = originPoint.x;
-                    target.top = originPoint.y;
-                    this._previousOriginX = null;
-                    this._previousOriginY = null;
-                }
-            }
-            this._currentTransform = null;
-            if (this.selection && this._groupSelector) {
-                this._findSelectedObjects(e);
-            }
-            var activeGroup = this.getActiveGroup();
-            if (activeGroup) {
-                activeGroup.setObjectsCoords();
-                activeGroup.set("isMoving", false);
-                this._setCursor(this.defaultCursor);
-            }
-            this._groupSelector = null;
-            this.renderAll();
-            this._setCursorFromEvent(e, target);
-            var _this = this;
-            setTimeout(function() {
-                _this._setCursorFromEvent(e, target);
-            }, 50);
-            this.fire("mouse:up", {
-                target: target,
-                e: e
-            });
-            target && target.fire("mouseup", {
-                e: e
-            });
-        },
-        __onMouseDown: function(e) {
-            var pointer;
-            var isLeftClick = "which" in e ? e.which === 1 : e.button === 1;
-            if (!isLeftClick && !fabric.isTouchSupported) return;
-            if (this.isDrawingMode) {
-                pointer = this.getPointer(e);
-                this._isCurrentlyDrawing = true;
-                this.discardActiveObject().renderAll();
-                if (this.clipTo) {
-                    fabric.util.clipContext(this, this.contextTop);
-                }
-                this.freeDrawingBrush.onMouseDown(pointer);
-                this.fire("mouse:down", {
-                    e: e
-                });
-                return;
-            }
-            if (this._currentTransform) return;
-            var target = this.findTarget(e), corner;
-            pointer = this.getPointer(e);
-            if (this._shouldClearSelection(e, target)) {
-                this._groupSelector = {
-                    ex: pointer.x,
-                    ey: pointer.y,
-                    top: 0,
-                    left: 0
-                };
-                this.deactivateAllWithDispatch();
-                target && target.selectable && this.setActiveObject(target, e);
-            } else if (this._shouldHandleGroupLogic(e, target)) {
-                this._handleGroupLogic(e, target);
-                target = this.getActiveGroup();
-            } else {
-                this.stateful && target.saveState();
-                if (corner = target._findTargetCorner(e, this._offset)) {
-                    this.onBeforeScaleRotate(target);
-                }
-                if (target !== this.getActiveGroup() && target !== this.getActiveObject()) {
-                    this.deactivateAll();
-                    this.setActiveObject(target, e);
-                }
-                this._setupCurrentTransform(e, target);
-            }
-            this.renderAll();
-            this.fire("mouse:down", {
-                target: target,
-                e: e
-            });
-            target && target.fire("mousedown", {
-                e: e
-            });
-            if (corner === "mtr" && target.centerTransform) {
-                this._previousOriginX = this._currentTransform.target.originX;
-                this._previousOriginY = this._currentTransform.target.originY;
-                var center = target.getCenterPoint();
-                target.originX = "center";
-                target.originY = "center";
-                target.left = center.x;
-                target.top = center.y;
-                this._currentTransform.left = target.left;
-                this._currentTransform.top = target.top;
-            }
-        },
-        __onMouseMove: function(e) {
-            var target, pointer;
-            if (this.isDrawingMode) {
-                if (this._isCurrentlyDrawing) {
-                    pointer = this.getPointer(e);
-                    this.freeDrawingBrush.onMouseMove(pointer);
-                }
-                this.upperCanvasEl.style.cursor = this.freeDrawingCursor;
-                this.fire("mouse:move", {
-                    e: e
-                });
-                return;
-            }
-            var groupSelector = this._groupSelector;
-            if (groupSelector) {
-                pointer = getPointer(e, this.upperCanvasEl);
-                groupSelector.left = pointer.x - this._offset.left - groupSelector.ex;
-                groupSelector.top = pointer.y - this._offset.top - groupSelector.ey;
-                this.renderTop();
-            } else if (!this._currentTransform) {
-                var style = this.upperCanvasEl.style;
-                target = this.findTarget(e);
-                if (!target || target && !target.selectable) {
-                    style.cursor = this.defaultCursor;
-                } else {
-                    this._setCursorFromEvent(e, target);
-                }
-            } else {
-                pointer = getPointer(e, this.upperCanvasEl);
-                var x = pointer.x, y = pointer.y, reset = false, transform = this._currentTransform;
-                target = transform.target;
-                target.isMoving = true;
-                if ((transform.action === "scale" || transform.action === "scaleX" || transform.action === "scaleY") && (e.altKey && (transform.originX !== "center" || transform.originY !== "center") || !e.altKey && transform.originX === "center" && transform.originY === "center")) {
-                    this._resetCurrentTransform(e);
-                    reset = true;
-                }
-                if (transform.action === "rotate") {
-                    this._rotateObject(x, y);
-                    this.fire("object:rotating", {
-                        target: target,
-                        e: e
-                    });
-                    target.fire("rotating", {
-                        e: e
-                    });
-                } else if (transform.action === "scale") {
-                    if ((e.shiftKey || this.uniScaleTransform) && !target.get("lockUniScaling")) {
-                        transform.currentAction = "scale";
-                        this._scaleObject(x, y);
-                    } else {
-                        if (!reset && transform.currentAction === "scale") {
-                            this._resetCurrentTransform(e);
-                        }
-                        transform.currentAction = "scaleEqually";
-                        this._scaleObject(x, y, "equally");
-                    }
-                    this.fire("object:scaling", {
-                        target: target,
-                        e: e
-                    });
-                    target.fire("scaling", {
-                        e: e
-                    });
-                } else if (transform.action === "scaleX") {
-                    this._scaleObject(x, y, "x");
-                    this.fire("object:scaling", {
-                        target: target,
-                        e: e
-                    });
-                    target.fire("scaling", {
-                        e: e
-                    });
-                } else if (transform.action === "scaleY") {
-                    this._scaleObject(x, y, "y");
-                    this.fire("object:scaling", {
-                        target: target,
-                        e: e
-                    });
-                    target.fire("scaling", {
-                        e: e
-                    });
-                } else {
-                    this._translateObject(x, y);
-                    this.fire("object:moving", {
-                        target: target,
-                        e: e
-                    });
-                    target.fire("moving", {
-                        e: e
-                    });
-                    this._setCursor(this.moveCursor);
-                }
-                this.renderAll();
-            }
-            this.fire("mouse:move", {
-                target: target,
-                e: e
-            });
-            target && target.fire("mousemove", {
-                e: e
-            });
         },
         _setCursorFromEvent: function(e, target) {
             var s = this.upperCanvasEl.style;
@@ -6815,6 +6590,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
         lockScalingX: false,
         lockScalingY: false,
         lockUniScaling: false,
+        borderRectColor: "#000000",
         stateProperties: ("top left width height scaleX scaleY flipX flipY originX originY transformMatrix " + "stroke strokeWidth strokeDashArray strokeLineCap strokeLineJoin strokeMiterLimit " + "angle opacity fill fillRule overlayFill shadow clipTo visible").split(" "),
         initialize: function(options) {
             if (options) {
@@ -7063,12 +6839,24 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
             this.sourcePath = value;
             return this;
         },
-        render: function(ctx, noTransform) {
+        drawBorderRect: function(ctx) {
+            if (!this.oCoords) {
+                return;
+            }
+            if (this.oCoords.tl.x && this.oCoords.tl.y && this.oCoords.br.x - this.oCoords.tl.x > 0 && this.oCoords.br.y - this.oCoords.tl.y > 0) {
+                ctx.strokeStyle = this.borderRectColor;
+                ctx.strokeRect(this.oCoords.tl.x, this.oCoords.tl.y, this.oCoords.br.x - this.oCoords.tl.x, this.oCoords.br.y - this.oCoords.tl.y);
+            }
+        },
+        render: function(ctx, topctx) {
             if (!this.visible) return;
             if (this.opacity === 0) return;
             if (this.display === "none") return;
             ctx.save();
             this.transform(ctx);
+            if (topctx) {
+                this.drawBorderRect(topctx);
+            }
             if (this.stroke) {
                 ctx.lineWidth = this.strokeWidth;
                 ctx.lineCap = this.strokeLineCap;
@@ -7083,17 +6871,9 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
             }
             this._setShadow(ctx);
             this.clipTo && fabric.util.clipContext(this, ctx);
-            this._render(ctx, noTransform);
+            this._render(ctx, topctx);
             this.clipTo && ctx.restore();
             this._removeShadow(ctx);
-            if (this.active && !noTransform) {
-                this.drawBorders(ctx);
-                this.drawControls(ctx);
-            }
-            ctx.beginPath();
-            ctx.arc(0, 0, 2, 0, 2 * Math.PI, false);
-            ctx.fillStyle = "green";
-            ctx.fill();
             this.untransform(ctx);
         },
         _setShadow: function(ctx) {
@@ -7564,7 +7344,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
         },
         processPositionEvent: function(e, eventname) {
             if (!(this.visible && this.opacity > 0)) {
-                return;
+                return -1;
             }
             if (this.containsPoint(e)) {
                 this.fire(eventname, {
@@ -8034,6 +7814,9 @@ fabric.util.object.extend(fabric.Object.prototype, {
                 this._setWidthHeight();
             }
             return this;
+        },
+        _extraTransformations: function() {
+            return [ 1, 0, 0, 1, -(this.width / 2), -(this.height / 2) ];
         },
         _render: function(ctx) {
             ctx.beginPath();
@@ -8594,6 +8377,7 @@ fabric.util.object.extend(fabric.Object.prototype, {
     }
     fabric.Path = fabric.util.createClass(fabric.Object, {
         type: "path",
+        borderRectColor: "#FFFF00",
         initialize: function(path, options) {
             options = options || {};
             this.setOptions(options);
@@ -8637,9 +8421,13 @@ fabric.util.object.extend(fabric.Object.prototype, {
                 y: this.top - origTop - this.height / 2
             };
         },
+        _extraTransformations: function() {
+            return [ 1, 0, 0, 1, -(this.width / 2 + this.pathOffset.x), -(this.height / 2 + this.pathOffset.y) ];
+        },
         _render: function(ctx) {
+            ctx.translate(-(this.width / 2 + this.pathOffset.x), -(this.height / 2 + this.pathOffset.y));
             ctx.beginPath();
-            var current, previous = null, x = 0, y = 0, controlX = 0, controlY = 0, tempX, tempY, tempControlX, tempControlY, l = -(this.width / 2 + this.pathOffset.x), t = -(this.height / 2 + this.pathOffset.y);
+            var current, previous = null, x = 0, y = 0, controlX = 0, controlY = 0, tempX, tempY, tempControlX, tempControlY, l = 0, t = 0;
             for (var i = 0, len = this.path.length; i < len; ++i) {
                 current = this.path[i];
                 switch (current[0]) {
@@ -9099,6 +8887,7 @@ fabric.util.object.extend(fabric.Object.prototype, {
     };
     fabric.Group = fabric.util.createClass(fabric.Object, fabric.Collection, {
         type: "group",
+        borderRectColor: "#00FF00",
         initialize: function(objects, options) {
             options = options || {};
             this._objects = objects || [];
@@ -9181,7 +8970,9 @@ fabric.util.object.extend(fabric.Object.prototype, {
             this.setCoords();
         },
         processPositionEvent: function(e, eventname) {
-            this.callSuper("processPositionEvent", e, eventname);
+            if (-1 === this.callSuper("processPositionEvent", e, eventname)) {
+                return;
+            }
             this.distributePositionEvent(e, eventname);
         },
         _extraTransformations: function() {
@@ -9189,11 +8980,11 @@ fabric.util.object.extend(fabric.Object.prototype, {
                 return [ 1, 0, 0, 1, -this.anchorX, -this.anchorY ];
             }
         },
-        _render: function(ctx, noTransform) {
+        _render: function(ctx, topctx) {
             ctx.translate(-this.anchorX || 0, -this.anchorY || 0);
             for (var i = 0, len = this._objects.length; i < len; i++) {
                 var object = this._objects[i];
-                object.render(ctx);
+                object.render(ctx, topctx);
             }
             this._calcBounds();
         },
@@ -9287,6 +9078,7 @@ fabric.util.object.extend(fabric.Object.prototype, {
     }
     fabric.Image = fabric.util.createClass(fabric.Object, {
         type: "image",
+        borderRectColor: "#FF0000",
         initialize: function(element, options) {
             options || (options = {});
             this.filters = [];
@@ -10113,6 +9905,7 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass({
         stateProperties: stateProperties,
         stroke: null,
         shadow: null,
+        borderRectColor: "#0000FF",
         initialize: function(text, options) {
             options = options || {};
             this.text = text;

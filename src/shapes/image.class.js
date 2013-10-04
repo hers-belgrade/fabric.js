@@ -27,6 +27,8 @@
      */
     type: 'image',
 
+    borderRectColor:          '#FF0000',
+
     /**
      * Constructor
      * @param {HTMLImageElement | String} element Image element

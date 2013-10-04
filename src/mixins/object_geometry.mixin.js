@@ -314,7 +314,7 @@
 
     processPositionEvent : function(e,eventname){
       if(!(this.visible && this.opacity>0)){
-        return;
+        return -1; //void function returning -1 for child classes
       }
       if(this.containsPoint(e)){
         this.fire(eventname,{e:e});
