@@ -3645,7 +3645,7 @@ fabric.Collection = {
 (function(global) {
     "use strict";
     var fabric = global.fabric || (global.fabric = {}), extend = fabric.util.object.extend, capitalize = fabric.util.string.capitalize, clone = fabric.util.object.clone, toFixed = fabric.util.toFixed, multiplyTransformMatrices = fabric.util.multiplyTransformMatrices;
-    fabric.SHARED_ATTRIBUTES = [ "id", "transform", "fill", "fill-opacity", "fill-rule", "opacity", "display", "stroke", "stroke-dasharray", "stroke-linecap", "stroke-linejoin", "stroke-miterlimit", "stroke-opacity", "stroke-width" ];
+    fabric.SHARED_ATTRIBUTES = [ "id", "transform", "fill", "fill-opacity", "fill-rule", "opacity", "display", "stroke", "stroke-dasharray", "stroke-linecap", "stroke-linejoin", "stroke-miterlimit", "stroke-opacity", "stroke-width", "inkscape:label", "inkscape:groupmode" ];
     var attributesMap = {
         id: "id",
         "fill-opacity": "fillOpacity",
@@ -3667,7 +3667,9 @@ fabric.Collection = {
         cy: "top",
         y: "top",
         transform: "transformMatrix",
-        "text-align": "textAlign"
+        "text-align": "textAlign",
+        "inkscape:label": "inkscapeLabel",
+        "inkscape:groupmode": "inkscapeGroupMode"
     };
     var colorAttributes = {
         stroke: "strokeOpacity",
