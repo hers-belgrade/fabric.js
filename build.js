@@ -146,6 +146,7 @@ var filesToInclude = [
 
   //ifSpecifiedInclude('animation', 'src/util/animate.js'),
   'src/util/animate.js',
+	'src/util/font.js',
   ifSpecifiedInclude('easing', 'src/util/anim_ease.js'),
 
   ifSpecifiedInclude('parser', 'src/parser.js'),
@@ -198,6 +199,7 @@ var filesToInclude = [
   'src/shapes/group.class.js',
   'src/shapes/image.class.js',
   'src/shapes/sprite.class.js',
+	'src/shapes/use.class.js',
 
   ifSpecifiedInclude('object_straightening', 'src/mixins/object_straightening.mixin.js'),
 

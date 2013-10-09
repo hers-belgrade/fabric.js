@@ -79,6 +79,55 @@ fabric.Collection = {
     return this;
   },
 
+	forEachObjectRecursive: function(callback, context, patharray) {
+		patharray = patharray || [];
+    var objects = this.getObjects(),
+        i = objects.length;
+    while (i--) {
+			var obj = objects[i];
+			if(obj.forEachObjectRecursive){
+				var feoret = obj.forEachObjectRecursive(callback,context,patharray.concat([obj]));
+				if(feoret){
+					return feoret;
+				}
+			}
+      var cbret = callback.call(context, obj, i, objects, patharray);
+			if(cbret){
+				return cbret;
+			}
+    }
+    return;
+	},
+
+	forEachObjectRecursiveAsync: function(callback, context, patharray) {
+		patharray = patharray || [];
+    var objects = this.getObjects(),
+        i = objects.length;
+    while (i--) {
+			var obj = objects[i];
+			if(obj.forEachObjectRecursive){
+				var feoret = obj.forEachObjectRecursive(callback,context,patharray.concat([obj]));
+				if(feoret){
+					return feoret;
+				}
+			}
+      var cbret = callback.call(context, obj, i, objects, patharray);
+			if(cbret){
+				return cbret;
+			}
+    }
+    return;
+	},
+
+	getObjectById: function(id){
+		var getidcb = function(obj, index, objects, patharray){
+			if(obj && obj.id === id){
+				return obj;
+			}
+		};
+		return this.forEachObjectRecursive(getidcb,this);
+	},
+
   /**
    * Returns object at specified index
    * @param {Number} index

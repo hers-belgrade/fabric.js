@@ -66,21 +66,21 @@
      * @type Number
      * @default
      */
-    fontSize:             40,
+    //fontSize:             40,
 
     /**
      * Font weight (e.g. bold, normal, 400, 600, 800)
      * @type Number
      * @default
      */
-    fontWeight:           'normal',
+    //fontWeight:           'normal',
 
     /**
      * Font family
      * @type String
      * @default
      */
-    fontFamily:           'Times New Roman',
+    //fontFamily:           'Times New Roman',
 
     /**
      * Text decoration Possible values: "", "underline", "overline" or "line-through".
@@ -101,7 +101,7 @@
      * @type String
      * @default
      */
-    fontStyle:            '',
+    //fontStyle:            '',
 
     /**
      * Line height
@@ -242,7 +242,6 @@
      * @param {CanvasRenderingContext2D} ctx Context to render on
      */
     _renderViaNative: function(ctx) {
-
       ctx.save();
 
       this._setTextStyles(ctx);
@@ -251,6 +250,7 @@
 
       this.width = this._getTextWidth(ctx, textLines);
       this.height = this._getTextHeight(ctx, textLines);
+			//console.log('TEXT WIDTH ', this.width, 'TEXT HEIGHT', this.height);
 
       this._renderTextBackground(ctx, textLines);
 
@@ -282,7 +282,7 @@
         var lineLeftOffset = this._getLineLeftOffset(lineWidth);
 
         this._boundaries.push({
-          height: this.fontSize * this.lineHeight,
+          height: this._getFontSize() * this.lineHeight,
           width: lineWidth,
           left: lineLeftOffset
         });
@@ -294,24 +294,14 @@
      * @param {CanvasRenderingContext2D} ctx Context to render on
      */
     _setTextStyles: function(ctx) {
-      if (this.fill) {
-        ctx.fillStyle = this.fill.toLive
-            ? this.fill.toLive(ctx)
-            : this.fill;
-      }
-      if (this.stroke) {
-        ctx.lineWidth = this.strokeWidth;
-        ctx.lineCap = this.strokeLineCap;
-        ctx.lineJoin = this.strokeLineJoin;
-        ctx.miterLimit = this.strokeMiterLimit;
-        ctx.strokeStyle = this.stroke.toLive
-          ? this.stroke.toLive(ctx)
-          : this.stroke;
-      }
+			fabric.util.setTextFillAndStroke(ctx, this);
       ctx.textBaseline = 'alphabetic';
       ctx.textAlign = this.textAlign;
-      ctx.font = this._getFontDeclaration();
+			this.font_params = fabric.util.setFontDeclaration(ctx, this);
     },
+		_getFontSize : function () {
+			return (this.font_params) ? this.font_params.fontSize : 0;
+		},
 
     /**
      * @private
@@ -320,7 +310,7 @@
      * @return {Number} Height of fabric.Text object
      */
     _getTextHeight: function(ctx, textLines) {
-      return this.fontSize * textLines.length * this.lineHeight;
+      return this._getFontSize() * textLines.length * this.lineHeight;
     },
 
     /**
@@ -501,7 +491,7 @@
     },
 
     _getHeightOfLine: function() {
-      return this.fontSize * this.lineHeight;
+      return this._getFontSize() * this.lineHeight;
     },
 
     /**
@@ -554,9 +544,9 @@
 
           ctx.fillRect(
             this._getLeftOffset() + lineLeftOffset,
-            this._getTopOffset() + (i * this.fontSize * this.lineHeight),
+            this._getTopOffset() + (i * this._getFontSize() * this.lineHeight),
             lineWidth,
-            this.fontSize * this.lineHeight
+            this._getFontSize() * this.lineHeight
           );
         }
       }
@@ -617,48 +607,17 @@
         }
       }
 
-      var fractionOfFontSize = this.fontSize / 4;
+      var fractionOfFontSize = this._getFontSize() / 4;
 
       if (this.textDecoration.indexOf('underline') > -1) {
-        renderLinesAtOffset(this.fontSize * this.lineHeight);
+        renderLinesAtOffset(this._getFontSize() * this.lineHeight);
       }
       if (this.textDecoration.indexOf('line-through') > -1) {
-        renderLinesAtOffset(this.fontSize * this.lineHeight - fractionOfFontSize);
+        renderLinesAtOffset(this._getFontSize() * this.lineHeight - fractionOfFontSize);
       }
       if (this.textDecoration.indexOf('overline') > -1) {
         renderLinesAtOffset(fractionOfFontSize);
       }
-    },
-
-    /**
-     * @private
-     */
-    _getFontDeclaration: function() {
-      return [
-        // node-canvas needs "weight style", while browsers need "style weight"
-        (fabric.isLikelyNode ? this.fontWeight : this.fontStyle),
-        (fabric.isLikelyNode ? this.fontStyle : this.fontWeight),
-        this.fontSize + 'px',
-        (fabric.isLikelyNode ? ('"' + this.fontFamily + '"') : this.fontFamily)
-      ].join(' ');
-    },
-
-    /**
-     * Renders text instance on a specified context
-     * @param {CanvasRenderingContext2D} ctx Context to render on
-     * @param {Boolean} [noTransform] When true, context is not transformed
-     */
-    render1: function(ctx, noTransform) {
-      // do not render if object is not visible
-      if (!this.visible) return;
-
-      ctx.save();
-      this._render(ctx);
-      if (!noTransform && this.active) {
-        this.drawBorders(ctx);
-        this.drawControls(ctx);
-      }
-      ctx.restore();
     },
 
     /**
@@ -691,13 +650,13 @@
     toSVG: function() {
       var textLines = this.text.split(/\r?\n/),
           lineTopOffset = this.useNative
-            ? this.fontSize * this.lineHeight
+            ? this._getFontSize() * this.lineHeight
             : (-this._fontAscent - ((this._fontAscent / 5) * this.lineHeight)),
 
           textLeftOffset = -(this.width/2),
           textTopOffset = this.useNative
-            ? this.fontSize - 1
-            : (this.height/2) - (textLines.length * this.fontSize) - this._totalLineHeight,
+            ? this._getFontSize() - 1
+            : (this.height/2) - (textLines.length * this._getFontSize()) - this._totalLineHeight,
 
           textAndBg = this._getSVGTextAndBg(lineTopOffset, textLeftOffset, textLines),
           shadowSpans = this._getSVGShadows(lineTopOffset, textLines);
@@ -710,7 +669,7 @@
           textAndBg.textBgRects.join(''),
           '<text ',
             (this.fontFamily ? 'font-family="' + this.fontFamily.replace(/"/g,'\'') + '" ': ''),
-            (this.fontSize ? 'font-size="' + this.fontSize + '" ': ''),
+            (this._getFontSize() ? 'font-size="' + this._getFontSize() + '" ': ''),
             (this.fontStyle ? 'font-style="' + this.fontStyle + '" ': ''),
             (this.fontWeight ? 'font-weight="' + this.fontWeight + '" ': ''),
             (this.textDecoration ? 'text-decoration="' + this.textDecoration + '" ': ''),

@@ -209,6 +209,8 @@
     },
 
 		_render: function(ctx, topctx){
+			fabric.util.setTextFillAndStroke(ctx, this);
+			fabric.util.setFontDeclaration(ctx, this);
       ctx.translate(-this.anchorX||0,-this.anchorY||0);
       for (var i = 0, len = this._objects.length; i < len; i++) {
         var object = this._objects[i];

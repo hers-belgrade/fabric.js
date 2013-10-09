@@ -117,5 +117,4 @@
     setWorkingDirectory : setWorkingDirectory,
     loadResources : loadResources
   });
-
 })(typeof exports !== 'undefined' ? exports : this);
