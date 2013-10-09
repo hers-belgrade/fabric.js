@@ -6860,9 +6860,7 @@ fabric.util.string = {
         };
         return worker;
       })(g.childNodes,cb);
-      processElement(0, function () {
-				console.log('Parsing document done');
-			});
+      processElement(0);
     };
 
     // http://www.w3.org/TR/SVG/coords.html#ViewBoxAttribute
@@ -6931,7 +6929,6 @@ fabric.util.string = {
       var hierarchy = {};
       var elements = [];
       processGroup(hierarchy,elements,doc,options,function(){
-				if (options.style) console.log('PROCESS GROUP STYLE ...', options.style);
         fabric.documentParsingTime = new Date() - startTime;
         if(callback) {
 					var anchor = elements[0].getObjectById('anchor');
@@ -6947,10 +6944,14 @@ fabric.util.string = {
 								objlink = objlink.slice(1);
 							}
 							var objtouse = this.getObjectById(objlink);
+							//console.log('resolving',objlink,objtouse ? 'successfully' : 'unsuccefully','to',obj.randomID);
 							if(objtouse){
-								objtouse.clone(function(instance){
-									obj.usedObj = instance;
-								});
+								objtouse.clone((function(_obj){
+									var obj = _obj;
+									return function(instance){
+										obj.setUsedObj(instance);
+									}
+								})(obj));
 							}
 						}
 					},elements[0]);
@@ -14538,9 +14539,10 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
    * @param {Object} object Object to create an instance from
    * @return {fabric.Line} instance of fabric.Line
    */
-  fabric.Line.fromObject = function(object) {
-    var points = [object.x1, object.y1, object.x2, object.y2];
-    return new fabric.Line(points, object);
+  fabric.Line.fromObject = function(object, callback) {
+		var ret = new fabric.Line([object.x1, object.y1, object.x2, object.y2], object);
+		('function' === typeof(callback)) && callback(ret);
+    return ret;
   };
 
 })(typeof exports !== 'undefined' ? exports : this);
@@ -14735,8 +14737,10 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
    * @param {Object} object Object to create an instance from
    * @return {Object} Instance of fabric.Circle
    */
-  fabric.Circle.fromObject = function(object) {
-    return new fabric.Circle(object);
+  fabric.Circle.fromObject = function(object, callback) {
+		var ret = new fabric.Circle(object);
+		('function' === typeof(callback)) && callback(ret);
+    return ret;
   };
 
 })(typeof exports !== 'undefined' ? exports : this);
@@ -14860,7 +14864,9 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
    * @return {Object} instance of Canvas.Triangle
    */
   fabric.Triangle.fromObject = function(object) {
-    return new fabric.Triangle(object);
+		var ret = new fabric.Triangle(object);
+		('function' === typeof(callback)) && callback(ret);
+    return ret;
   };
 
 })(typeof exports !== 'undefined' ? exports : this);
@@ -15045,7 +15051,9 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
    * @return {fabric.Ellipse}
    */
   fabric.Ellipse.fromObject = function(object) {
-    return new fabric.Ellipse(object);
+		var ret = new fabric.Ellipse(object);
+		('function' === typeof(callback)) && callback(ret);
+    return ret;
   };
 
 })(typeof exports !== 'undefined' ? exports : this);
@@ -15143,25 +15151,14 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
     _render: function(ctx) {
       var rx = this.rx || 0,
           ry = this.ry || 0,
-          x = -this.width / 2,
-          y = -this.height / 2,
+          x = 0, //-this.width / 2,
+          y = 0, //-this.height / 2,
           w = this.width,
           h = this.height,
           isInPathGroup = this.group && this.group.type !== 'group';
 
       ctx.beginPath();
       ctx.globalAlpha = isInPathGroup ? (ctx.globalAlpha * this.opacity) : this.opacity;
-
-      if (this.transformMatrix && isInPathGroup) {
-        ctx.translate(
-          this.width / 2 + this.x,
-          this.height / 2 + this.y);
-      }
-      if (!this.transformMatrix && isInPathGroup) {
-        ctx.translate(
-          -this.group.width / 2 + this.width / 2 + this.x,
-          -this.group.height / 2 + this.height / 2 + this.y);
-      }
 
       var isRounded = rx !== 0 || ry !== 0;
 
@@ -15185,8 +15182,8 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
      * @param ctx {CanvasRenderingContext2D} context to render on
      */
     _renderDashedStroke: function(ctx) {
-     var x = -this.width/2,
-         y = -this.height/2,
+     var x = 0, //-this.width/2,
+         y = 0, //-this.height/2,
          w = this.width,
          h = this.height;
 
@@ -15203,13 +15200,7 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
      * @private
      */
     _normalizeLeftTopProperties: function(parsedAttributes) {
-      if ('left' in parsedAttributes) {
-        this.set('left', parsedAttributes.left + this.getWidth() / 2);
-      }
       this.set('x', parsedAttributes.left || 0);
-      if ('top' in parsedAttributes) {
-        this.set('top', parsedAttributes.top + this.getHeight() / 2);
-      }
       this.set('y', parsedAttributes.top || 0);
       return this;
     },
@@ -15238,7 +15229,7 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
 
       markup.push(
         '<rect ',
-          'x="', (-1 * this.width / 2), '" y="', (-1 * this.height / 2),
+          'x="0" y="0"',
           '" rx="', this.get('rx'), '" ry="', this.get('ry'),
           '" width="', this.width, '" height="', this.height,
           '" style="', this.getSvgStyles(),
@@ -15307,8 +15298,10 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
    * @param object {Object} object to create an instance from
    * @return {Object} instance of fabric.Rect
    */
-  fabric.Rect.fromObject = function(object) {
-    return new fabric.Rect(object);
+  fabric.Rect.fromObject = function(object,callback) {
+		var ret = new fabric.Rect(object);
+		('function' === typeof(callback)) && callback(ret);
+    return ret;
   };
 
 })(typeof exports !== 'undefined' ? exports : this);
@@ -15487,8 +15480,9 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
    * @return {fabric.Polyline} Instance of fabric.Polyline
    */
   fabric.Polyline.fromObject = function(object) {
-    var points = object.points;
-    return new fabric.Polyline(points, object, true);
+		var ret = new fabric.Polyline(object.points, object, true);
+		('function' === typeof(callback)) && callback(ret);
+    return ret;
   };
 
 })(typeof exports !== 'undefined' ? exports : this);
@@ -15696,7 +15690,9 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
    * @return {fabric.Polygon} Instance of fabric.Polygon
    */
   fabric.Polygon.fromObject = function(object) {
-    return new fabric.Polygon(object.points, object, true);
+		var ret = new fabric.Polygon(object.points, object, true);
+		('function' === typeof(callback)) && callback(ret);
+    return ret;
   };
 
 })(typeof exports !== 'undefined' ? exports : this);
@@ -17081,7 +17077,7 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
   fabric.Group.fromObject = function(object, callback) {
     fabric.util.enlivenObjects(object.objects, function(enlivenedObjects) {
       delete object.objects;
-      callback && callback(new fabric.Group(enlivenedObjects, object));
+			('function' === typeof(callback)) && callback(new fabric.Group(enlivenedObjects, object));
     });
   };
 
@@ -17526,7 +17522,7 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
         object.filters = filters || [ ];
 
         var instance = new fabric.Image(img, object);
-        callback && callback(instance);
+				('function' === typeof(callback)) && callback(instance);
         img = img.onload = img.onerror = null;
       });
     };
@@ -17655,7 +17651,7 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
    * @param {Function} [callback] Callback to invoke when an image instance is created
    */
   fabric.Sprite.fromObject = function(object, callback) {
-    callback && callback(new fabric.Sprite(object.element,object));
+		('function' === typeof(callback)) && callback(new fabric.Sprite(object.element,object));
   };
 
 
@@ -17773,6 +17769,7 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
 		type:'use',
     borderRectColor:'#FFFF00',
 		initialize: function (element,options) {
+			this.randomID = Math.floor(Math.random()*5000000);
       options = options || { };
 
 			var usedobjFromObj = options.usedobjFromObj;
@@ -17796,13 +17793,39 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
 			this._element = element;
 			this._originalElement = element;
 		},
+		setUsedObj: function(object) {
+			//console.log('setting used obj',object.id,'on',this.randomID,'with',this.clonesWaitingForUsedObj ? this.clonesWaitingForUsedObj.length : 'no', 'waiters');
+			this.usedObj = object;
+			var waiters = this.clonesWaitingForUsedObj;
+			if(!waiters){return;}
+			delete this.clonesWaitingForUsedObj;
+			function resolveWaiter(){
+				if(!waiters.length){
+					return;
+				}
+				object.clone(function(cloneinst){
+					var wf = waiters.shift();
+					wf(cloneinst);
+					resolveWaiter();
+				});
+			};
+			resolveWaiter();
+		},
 		toObject: function (propertiesToInclude) {
-      var ret = extend(this.callSuper('toObject', propertiesToInclude), {
-        'xlink:href': this['xlink:href']
-      });
+      var ret = this.callSuper('toObject', propertiesToInclude);
 			if(this.usedObj){
 				ret.usedobjObj = this.usedObj.toObject();
 				ret.usedobjFromObj = this.usedObj.constructor.fromObject;
+			}else{
+				var hook = function(usedobj){
+					if(ret.takeObj){
+						ret.takeObj(usedobj);
+					}
+				};
+				ret.usedObjHook = hook;
+				this.clonesWaitingForUsedObj = this.clonesWaitingForUsedObj || [];
+				this.clonesWaitingForUsedObj.push(hook);
+				//console.log(this.randomID,'has no usedobj still, but got a link',this['xlink:href'],this.clonesWaitingForUsedObj.length,'waiters');
 			}
 			return ret;
 		},
@@ -17818,9 +17841,8 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
 		_render: function (ctx,topctx) {
 			if(this.usedObj){
 				this.usedObj.render(ctx,topctx);
-				console.log(this.original_options);
 			}else{
-				console.log('used object missing ...', this.id, 'should be '+this['xlink:href']);
+				//console.log('used object missing ...', this.id, 'should be '+this['xlink:href'], this.randomID);
 			}
 		}
 	});
@@ -17839,7 +17861,11 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
 				inst.usedObj = usedobjinst;
 				callback(inst);
 			});
-		}else{
+		}else if(object.usedObjHook){
+			object.takeObj = function(usedobj){
+				delete object.takeObj;
+				inst.setUsedObj(usedobj);
+			};
 			callback(inst);
 		}
 	};
@@ -19852,7 +19878,9 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass(/** @lends fabric.Imag
    * @return {fabric.Text} Instance of fabric.Text
    */
   fabric.Text.fromObject = function(object) {
-    return new fabric.Text(object.text, clone(object));
+		var ret = new fabric.Text(object.text, clone(object));
+		('function' === typeof(callback)) && callback(ret);
+    return ret;
   };
 
   fabric.util.createAccessors(fabric.Text);

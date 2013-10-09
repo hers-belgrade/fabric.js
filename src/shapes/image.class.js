@@ -427,7 +427,7 @@
         object.filters = filters || [ ];
 
         var instance = new fabric.Image(img, object);
-        callback && callback(instance);
+				('function' === typeof(callback)) && callback(instance);
         img = img.onload = img.onerror = null;
       });
     };

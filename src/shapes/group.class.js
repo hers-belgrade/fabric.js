@@ -375,7 +375,7 @@
   fabric.Group.fromObject = function(object, callback) {
     fabric.util.enlivenObjects(object.objects, function(enlivenedObjects) {
       delete object.objects;
-      callback && callback(new fabric.Group(enlivenedObjects, object));
+			('function' === typeof(callback)) && callback(new fabric.Group(enlivenedObjects, object));
     });
   };
 

@@ -200,7 +200,9 @@
    * @return {fabric.Polygon} Instance of fabric.Polygon
    */
   fabric.Polygon.fromObject = function(object) {
-    return new fabric.Polygon(object.points, object, true);
+		var ret = new fabric.Polygon(object.points, object, true);
+		('function' === typeof(callback)) && callback(ret);
+    return ret;
   };
 
 })(typeof exports !== 'undefined' ? exports : this);

@@ -4141,9 +4141,7 @@ fabric.Collection = {
                 };
                 return worker;
             }(g.childNodes, cb);
-            processElement(0, function() {
-                console.log("Parsing document done");
-            });
+            processElement(0);
         }
         var reNum = "(?:[-+]?\\d+(?:\\.\\d+)?(?:e[-+]?\\d+)?)";
         var reViewBoxAttrValue = new RegExp("^" + "\\s*(" + reNum + "+)\\s*,?" + "\\s*(" + reNum + "+)\\s*,?" + "\\s*(" + reNum + "+)\\s*,?" + "\\s*(" + reNum + "+)\\s*" + "$");
@@ -4179,7 +4177,6 @@ fabric.Collection = {
             var hierarchy = {};
             var elements = [];
             processGroup(hierarchy, elements, doc, options, function() {
-                if (options.style) console.log("PROCESS GROUP STYLE ...", options.style);
                 fabric.documentParsingTime = new Date() - startTime;
                 if (callback) {
                     var anchor = elements[0].getObjectById("anchor");
@@ -4198,9 +4195,12 @@ fabric.Collection = {
                             }
                             var objtouse = this.getObjectById(objlink);
                             if (objtouse) {
-                                objtouse.clone(function(instance) {
-                                    obj.usedObj = instance;
-                                });
+                                objtouse.clone(function(_obj) {
+                                    var obj = _obj;
+                                    return function(instance) {
+                                        obj.setUsedObj(instance);
+                                    };
+                                }(obj));
                             }
                         }
                     }, elements[0]);
@@ -7947,9 +7947,10 @@ fabric.util.object.extend(fabric.Object.prototype, {
         var points = [ parsedAttributes.x1 || 0, parsedAttributes.y1 || 0, parsedAttributes.x2 || 0, parsedAttributes.y2 || 0 ];
         return new fabric.Line(points, extend(parsedAttributes, options));
     };
-    fabric.Line.fromObject = function(object) {
-        var points = [ object.x1, object.y1, object.x2, object.y2 ];
-        return new fabric.Line(points, object);
+    fabric.Line.fromObject = function(object, callback) {
+        var ret = new fabric.Line([ object.x1, object.y1, object.x2, object.y2 ], object);
+        "function" === typeof callback && callback(ret);
+        return ret;
     };
 })(typeof exports !== "undefined" ? exports : this);
 
@@ -8027,8 +8028,10 @@ fabric.util.object.extend(fabric.Object.prototype, {
     function isValidRadius(attributes) {
         return "radius" in attributes && attributes.radius > 0;
     }
-    fabric.Circle.fromObject = function(object) {
-        return new fabric.Circle(object);
+    fabric.Circle.fromObject = function(object, callback) {
+        var ret = new fabric.Circle(object);
+        "function" === typeof callback && callback(ret);
+        return ret;
     };
 })(typeof exports !== "undefined" ? exports : this);
 
@@ -8075,7 +8078,9 @@ fabric.util.object.extend(fabric.Object.prototype, {
         }
     });
     fabric.Triangle.fromObject = function(object) {
-        return new fabric.Triangle(object);
+        var ret = new fabric.Triangle(object);
+        "function" === typeof callback && callback(ret);
+        return ret;
     };
 })(typeof exports !== "undefined" ? exports : this);
 
@@ -8148,7 +8153,9 @@ fabric.util.object.extend(fabric.Object.prototype, {
         return ellipse;
     };
     fabric.Ellipse.fromObject = function(object) {
-        return new fabric.Ellipse(object);
+        var ret = new fabric.Ellipse(object);
+        "function" === typeof callback && callback(ret);
+        return ret;
     };
 })(typeof exports !== "undefined" ? exports : this);
 
@@ -8183,15 +8190,9 @@ fabric.util.object.extend(fabric.Object.prototype, {
             }
         },
         _render: function(ctx) {
-            var rx = this.rx || 0, ry = this.ry || 0, x = -this.width / 2, y = -this.height / 2, w = this.width, h = this.height, isInPathGroup = this.group && this.group.type !== "group";
+            var rx = this.rx || 0, ry = this.ry || 0, x = 0, y = 0, w = this.width, h = this.height, isInPathGroup = this.group && this.group.type !== "group";
             ctx.beginPath();
             ctx.globalAlpha = isInPathGroup ? ctx.globalAlpha * this.opacity : this.opacity;
-            if (this.transformMatrix && isInPathGroup) {
-                ctx.translate(this.width / 2 + this.x, this.height / 2 + this.y);
-            }
-            if (!this.transformMatrix && isInPathGroup) {
-                ctx.translate(-this.group.width / 2 + this.width / 2 + this.x, -this.group.height / 2 + this.height / 2 + this.y);
-            }
             var isRounded = rx !== 0 || ry !== 0;
             ctx.moveTo(x + rx, y);
             ctx.lineTo(x + w - rx, y);
@@ -8207,7 +8208,7 @@ fabric.util.object.extend(fabric.Object.prototype, {
             this._renderStroke(ctx);
         },
         _renderDashedStroke: function(ctx) {
-            var x = -this.width / 2, y = -this.height / 2, w = this.width, h = this.height;
+            var x = 0, y = 0, w = this.width, h = this.height;
             ctx.beginPath();
             fabric.util.drawDashedLine(ctx, x, y, x + w, y, this.strokeDashArray);
             fabric.util.drawDashedLine(ctx, x + w, y, x + w, y + h, this.strokeDashArray);
@@ -8216,13 +8217,7 @@ fabric.util.object.extend(fabric.Object.prototype, {
             ctx.closePath();
         },
         _normalizeLeftTopProperties: function(parsedAttributes) {
-            if ("left" in parsedAttributes) {
-                this.set("left", parsedAttributes.left + this.getWidth() / 2);
-            }
             this.set("x", parsedAttributes.left || 0);
-            if ("top" in parsedAttributes) {
-                this.set("top", parsedAttributes.top + this.getHeight() / 2);
-            }
             this.set("y", parsedAttributes.top || 0);
             return this;
         },
@@ -8236,7 +8231,7 @@ fabric.util.object.extend(fabric.Object.prototype, {
         },
         toSVG: function() {
             var markup = this._createBaseSVGMarkup();
-            markup.push("<rect ", 'x="', -1 * this.width / 2, '" y="', -1 * this.height / 2, '" rx="', this.get("rx"), '" ry="', this.get("ry"), '" width="', this.width, '" height="', this.height, '" style="', this.getSvgStyles(), '" transform="', this.getSvgTransform(), '"/>');
+            markup.push("<rect ", 'x="0" y="0"', '" rx="', this.get("rx"), '" ry="', this.get("ry"), '" width="', this.width, '" height="', this.height, '" style="', this.getSvgStyles(), '" transform="', this.getSvgTransform(), '"/>');
             return markup.join("");
         },
         complexity: function() {
@@ -8259,8 +8254,10 @@ fabric.util.object.extend(fabric.Object.prototype, {
         rect._normalizeLeftTopProperties(parsedAttributes);
         return rect;
     };
-    fabric.Rect.fromObject = function(object) {
-        return new fabric.Rect(object);
+    fabric.Rect.fromObject = function(object, callback) {
+        var ret = new fabric.Rect(object);
+        "function" === typeof callback && callback(ret);
+        return ret;
     };
 })(typeof exports !== "undefined" ? exports : this);
 
@@ -8333,8 +8330,9 @@ fabric.util.object.extend(fabric.Object.prototype, {
         return new fabric.Polyline(points, fabric.util.object.extend(parsedAttributes, options), true);
     };
     fabric.Polyline.fromObject = function(object) {
-        var points = object.points;
-        return new fabric.Polyline(points, object, true);
+        var ret = new fabric.Polyline(object.points, object, true);
+        "function" === typeof callback && callback(ret);
+        return ret;
     };
 })(typeof exports !== "undefined" ? exports : this);
 
@@ -8423,7 +8421,9 @@ fabric.util.object.extend(fabric.Object.prototype, {
         return new fabric.Polygon(points, extend(parsedAttributes, options), true);
     };
     fabric.Polygon.fromObject = function(object) {
-        return new fabric.Polygon(object.points, object, true);
+        var ret = new fabric.Polygon(object.points, object, true);
+        "function" === typeof callback && callback(ret);
+        return ret;
     };
 })(typeof exports !== "undefined" ? exports : this);
 
@@ -9144,7 +9144,7 @@ fabric.util.object.extend(fabric.Object.prototype, {
     fabric.Group.fromObject = function(object, callback) {
         fabric.util.enlivenObjects(object.objects, function(enlivenedObjects) {
             delete object.objects;
-            callback && callback(new fabric.Group(enlivenedObjects, object));
+            "function" === typeof callback && callback(new fabric.Group(enlivenedObjects, object));
         });
     };
     fabric.Group.async = true;
@@ -9351,7 +9351,7 @@ fabric.util.object.extend(fabric.Object.prototype, {
             fabric.Image.prototype._initFilters.call(object, object, function(filters) {
                 object.filters = filters || [];
                 var instance = new fabric.Image(img, object);
-                callback && callback(instance);
+                "function" === typeof callback && callback(instance);
                 img = img.onload = img.onerror = null;
             });
         };
@@ -9406,7 +9406,7 @@ fabric.util.object.extend(fabric.Object.prototype, {
         }
     });
     fabric.Sprite.fromObject = function(object, callback) {
-        callback && callback(new fabric.Sprite(object.element, object));
+        "function" === typeof callback && callback(new fabric.Sprite(object.element, object));
     };
     fabric.StateableSprite = fabric.util.createClass(fabric.Sprite, {
         type: "StateableSprite",
@@ -9501,6 +9501,7 @@ fabric.util.object.extend(fabric.Object.prototype, {
         type: "use",
         borderRectColor: "#FFFF00",
         initialize: function(element, options) {
+            this.randomID = Math.floor(Math.random() * 5e6);
             options = options || {};
             var usedobjFromObj = options.usedobjFromObj;
             var usedobjObj = options.usedobjObj;
@@ -9521,13 +9522,39 @@ fabric.util.object.extend(fabric.Object.prototype, {
             this._element = element;
             this._originalElement = element;
         },
+        setUsedObj: function(object) {
+            this.usedObj = object;
+            var waiters = this.clonesWaitingForUsedObj;
+            if (!waiters) {
+                return;
+            }
+            delete this.clonesWaitingForUsedObj;
+            function resolveWaiter() {
+                if (!waiters.length) {
+                    return;
+                }
+                object.clone(function(cloneinst) {
+                    var wf = waiters.shift();
+                    wf(cloneinst);
+                    resolveWaiter();
+                });
+            }
+            resolveWaiter();
+        },
         toObject: function(propertiesToInclude) {
-            var ret = extend(this.callSuper("toObject", propertiesToInclude), {
-                "xlink:href": this["xlink:href"]
-            });
+            var ret = this.callSuper("toObject", propertiesToInclude);
             if (this.usedObj) {
                 ret.usedobjObj = this.usedObj.toObject();
                 ret.usedobjFromObj = this.usedObj.constructor.fromObject;
+            } else {
+                var hook = function(usedobj) {
+                    if (ret.takeObj) {
+                        ret.takeObj(usedobj);
+                    }
+                };
+                ret.usedObjHook = hook;
+                this.clonesWaitingForUsedObj = this.clonesWaitingForUsedObj || [];
+                this.clonesWaitingForUsedObj.push(hook);
             }
             return ret;
         },
@@ -9543,10 +9570,7 @@ fabric.util.object.extend(fabric.Object.prototype, {
         _render: function(ctx, topctx) {
             if (this.usedObj) {
                 this.usedObj.render(ctx, topctx);
-                console.log(this.original_options);
-            } else {
-                console.log("used object missing ...", this.id, "should be " + this["xlink:href"]);
-            }
+            } else {}
         }
     });
     fabric.Use.ATTRIBUTE_NAMES = fabric.SHARED_ATTRIBUTES.concat("x y width height xlink:href".split(" "));
@@ -9563,7 +9587,11 @@ fabric.util.object.extend(fabric.Object.prototype, {
                 inst.usedObj = usedobjinst;
                 callback(inst);
             });
-        } else {
+        } else if (object.usedObjHook) {
+            object.takeObj = function(usedobj) {
+                delete object.takeObj;
+                inst.setUsedObj(usedobj);
+            };
             callback(inst);
         }
     };
@@ -10400,7 +10428,9 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass({
         return text;
     };
     fabric.Text.fromObject = function(object) {
-        return new fabric.Text(object.text, clone(object));
+        var ret = new fabric.Text(object.text, clone(object));
+        "function" === typeof callback && callback(ret);
+        return ret;
     };
     fabric.util.createAccessors(fabric.Text);
 })(typeof exports !== "undefined" ? exports : this);

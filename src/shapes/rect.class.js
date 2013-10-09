@@ -90,25 +90,14 @@
     _render: function(ctx) {
       var rx = this.rx || 0,
           ry = this.ry || 0,
-          x = -this.width / 2,
-          y = -this.height / 2,
+          x = 0, //-this.width / 2,
+          y = 0, //-this.height / 2,
           w = this.width,
           h = this.height,
           isInPathGroup = this.group && this.group.type !== 'group';
 
       ctx.beginPath();
       ctx.globalAlpha = isInPathGroup ? (ctx.globalAlpha * this.opacity) : this.opacity;
-
-      if (this.transformMatrix && isInPathGroup) {
-        ctx.translate(
-          this.width / 2 + this.x,
-          this.height / 2 + this.y);
-      }
-      if (!this.transformMatrix && isInPathGroup) {
-        ctx.translate(
-          -this.group.width / 2 + this.width / 2 + this.x,
-          -this.group.height / 2 + this.height / 2 + this.y);
-      }
 
       var isRounded = rx !== 0 || ry !== 0;
 
@@ -132,8 +121,8 @@
      * @param ctx {CanvasRenderingContext2D} context to render on
      */
     _renderDashedStroke: function(ctx) {
-     var x = -this.width/2,
-         y = -this.height/2,
+     var x = 0, //-this.width/2,
+         y = 0, //-this.height/2,
          w = this.width,
          h = this.height;
 
@@ -150,13 +139,7 @@
      * @private
      */
     _normalizeLeftTopProperties: function(parsedAttributes) {
-      if ('left' in parsedAttributes) {
-        this.set('left', parsedAttributes.left + this.getWidth() / 2);
-      }
       this.set('x', parsedAttributes.left || 0);
-      if ('top' in parsedAttributes) {
-        this.set('top', parsedAttributes.top + this.getHeight() / 2);
-      }
       this.set('y', parsedAttributes.top || 0);
       return this;
     },
@@ -185,7 +168,7 @@
 
       markup.push(
         '<rect ',
-          'x="', (-1 * this.width / 2), '" y="', (-1 * this.height / 2),
+          'x="0" y="0"',
           '" rx="', this.get('rx'), '" ry="', this.get('ry'),
           '" width="', this.width, '" height="', this.height,
           '" style="', this.getSvgStyles(),
@@ -254,8 +237,10 @@
    * @param object {Object} object to create an instance from
    * @return {Object} instance of fabric.Rect
    */
-  fabric.Rect.fromObject = function(object) {
-    return new fabric.Rect(object);
+  fabric.Rect.fromObject = function(object,callback) {
+		var ret = new fabric.Rect(object);
+		('function' === typeof(callback)) && callback(ret);
+    return ret;
   };
 
 })(typeof exports !== 'undefined' ? exports : this);

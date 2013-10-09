@@ -56,7 +56,7 @@
    * @param {Function} [callback] Callback to invoke when an image instance is created
    */
   fabric.Sprite.fromObject = function(object, callback) {
-    callback && callback(new fabric.Sprite(object.element,object));
+		('function' === typeof(callback)) && callback(new fabric.Sprite(object.element,object));
   };
 
 

@@ -798,7 +798,6 @@
       var hierarchy = {};
       var elements = [];
       processGroup(hierarchy,elements,doc,options,function(){
-				if (options.style) console.log('PROCESS GROUP STYLE ...', options.style);
         fabric.documentParsingTime = new Date() - startTime;
         if(callback) {
 					var anchor = elements[0].getObjectById('anchor');
@@ -814,10 +813,14 @@
 								objlink = objlink.slice(1);
 							}
 							var objtouse = this.getObjectById(objlink);
+							//console.log('resolving',objlink,objtouse ? 'successfully' : 'unsuccefully','to',obj.randomID);
 							if(objtouse){
-								objtouse.clone(function(instance){
-									obj.usedObj = instance;
-								});
+								objtouse.clone((function(_obj){
+									var obj = _obj;
+									return function(instance){
+										obj.setUsedObj(instance);
+									}
+								})(obj));
 							}
 						}
 					},elements[0]);

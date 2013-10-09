@@ -177,7 +177,9 @@
    * @return {fabric.Ellipse}
    */
   fabric.Ellipse.fromObject = function(object) {
-    return new fabric.Ellipse(object);
+		var ret = new fabric.Ellipse(object);
+		('function' === typeof(callback)) && callback(ret);
+    return ret;
   };
 
 })(typeof exports !== 'undefined' ? exports : this);

@@ -16,6 +16,7 @@
 		type:'use',
     borderRectColor:'#FFFF00',
 		initialize: function (element,options) {
+			this.randomID = Math.floor(Math.random()*5000000);
       options = options || { };
 
 			var usedobjFromObj = options.usedobjFromObj;
@@ -39,13 +40,39 @@
 			this._element = element;
 			this._originalElement = element;
 		},
+		setUsedObj: function(object) {
+			//console.log('setting used obj',object.id,'on',this.randomID,'with',this.clonesWaitingForUsedObj ? this.clonesWaitingForUsedObj.length : 'no', 'waiters');
+			this.usedObj = object;
+			var waiters = this.clonesWaitingForUsedObj;
+			if(!waiters){return;}
+			delete this.clonesWaitingForUsedObj;
+			function resolveWaiter(){
+				if(!waiters.length){
+					return;
+				}
+				object.clone(function(cloneinst){
+					var wf = waiters.shift();
+					wf(cloneinst);
+					resolveWaiter();
+				});
+			};
+			resolveWaiter();
+		},
 		toObject: function (propertiesToInclude) {
-      var ret = extend(this.callSuper('toObject', propertiesToInclude), {
-        'xlink:href': this['xlink:href']
-      });
+      var ret = this.callSuper('toObject', propertiesToInclude);
 			if(this.usedObj){
 				ret.usedobjObj = this.usedObj.toObject();
 				ret.usedobjFromObj = this.usedObj.constructor.fromObject;
+			}else{
+				var hook = function(usedobj){
+					if(ret.takeObj){
+						ret.takeObj(usedobj);
+					}
+				};
+				ret.usedObjHook = hook;
+				this.clonesWaitingForUsedObj = this.clonesWaitingForUsedObj || [];
+				this.clonesWaitingForUsedObj.push(hook);
+				//console.log(this.randomID,'has no usedobj still, but got a link',this['xlink:href'],this.clonesWaitingForUsedObj.length,'waiters');
 			}
 			return ret;
 		},
@@ -61,9 +88,8 @@
 		_render: function (ctx,topctx) {
 			if(this.usedObj){
 				this.usedObj.render(ctx,topctx);
-				console.log(this.original_options);
 			}else{
-				console.log('used object missing ...', this.id, 'should be '+this['xlink:href']);
+				//console.log('used object missing ...', this.id, 'should be '+this['xlink:href'], this.randomID);
 			}
 		}
 	});
@@ -82,7 +108,11 @@
 				inst.usedObj = usedobjinst;
 				callback(inst);
 			});
-		}else{
+		}else if(object.usedObjHook){
+			object.takeObj = function(usedobj){
+				delete object.takeObj;
+				inst.setUsedObj(usedobj);
+			};
 			callback(inst);
 		}
 	};
