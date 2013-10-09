@@ -61,14 +61,6 @@
 
       if (skipOffset) return;
 
-      var halfWidth = this.width / 2 + this.minX,
-          halfHeight = this.height / 2 + this.minY;
-
-      // change points to offset polygon into a bounding box
-      this.points.forEach(function(p) {
-        p.x -= halfWidth;
-        p.y -= halfHeight;
-      }, this);
     },
 
     /**
@@ -181,12 +173,6 @@
 
     minX = minX < 0 ? minX : 0;
     minY = minX < 0 ? minY : 0;
-
-    for (var i = 0, len = points.length; i < len; i++) {
-      // normalize coordinates, according to containing box (dimensions of which are passed via `options`)
-      points[i].x -= (options.width / 2 + minX) || 0;
-      points[i].y -= (options.height / 2 + minY) || 0;
-    }
 
     return new fabric.Polygon(points, extend(parsedAttributes, options), true);
   };

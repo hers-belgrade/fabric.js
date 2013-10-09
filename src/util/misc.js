@@ -171,7 +171,8 @@
         if (callback) {
           callback(enlivenedObjects);
         }
-      }
+      }else{
+			}
     }
 
     var enlivenedObjects = [ ],

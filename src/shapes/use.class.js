@@ -19,19 +19,7 @@
 			this.randomID = Math.floor(Math.random()*5000000);
       options = options || { };
 
-			var usedobjFromObj = options.usedobjFromObj;
-			var usedobjObj= options.usedobjObj;
-
-			delete options.usedobjFromObj;
-			delete options.usedobjObj;
-
 			this.callSuper('initialize', options);
-			if ('function' === typeof(usedobjFromObj)) {
-				var self = this;
-				usedobjFromObj(usedobjObj, function (instance) {
-					self.usedObj = instance;
-				});
-			}
 		},
 		getElement: function () {
 			return this._element;
@@ -41,7 +29,7 @@
 			this._originalElement = element;
 		},
 		setUsedObj: function(object) {
-			//console.log('setting used obj',object.id,'on',this.randomID,'with',this.clonesWaitingForUsedObj ? this.clonesWaitingForUsedObj.length : 'no', 'waiters');
+			console.log('setting used obj',object.id,'on',this.randomID,'with',this.clonesWaitingForUsedObj ? this.clonesWaitingForUsedObj.length : 'no', 'waiters');
 			this.usedObj = object;
 			var waiters = this.clonesWaitingForUsedObj;
 			if(!waiters){return;}
@@ -63,6 +51,7 @@
 			if(this.usedObj){
 				ret.usedobjObj = this.usedObj.toObject();
 				ret.usedobjFromObj = this.usedObj.constructor.fromObject;
+				ret.usedobjType = this.usedObj.type;
 			}else{
 				var hook = function(usedobj){
 					if(ret.takeObj){
@@ -89,7 +78,7 @@
 			if(this.usedObj){
 				this.usedObj.render(ctx,topctx);
 			}else{
-				//console.log('used object missing ...', this.id, 'should be '+this['xlink:href'], this.randomID);
+				console.log('used object missing ...', this.id, 'should be '+this['xlink:href'], this.randomID);
 			}
 		}
 	});
@@ -100,15 +89,26 @@
 		callback( new fabric.Use(element, extend((options ? fabric.util.object.clone(options) : { }), parsedAttributes)) );
 	};
 	fabric.Use.fromObject = function (object, callback) {
+		var extraoptions = {};
+		if(object.usedobjObj && object.usedobjFromObj){
+			extraoptions.usedobjObj=object.usedobjObj;
+			extraoptions.usedobjFromObj = object.usedobjFromObj;
+			extraoptions.usedobjType = object.usedobjType;
+			delete object.usedobjObj;
+			delete object.usedobjFromObj;
+			delete object.usedobjType;
+		}else if(object.usedObjHook){
+			extraoptions.usedObjHook = object.usedObjHook;
+			delete object.usedObjHook;
+		}
 		var inst = new fabric.Use(null,object);
-		if(inst.usedobjObj && inst.usedobjFromObj){
-			inst.usedobjFromObj(inst.usedobjObj,function(usedobjinst){
-				delete inst.usedobjObj;
-				delete inst.usedobjFromObj;
+		if(extraoptions.usedobjObj && extraoptions.usedobjFromObj){
+			console.log(object);
+			extraoptions.usedobjFromObj(extraoptions.usedobjObj,function(usedobjinst){
 				inst.usedObj = usedobjinst;
 				callback(inst);
 			});
-		}else if(object.usedObjHook){
+		}else if(extraoptions.usedObjHook){
 			object.takeObj = function(usedobj){
 				delete object.takeObj;
 				inst.setUsedObj(usedobj);

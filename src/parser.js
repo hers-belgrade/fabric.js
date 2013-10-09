@@ -813,11 +813,13 @@
 								objlink = objlink.slice(1);
 							}
 							var objtouse = this.getObjectById(objlink);
-							//console.log('resolving',objlink,objtouse ? 'successfully' : 'unsuccefully','to',obj.randomID);
+							if (objlink ===  'out_spade') console.log('bla to clone');
+							console.log('resolving',objlink,objtouse ? 'successfully' : 'unsuccefully','to',obj.randomID, objtouse.type);
 							if(objtouse){
 								objtouse.clone((function(_obj){
 									var obj = _obj;
 									return function(instance){
+										if (objlink ===  'out_spade') console.log('bla');
 										obj.setUsedObj(instance);
 									}
 								})(obj));

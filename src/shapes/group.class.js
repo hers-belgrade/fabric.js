@@ -146,9 +146,13 @@
      * @return {Object} object representation of an instance
      */
     toObject: function(propertiesToInclude) {
-      return extend(this.callSuper('toObject', ['anchorX','anchorY'].concat(propertiesToInclude)), {
+      var ret = extend(this.callSuper('toObject', ['anchorX','anchorY'].concat(propertiesToInclude)), {
         objects: invoke(this._objects, 'toObject', propertiesToInclude)
       });
+			if(this.id==='g4831-8'){
+				console.log('toObject:',ret);
+			}
+			return ret;
     },
 
     /**

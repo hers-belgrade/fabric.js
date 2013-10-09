@@ -2538,7 +2538,7 @@ fabric.Collection = {
                 if (callback) {
                     callback(enlivenedObjects);
                 }
-            }
+            } else {}
         }
         var enlivenedObjects = [], numLoadedObjects = 0, numTotalObjects = objects.length;
         objects.forEach(function(o, index) {
@@ -4194,10 +4194,13 @@ fabric.Collection = {
                                 objlink = objlink.slice(1);
                             }
                             var objtouse = this.getObjectById(objlink);
+                            if (objlink === "out_spade") console.log("bla to clone");
+                            console.log("resolving", objlink, objtouse ? "successfully" : "unsuccefully", "to", obj.randomID, objtouse.type);
                             if (objtouse) {
                                 objtouse.clone(function(_obj) {
                                     var obj = _obj;
                                     return function(instance) {
+                                        if (objlink === "out_spade") console.log("bla");
                                         obj.setUsedObj(instance);
                                     };
                                 }(obj));
@@ -8014,12 +8017,6 @@ fabric.util.object.extend(fabric.Object.prototype, {
         if (!isValidRadius(parsedAttributes)) {
             throw new Error("value of `r` attribute is required and can not be negative");
         }
-        if ("left" in parsedAttributes) {
-            parsedAttributes.left -= options.width / 2 || 0;
-        }
-        if ("top" in parsedAttributes) {
-            parsedAttributes.top -= options.height / 2 || 0;
-        }
         var obj = new fabric.Circle(extend(parsedAttributes, options));
         obj.cx = parseFloat(element.getAttribute("cx")) || 0;
         obj.cy = parseFloat(element.getAttribute("cy")) || 0;
@@ -8358,11 +8355,6 @@ fabric.util.object.extend(fabric.Object.prototype, {
             this.minX = minX;
             this.minY = minY;
             if (skipOffset) return;
-            var halfWidth = this.width / 2 + this.minX, halfHeight = this.height / 2 + this.minY;
-            this.points.forEach(function(p) {
-                p.x -= halfWidth;
-                p.y -= halfHeight;
-            }, this);
         },
         toObject: function(propertiesToInclude) {
             return extend(this.callSuper("toObject", propertiesToInclude), {
@@ -8414,10 +8406,6 @@ fabric.util.object.extend(fabric.Object.prototype, {
         var points = fabric.parsePointsAttribute(element.getAttribute("points")), parsedAttributes = fabric.parseAttributes(element, fabric.Polygon.ATTRIBUTE_NAMES), minX = min(points, "x"), minY = min(points, "y");
         minX = minX < 0 ? minX : 0;
         minY = minX < 0 ? minY : 0;
-        for (var i = 0, len = points.length; i < len; i++) {
-            points[i].x -= options.width / 2 + minX || 0;
-            points[i].y -= options.height / 2 + minY || 0;
-        }
         return new fabric.Polygon(points, extend(parsedAttributes, options), true);
     };
     fabric.Polygon.fromObject = function(object) {
@@ -9024,9 +9012,13 @@ fabric.util.object.extend(fabric.Object.prototype, {
             this._calcBounds();
         },
         toObject: function(propertiesToInclude) {
-            return extend(this.callSuper("toObject", [ "anchorX", "anchorY" ].concat(propertiesToInclude)), {
+            var ret = extend(this.callSuper("toObject", [ "anchorX", "anchorY" ].concat(propertiesToInclude)), {
                 objects: invoke(this._objects, "toObject", propertiesToInclude)
             });
+            if (this.id === "g4831-8") {
+                console.log("toObject:", ret);
+            }
+            return ret;
         },
         render1: function(ctx, noTransform) {
             if (!this.visible) return;
@@ -9503,17 +9495,7 @@ fabric.util.object.extend(fabric.Object.prototype, {
         initialize: function(element, options) {
             this.randomID = Math.floor(Math.random() * 5e6);
             options = options || {};
-            var usedobjFromObj = options.usedobjFromObj;
-            var usedobjObj = options.usedobjObj;
-            delete options.usedobjFromObj;
-            delete options.usedobjObj;
             this.callSuper("initialize", options);
-            if ("function" === typeof usedobjFromObj) {
-                var self = this;
-                usedobjFromObj(usedobjObj, function(instance) {
-                    self.usedObj = instance;
-                });
-            }
         },
         getElement: function() {
             return this._element;
@@ -9523,6 +9505,7 @@ fabric.util.object.extend(fabric.Object.prototype, {
             this._originalElement = element;
         },
         setUsedObj: function(object) {
+            console.log("setting used obj", object.id, "on", this.randomID, "with", this.clonesWaitingForUsedObj ? this.clonesWaitingForUsedObj.length : "no", "waiters");
             this.usedObj = object;
             var waiters = this.clonesWaitingForUsedObj;
             if (!waiters) {
@@ -9546,6 +9529,7 @@ fabric.util.object.extend(fabric.Object.prototype, {
             if (this.usedObj) {
                 ret.usedobjObj = this.usedObj.toObject();
                 ret.usedobjFromObj = this.usedObj.constructor.fromObject;
+                ret.usedobjType = this.usedObj.type;
             } else {
                 var hook = function(usedobj) {
                     if (ret.takeObj) {
@@ -9570,7 +9554,9 @@ fabric.util.object.extend(fabric.Object.prototype, {
         _render: function(ctx, topctx) {
             if (this.usedObj) {
                 this.usedObj.render(ctx, topctx);
-            } else {}
+            } else {
+                console.log("used object missing ...", this.id, "should be " + this["xlink:href"], this.randomID);
+            }
         }
     });
     fabric.Use.ATTRIBUTE_NAMES = fabric.SHARED_ATTRIBUTES.concat("x y width height xlink:href".split(" "));
@@ -9579,15 +9565,26 @@ fabric.util.object.extend(fabric.Object.prototype, {
         callback(new fabric.Use(element, extend(options ? fabric.util.object.clone(options) : {}, parsedAttributes)));
     };
     fabric.Use.fromObject = function(object, callback) {
+        var extraoptions = {};
+        if (object.usedobjObj && object.usedobjFromObj) {
+            extraoptions.usedobjObj = object.usedobjObj;
+            extraoptions.usedobjFromObj = object.usedobjFromObj;
+            extraoptions.usedobjType = object.usedobjType;
+            delete object.usedobjObj;
+            delete object.usedobjFromObj;
+            delete object.usedobjType;
+        } else if (object.usedObjHook) {
+            extraoptions.usedObjHook = object.usedObjHook;
+            delete object.usedObjHook;
+        }
         var inst = new fabric.Use(null, object);
-        if (inst.usedobjObj && inst.usedobjFromObj) {
-            inst.usedobjFromObj(inst.usedobjObj, function(usedobjinst) {
-                delete inst.usedobjObj;
-                delete inst.usedobjFromObj;
+        if (extraoptions.usedobjObj && extraoptions.usedobjFromObj) {
+            console.log(object);
+            extraoptions.usedobjFromObj(extraoptions.usedobjObj, function(usedobjinst) {
                 inst.usedObj = usedobjinst;
                 callback(inst);
             });
-        } else if (object.usedObjHook) {
+        } else if (extraoptions.usedObjHook) {
             object.takeObj = function(usedobj) {
                 delete object.takeObj;
                 inst.setUsedObj(usedobj);
