@@ -148,8 +148,10 @@
      * @param {CanvasRenderingContext2D} ctx context to render path on
      */
     _render: function(ctx) {
-      ctx.translate(-((this.width / 2) + this.pathOffset.x),-((this.height / 2) + this.pathOffset.y));
+			if (this.id != 'path4089') return;
+
       ctx.beginPath();
+      ctx.translate(-((this.width / 2) + this.pathOffset.x),-((this.height / 2) + this.pathOffset.y));
       var current, // current instruction
           previous = null,
           x = 0, // current x
@@ -163,6 +165,8 @@
           l = 0,//-((this.width / 2) + this.pathOffset.x),
           t = 0;//-((this.height / 2) + this.pathOffset.y);
 
+			ctx.save();
+			ctx.strokeStyle = ctx.fillStyle;
       for (var i = 0, len = this.path.length; i < len; ++i) {
 
         current = this.path[i];
@@ -424,64 +428,11 @@
             break;
         }
         previous = current;
+				ctx.stroke();
+				console.log('should stroke');
       }
-      this._renderFill(ctx);
-      this._renderStroke(ctx);
-    },
-
-    /**
-     * Renders path on a specified context
-     * @param {CanvasRenderingContext2D} ctx context to render path on
-     * @param {Boolean} [noTransform] When true, context is not transformed
-     */
-    render1: function(ctx, noTransform) {
-      // do not render if object is not visible
-      if (!this.visible) return;
-
-      ctx.save();
-      var m = this.transformMatrix;
-      if (m) {
-        ctx.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
-      }
-      if (!noTransform) {
-        this.transform(ctx);
-      }
-      // ctx.globalCompositeOperation = this.fillRule;
-
-      if (this.overlayFill) {
-        ctx.fillStyle = this.overlayFill;
-      }
-      else if (this.fill) {
-        ctx.fillStyle = this.fill.toLive
-          ? this.fill.toLive(ctx)
-          : this.fill;
-      }
-
-      if (this.stroke) {
-        ctx.lineWidth = this.strokeWidth;
-        ctx.lineCap = this.strokeLineCap;
-        ctx.lineJoin = this.strokeLineJoin;
-        ctx.miterLimit = this.strokeMiterLimit;
-        ctx.strokeStyle = this.stroke.toLive
-          ? this.stroke.toLive(ctx)
-          : this.stroke;
-      }
-
-      this._setShadow(ctx);
-      this.clipTo && fabric.util.clipContext(this, ctx);
-      ctx.beginPath();
-
-      this._render(ctx);
-      this._renderFill(ctx);
-      this._renderStroke(ctx);
-      this.clipTo && ctx.restore();
-      this._removeShadow(ctx);
-
-      if (!noTransform && this.active) {
-        this.drawBorders(ctx);
-        this.drawControls(ctx);
-      }
-      ctx.restore();
+			//fabric.util.fixStrokeAndFillForLines(this, ctx);
+			ctx.restore();
     },
 
     /**

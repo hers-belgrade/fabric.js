@@ -1,15 +1,29 @@
 (function () {
-	function setTextFillAndStroke (ctx, settings) {
-		if (settings.fill) {
+
+	function setFillToCanvas (ctx, settings) {
+		if (settings.overlayFill) {
+			ctx.fillStyle = settings.overlayFill;
+		}
+		else if (settings.fill) {
 			ctx.fillStyle = settings.fill.toLive ? settings.fill.toLive(ctx) : settings.fill;
 		}
+	}
+
+	function setStrokeToCanvas (ctx,settings) {
+		ctx.lineWidth = settings.strokeWidth;
+		ctx.lineCap = settings.strokeLineCap;
+		ctx.lineJoin = settings.strokeLineJoin;
+		ctx.miterLimit = settings.strokeMiterLimit;
 		if (settings.stroke) {
-			ctx.lineWidth = settings.strokeWidth;
-			ctx.lineCap = settings.strokeLineCap;
-			ctx.lineJoin = settings.strokeLineJoin;
-			ctx.miterLimit = settings.strokeMiterLimit;
 			ctx.strokeStyle = settings.stroke.toLive ? settings.stroke.toLive(ctx) : settings.stroke;
 		}
+	}
+
+
+	//TODO: should be removed ....
+	function setTextFillAndStroke (ctx, settings) {
+		setFillToCanvas(ctx, settings);
+		setStrokeToCanvas(ctx, settings);
 	}
 
 	function setFontDeclaration (ctx, settings) {
@@ -29,7 +43,26 @@
 		return res;
 	}
 
+
+	function fixStrokeAndFillForLines (obj, ctx) {
+		//mislim da ovo nije potpuna istina ... ako mora da se dogodi fix da li teba da rady obj.stroke = obj.fill?
+		/*
+		ctx.strokeStyle = ctx.fillStyle;
+		ctx.fillStyle = 'none';
+		obj.stroke = obj.fill;
+		obj.fill = 'none';
+		obj._renderStroke(ctx);
+		obj._renderFill(ctx);
+		*/
+	}
+
 	fabric.util.setTextFillAndStroke = setTextFillAndStroke;
 	fabric.util.setFontDeclaration = setFontDeclaration;
+
+	fabric.util.setFillToCanvas = setFillToCanvas;
+	fabric.util.setStrokeToCanvas = setStrokeToCanvas;
+	fabric.util.fixStrokeAndFillForLines = fixStrokeAndFillForLines;
+
+
 
 })();

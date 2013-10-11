@@ -104,6 +104,7 @@
      * @param {CanvasRenderingContext2D} ctx Context to render on
      */
     _render: function(ctx) {
+			return;
       var point;
       ctx.beginPath();
       ctx.moveTo(this.points[0].x, this.points[0].y);

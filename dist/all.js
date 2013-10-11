@@ -5761,17 +5761,31 @@ fabric.util.string = {
 
 
 (function () {
-	function setTextFillAndStroke (ctx, settings) {
-		if (settings.fill) {
+
+	function setFillToCanvas (ctx, settings) {
+		if (settings.overlayFill) {
+			ctx.fillStyle = settings.overlayFill;
+		}
+		else if (settings.fill) {
 			ctx.fillStyle = settings.fill.toLive ? settings.fill.toLive(ctx) : settings.fill;
 		}
+	}
+
+	function setStrokeToCanvas (ctx,settings) {
+		ctx.lineWidth = settings.strokeWidth;
+		ctx.lineCap = settings.strokeLineCap;
+		ctx.lineJoin = settings.strokeLineJoin;
+		ctx.miterLimit = settings.strokeMiterLimit;
 		if (settings.stroke) {
-			ctx.lineWidth = settings.strokeWidth;
-			ctx.lineCap = settings.strokeLineCap;
-			ctx.lineJoin = settings.strokeLineJoin;
-			ctx.miterLimit = settings.strokeMiterLimit;
 			ctx.strokeStyle = settings.stroke.toLive ? settings.stroke.toLive(ctx) : settings.stroke;
 		}
+	}
+
+
+	//TODO: should be removed ....
+	function setTextFillAndStroke (ctx, settings) {
+		setFillToCanvas(ctx, settings);
+		setStrokeToCanvas(ctx, settings);
 	}
 
 	function setFontDeclaration (ctx, settings) {
@@ -5791,8 +5805,27 @@ fabric.util.string = {
 		return res;
 	}
 
+
+	function fixStrokeAndFillForLines (obj, ctx) {
+		//mislim da ovo nije potpuna istina ... ako mora da se dogodi fix da li teba da rady obj.stroke = obj.fill?
+		/*
+		ctx.strokeStyle = ctx.fillStyle;
+		ctx.fillStyle = 'none';
+		obj.stroke = obj.fill;
+		obj.fill = 'none';
+		obj._renderStroke(ctx);
+		obj._renderFill(ctx);
+		*/
+	}
+
 	fabric.util.setTextFillAndStroke = setTextFillAndStroke;
 	fabric.util.setFontDeclaration = setFontDeclaration;
+
+	fabric.util.setFillToCanvas = setFillToCanvas;
+	fabric.util.setStrokeToCanvas = setStrokeToCanvas;
+	fabric.util.fixStrokeAndFillForLines = fixStrokeAndFillForLines;
+
+
 
 })();
 
@@ -6158,6 +6191,7 @@ fabric.util.string = {
 
 
 	var fontAttributes = 'font-family font-style font-weight font-size text-decoration text-align'.split(' ');
+	var fillAttributes = 'fill fill-opacity fill-rule'.split(' ');
 
   var attributesMap = {
 		'id':								'id',
@@ -6201,10 +6235,12 @@ fabric.util.string = {
   function normalizeValue(attr, value/*, parentAttributes*/) {
     var isArray;
 
+		/*
     if ((attr === 'fill' || attr === 'stroke') && value === 'none') {
       value = '';
     }
-    else if (attr === 'fillRule') {
+		
+    else*/ if (attr === 'fillRule') {
       value = (value === 'evenodd') ? 'destination-over' : value;
     }
     else if (attr === 'strokeDashArray') {
@@ -6819,7 +6855,7 @@ fabric.util.string = {
 
 						//aparently, we propagate style options all the way down to element through group... so copy from parent and override with local data if any ...
 
-            var ga = fabric.parseAttributes(g,fabric.SHARED_ATTRIBUTES.concat(['x','y']).concat(fontAttributes));//,'width','height']));
+            var ga = fabric.parseAttributes(g,fabric.SHARED_ATTRIBUTES.concat(['x','y']).concat(fontAttributes).concat(fillAttributes));
             ga.width = ga.width || options.width;
             ga.height = ga.height || options.height;
 
@@ -6945,13 +6981,11 @@ fabric.util.string = {
 								objlink = objlink.slice(1);
 							}
 							var objtouse = this.getObjectById(objlink);
-							if (objlink ===  'out_spade') console.log('bla to clone');
-							console.log('resolving',objlink,objtouse ? 'successfully' : 'unsuccefully','to',obj.randomID, objtouse.type);
+							//console.log('resolving',objlink,objtouse ? 'successfully' : 'unsuccefully','to',obj.randomID, objtouse.type);
 							if(objtouse){
 								objtouse.clone((function(_obj){
 									var obj = _obj;
 									return function(instance){
-										if (objlink ===  'out_spade') console.log('bla');
 										obj.setUsedObj(instance);
 									}
 								})(obj));
@@ -12033,7 +12067,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
      * @type String
      * @default
      */
-    fill:                     'rgb(0,0,0)',
+    //fill:                     'rgb(0,0,0)',
 
     /**
      * Fill rule used to fill an object
@@ -12054,7 +12088,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
      * @type String
      * @default
      */
-    stroke:                   null,
+    stroke:                   'none',
 
     /**
      * Width of a stroke used to render this object
@@ -12665,26 +12699,10 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
         this.drawBorderRect(topctx);
       }
 
-      if (this.stroke) {
-        ctx.lineWidth = this.strokeWidth;
-        ctx.lineCap = this.strokeLineCap;
-        ctx.lineJoin = this.strokeLineJoin;
-        ctx.miterLimit = this.strokeMiterLimit;
-        ctx.strokeStyle = this.stroke.toLive
-          ? this.stroke.toLive(ctx)
-          : this.stroke;
-      }
+			fabric.util.setStrokeToCanvas(ctx, this);
+			fabric.util.setFillToCanvas(ctx, this);
 
-      if (this.overlayFill) {
-        ctx.fillStyle = this.overlayFill;
-      }
-      else if (this.fill) {
-        ctx.fillStyle = this.fill.toLive
-          ? this.fill.toLive(ctx)
-          : this.fill;
-      }
-
-      this._setShadow(ctx);
+      //this._setShadow(ctx);
       this.clipTo && fabric.util.clipContext(this, ctx);
       this._render(ctx, topctx);
       this.clipTo && ctx.restore();
@@ -12720,16 +12738,19 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
      * @param {CanvasRenderingContext2D} ctx Context to render on
      */
     _renderFill: function(ctx) {
-      if (!this.fill) return;
 
-      if (this.fill.toLive) {
+			if (!this.fill || '' === this.fill) ctx.fillStyle = this.fill;
+
+      if (this.fill && this.fill.toLive) {
         ctx.save();
         ctx.translate(
           -this.width / 2 + this.fill.offsetX || 0,
           -this.height / 2 + this.fill.offsetY || 0);
       }
+
       ctx.fill();
-      if (this.fill.toLive) {
+
+      if (this.fill && this.fill.toLive) {
         ctx.restore();
       }
       if (this.shadow && !this.shadow.affectStroke) {
@@ -12742,9 +12763,9 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
      * @param {CanvasRenderingContext2D} ctx Context to render on
      */
     _renderStroke: function(ctx) {
-      if (!this.stroke) return;
 
       ctx.save();
+			if (this.stroke) ctx.strokeStyle = this.stroke;
       if (this.strokeDashArray) {
         // Spec requires the concatenation of two copies the dash list when the number of elements is odd
         if (1 & this.strokeDashArray.length) {
@@ -15146,6 +15167,8 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
      * @param ctx {CanvasRenderingContext2D} context to render on
      */
     _render: function(ctx) {
+			return;
+			ctx.save();
       var rx = this.rx || 0,
           ry = this.ry || 0,
           x = 0, //-this.width / 2,
@@ -15170,8 +15193,10 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
       isRounded && ctx.quadraticCurveTo(x,y,x+rx,y,x+rx,y);
       ctx.closePath();
 
-      this._renderFill(ctx);
-      this._renderStroke(ctx);
+			this._renderStroke(ctx);
+			this._renderFill(ctx);
+
+			ctx.restore();
     },
 
     /**
@@ -15591,6 +15616,7 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
      * @param {CanvasRenderingContext2D} ctx Context to render on
      */
     _render: function(ctx) {
+			return;
       var point;
       ctx.beginPath();
       ctx.moveTo(this.points[0].x, this.points[0].y);
@@ -15831,8 +15857,10 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
      * @param {CanvasRenderingContext2D} ctx context to render path on
      */
     _render: function(ctx) {
-      ctx.translate(-((this.width / 2) + this.pathOffset.x),-((this.height / 2) + this.pathOffset.y));
+			if (this.id != 'path4089') return;
+
       ctx.beginPath();
+      ctx.translate(-((this.width / 2) + this.pathOffset.x),-((this.height / 2) + this.pathOffset.y));
       var current, // current instruction
           previous = null,
           x = 0, // current x
@@ -15846,6 +15874,8 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
           l = 0,//-((this.width / 2) + this.pathOffset.x),
           t = 0;//-((this.height / 2) + this.pathOffset.y);
 
+			ctx.save();
+			ctx.strokeStyle = ctx.fillStyle;
       for (var i = 0, len = this.path.length; i < len; ++i) {
 
         current = this.path[i];
@@ -16107,64 +16137,11 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
             break;
         }
         previous = current;
+				ctx.stroke();
+				console.log('should stroke');
       }
-      this._renderFill(ctx);
-      this._renderStroke(ctx);
-    },
-
-    /**
-     * Renders path on a specified context
-     * @param {CanvasRenderingContext2D} ctx context to render path on
-     * @param {Boolean} [noTransform] When true, context is not transformed
-     */
-    render1: function(ctx, noTransform) {
-      // do not render if object is not visible
-      if (!this.visible) return;
-
-      ctx.save();
-      var m = this.transformMatrix;
-      if (m) {
-        ctx.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
-      }
-      if (!noTransform) {
-        this.transform(ctx);
-      }
-      // ctx.globalCompositeOperation = this.fillRule;
-
-      if (this.overlayFill) {
-        ctx.fillStyle = this.overlayFill;
-      }
-      else if (this.fill) {
-        ctx.fillStyle = this.fill.toLive
-          ? this.fill.toLive(ctx)
-          : this.fill;
-      }
-
-      if (this.stroke) {
-        ctx.lineWidth = this.strokeWidth;
-        ctx.lineCap = this.strokeLineCap;
-        ctx.lineJoin = this.strokeLineJoin;
-        ctx.miterLimit = this.strokeMiterLimit;
-        ctx.strokeStyle = this.stroke.toLive
-          ? this.stroke.toLive(ctx)
-          : this.stroke;
-      }
-
-      this._setShadow(ctx);
-      this.clipTo && fabric.util.clipContext(this, ctx);
-      ctx.beginPath();
-
-      this._render(ctx);
-      this._renderFill(ctx);
-      this._renderStroke(ctx);
-      this.clipTo && ctx.restore();
-      this._removeShadow(ctx);
-
-      if (!noTransform && this.active) {
-        this.drawBorders(ctx);
-        this.drawControls(ctx);
-      }
-      ctx.restore();
+			//fabric.util.fixStrokeAndFillForLines(this, ctx);
+			ctx.restore();
     },
 
     /**
@@ -17769,7 +17746,7 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
 			this._originalElement = element;
 		},
 		setUsedObj: function(object) {
-			console.log('setting used obj',object.id,'on',this.randomID,'with',this.clonesWaitingForUsedObj ? this.clonesWaitingForUsedObj.length : 'no', 'waiters');
+			//console.log('setting used obj',object.id,'on',this.randomID,'with',this.clonesWaitingForUsedObj ? this.clonesWaitingForUsedObj.length : 'no', 'waiters');
 			this.usedObj = object;
 			var waiters = this.clonesWaitingForUsedObj;
 			if(!waiters){return;}
@@ -17843,7 +17820,7 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
 		}
 		var inst = new fabric.Use(null,object);
 		if(extraoptions.usedobjObj && extraoptions.usedobjFromObj){
-			console.log(object);
+			//console.log(object);
 			extraoptions.usedobjFromObj(extraoptions.usedobjObj,function(usedobjinst){
 				inst.usedObj = usedobjinst;
 				callback(inst);

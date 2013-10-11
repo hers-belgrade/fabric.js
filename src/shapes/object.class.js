@@ -165,7 +165,7 @@
      * @type String
      * @default
      */
-    fill:                     'rgb(0,0,0)',
+    //fill:                     'rgb(0,0,0)',
 
     /**
      * Fill rule used to fill an object
@@ -186,7 +186,7 @@
      * @type String
      * @default
      */
-    stroke:                   null,
+    stroke:                   'none',
 
     /**
      * Width of a stroke used to render this object
@@ -797,26 +797,10 @@
         this.drawBorderRect(topctx);
       }
 
-      if (this.stroke) {
-        ctx.lineWidth = this.strokeWidth;
-        ctx.lineCap = this.strokeLineCap;
-        ctx.lineJoin = this.strokeLineJoin;
-        ctx.miterLimit = this.strokeMiterLimit;
-        ctx.strokeStyle = this.stroke.toLive
-          ? this.stroke.toLive(ctx)
-          : this.stroke;
-      }
+			fabric.util.setStrokeToCanvas(ctx, this);
+			fabric.util.setFillToCanvas(ctx, this);
 
-      if (this.overlayFill) {
-        ctx.fillStyle = this.overlayFill;
-      }
-      else if (this.fill) {
-        ctx.fillStyle = this.fill.toLive
-          ? this.fill.toLive(ctx)
-          : this.fill;
-      }
-
-      this._setShadow(ctx);
+      //this._setShadow(ctx);
       this.clipTo && fabric.util.clipContext(this, ctx);
       this._render(ctx, topctx);
       this.clipTo && ctx.restore();
@@ -852,16 +836,19 @@
      * @param {CanvasRenderingContext2D} ctx Context to render on
      */
     _renderFill: function(ctx) {
-      if (!this.fill) return;
 
-      if (this.fill.toLive) {
+			if (!this.fill || '' === this.fill) ctx.fillStyle = this.fill;
+
+      if (this.fill && this.fill.toLive) {
         ctx.save();
         ctx.translate(
           -this.width / 2 + this.fill.offsetX || 0,
           -this.height / 2 + this.fill.offsetY || 0);
       }
+
       ctx.fill();
-      if (this.fill.toLive) {
+
+      if (this.fill && this.fill.toLive) {
         ctx.restore();
       }
       if (this.shadow && !this.shadow.affectStroke) {
@@ -874,9 +861,9 @@
      * @param {CanvasRenderingContext2D} ctx Context to render on
      */
     _renderStroke: function(ctx) {
-      if (!this.stroke) return;
 
       ctx.save();
+			if (this.stroke) ctx.strokeStyle = this.stroke;
       if (this.strokeDashArray) {
         // Spec requires the concatenation of two copies the dash list when the number of elements is odd
         if (1 & this.strokeDashArray.length) {

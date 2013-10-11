@@ -26,6 +26,7 @@
 
 
 	var fontAttributes = 'font-family font-style font-weight font-size text-decoration text-align'.split(' ');
+	var fillAttributes = 'fill fill-opacity fill-rule'.split(' ');
 
   var attributesMap = {
 		'id':								'id',
@@ -69,10 +70,12 @@
   function normalizeValue(attr, value/*, parentAttributes*/) {
     var isArray;
 
+		/*
     if ((attr === 'fill' || attr === 'stroke') && value === 'none') {
       value = '';
     }
-    else if (attr === 'fillRule') {
+		
+    else*/ if (attr === 'fillRule') {
       value = (value === 'evenodd') ? 'destination-over' : value;
     }
     else if (attr === 'strokeDashArray') {
@@ -687,7 +690,7 @@
 
 						//aparently, we propagate style options all the way down to element through group... so copy from parent and override with local data if any ...
 
-            var ga = fabric.parseAttributes(g,fabric.SHARED_ATTRIBUTES.concat(['x','y']).concat(fontAttributes));//,'width','height']));
+            var ga = fabric.parseAttributes(g,fabric.SHARED_ATTRIBUTES.concat(['x','y']).concat(fontAttributes).concat(fillAttributes));
             ga.width = ga.width || options.width;
             ga.height = ga.height || options.height;
 
@@ -813,13 +816,11 @@
 								objlink = objlink.slice(1);
 							}
 							var objtouse = this.getObjectById(objlink);
-							if (objlink ===  'out_spade') console.log('bla to clone');
-							console.log('resolving',objlink,objtouse ? 'successfully' : 'unsuccefully','to',obj.randomID, objtouse.type);
+							//console.log('resolving',objlink,objtouse ? 'successfully' : 'unsuccefully','to',obj.randomID, objtouse.type);
 							if(objtouse){
 								objtouse.clone((function(_obj){
 									var obj = _obj;
 									return function(instance){
-										if (objlink ===  'out_spade') console.log('bla');
 										obj.setUsedObj(instance);
 									}
 								})(obj));

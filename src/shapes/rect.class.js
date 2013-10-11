@@ -88,6 +88,8 @@
      * @param ctx {CanvasRenderingContext2D} context to render on
      */
     _render: function(ctx) {
+			return;
+			ctx.save();
       var rx = this.rx || 0,
           ry = this.ry || 0,
           x = 0, //-this.width / 2,
@@ -112,8 +114,10 @@
       isRounded && ctx.quadraticCurveTo(x,y,x+rx,y,x+rx,y);
       ctx.closePath();
 
-      this._renderFill(ctx);
-      this._renderStroke(ctx);
+			this._renderStroke(ctx);
+			this._renderFill(ctx);
+
+			ctx.restore();
     },
 
     /**

@@ -29,7 +29,7 @@
 			this._originalElement = element;
 		},
 		setUsedObj: function(object) {
-			console.log('setting used obj',object.id,'on',this.randomID,'with',this.clonesWaitingForUsedObj ? this.clonesWaitingForUsedObj.length : 'no', 'waiters');
+			//console.log('setting used obj',object.id,'on',this.randomID,'with',this.clonesWaitingForUsedObj ? this.clonesWaitingForUsedObj.length : 'no', 'waiters');
 			this.usedObj = object;
 			var waiters = this.clonesWaitingForUsedObj;
 			if(!waiters){return;}
@@ -103,7 +103,7 @@
 		}
 		var inst = new fabric.Use(null,object);
 		if(extraoptions.usedobjObj && extraoptions.usedobjFromObj){
-			console.log(object);
+			//console.log(object);
 			extraoptions.usedobjFromObj(extraoptions.usedobjObj,function(usedobjinst){
 				inst.usedObj = usedobjinst;
 				callback(inst);
