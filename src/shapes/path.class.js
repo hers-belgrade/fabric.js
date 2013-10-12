@@ -148,6 +148,8 @@
      * @param {CanvasRenderingContext2D} ctx context to render path on
      */
     _render: function(ctx) {
+			var test_points = [];
+
       ctx.translate(-((this.width / 2) + this.pathOffset.x),-((this.height / 2) + this.pathOffset.y));
       ctx.beginPath();
       var current, // current instruction
@@ -163,6 +165,16 @@
           l = 0,//-((this.width / 2) + this.pathOffset.x),
           t = 0;//-((this.height / 2) + this.pathOffset.y);
 
+			function do_command (f,args){
+				if (f === 'drawArc') {
+					drawArc.apply(null, args);
+				}else{
+					ctx[f].apply(ctx, args);
+				}
+				return;
+				var s = fname+'('+((args)?args.join(','):'')+')';
+				console.log(s);
+			}
       for (var i = 0, len = this.path.length; i < len; ++i) {
 
         current = this.path[i];
@@ -172,47 +184,45 @@
           case 'l': // lineto, relative
             x += current[1];
             y += current[2];
-            ctx.lineTo(x + l, y + t);
+						do_command('lineTo',[x, y]);
             break;
 
           case 'L': // lineto, absolute
             x = current[1];
             y = current[2];
-            ctx.lineTo(x + l, y + t);
+						do_command('lineTo',[x,y]);
             break;
 
           case 'h': // horizontal lineto, relative
             x += current[1];
-            ctx.lineTo(x + l, y + t);
+						do_command('lineTo', [x,y]);
             break;
 
           case 'H': // horizontal lineto, absolute
             x = current[1];
-            ctx.lineTo(x + l, y + t);
+						do_command('lineTo', [x,y]);
             break;
 
           case 'v': // vertical lineto, relative
             y += current[1];
-            ctx.lineTo(x + l, y + t);
+						do_command('lineTo', [x,y]);
             break;
 
           case 'V': // verical lineto, absolute
             y = current[1];
-            ctx.lineTo(x + l, y + t);
+						do_command('lineTo', [x,y])
             break;
 
           case 'm': // moveTo, relative
-            x += current[1];
-            y += current[2];
-            // draw a line if previous command was moveTo as well (otherwise, it will have no effect)
-            ctx[(previous && (previous[0] === 'm' || previous[0] === 'M')) ? 'lineTo' : 'moveTo'](x + l, y + t);
+            x = current[1];
+            y = current[2];
+						do_command('lineTo', [x, y]);
             break;
 
           case 'M': // moveTo, absolute
             x = current[1];
             y = current[2];
-            // draw a line if previous command was moveTo as well (otherwise, it will have no effect)
-            ctx[(previous && (previous[0] === 'm' || previous[0] === 'M')) ? 'lineTo' : 'moveTo'](x + l, y + t);
+						do_command('moveTo', [x,y]);
             break;
 
           case 'c': // bezierCurveTo, relative
@@ -220,14 +230,16 @@
             tempY = y + current[6];
             controlX = x + current[3];
             controlY = y + current[4];
-            ctx.bezierCurveTo(
-              x + current[1] + l, // x1
-              y + current[2] + t, // y1
-              controlX + l, // x2
-              controlY + t, // y2
-              tempX + l,
-              tempY + t
+            do_command('bezierCurveTo',[
+              x + current[1],
+              y + current[2],
+              controlX,
+              controlY,
+              tempX,
+              tempY
+							]
             );
+						
             x = tempX;
             y = tempY;
             break;
@@ -237,13 +249,14 @@
             y = current[6];
             controlX = current[3];
             controlY = current[4];
-            ctx.bezierCurveTo(
-              current[1] + l,
-              current[2] + t,
-              controlX + l,
-              controlY + t,
-              x + l,
-              y + t
+						do_command('bezierCurveTo', [
+              current[1],
+              current[2],
+              controlX,
+              controlY,
+              x,
+              y
+							]
             );
             break;
 
@@ -256,14 +269,14 @@
             // calculate reflection of previous control points
             controlX = controlX ? (2 * x - controlX) : x;
             controlY = controlY ? (2 * y - controlY) : y;
-
-            ctx.bezierCurveTo(
-              controlX + l,
-              controlY + t,
-              x + current[1] + l,
-              y + current[2] + t,
-              tempX + l,
-              tempY + t
+						do_command( 'bezierCurveTo',[
+              controlX,
+              controlY,
+              x + current[1],
+              y + current[2],
+              tempX,
+              tempY
+							]
             );
             // set control point to 2nd one of this command
             // "... the first control point is assumed to be the reflection of the second control point on the previous command relative to the current point."
@@ -280,13 +293,14 @@
             // calculate reflection of previous control points
             controlX = 2*x - controlX;
             controlY = 2*y - controlY;
-            ctx.bezierCurveTo(
-              controlX + l,
-              controlY + t,
-              current[1] + l,
-              current[2] + t,
-              tempX + l,
-              tempY + t
+						do_command('bezierCurveTo',[
+              controlX,
+              controlY,
+              current[1],
+              current[2],
+              tempX,
+              tempY
+							]
             );
             x = tempX;
             y = tempY;
@@ -305,12 +319,11 @@
 
             controlX = x + current[1];
             controlY = y + current[2];
-
-            ctx.quadraticCurveTo(
-              controlX + l,
-              controlY + t,
-              tempX + l,
-              tempY + t
+						do_command( 'quadraticCurveTo',[
+              controlX,
+              controlY,
+              tempX,
+              tempY]
             );
             x = tempX;
             y = tempY;
@@ -320,11 +333,11 @@
             tempX = current[3];
             tempY = current[4];
 
-            ctx.quadraticCurveTo(
-              current[1] + l,
-              current[2] + t,
-              tempX + l,
-              tempY + t
+						do_command('quadraticCurveTo',[
+              current[1],
+              current[2],
+              tempX,
+              tempY]
             );
             x = tempX;
             y = tempY;
@@ -358,13 +371,14 @@
 
             tempControlX = controlX;
             tempControlY = controlY;
-
-            ctx.quadraticCurveTo(
-              controlX + l,
-              controlY + t,
-              tempX + l,
-              tempY + t
+						do_command('quadraticCurveTo', [
+              controlX,
+              controlY,
+              tempX,
+              tempY
+							]
             );
+
             x = tempX;
             y = tempY;
             controlX = x + current[1];
@@ -378,55 +392,55 @@
             // calculate reflection of previous control points
             controlX = 2 * x - controlX;
             controlY = 2 * y - controlY;
-            ctx.quadraticCurveTo(
-              controlX + l,
-              controlY + t,
-              tempX + l,
-              tempY + t
+            do_command('quadraticCurveTo',[
+              controlX,
+              controlY,
+              tempX,
+              tempY
+							]
             );
             x = tempX;
             y = tempY;
             break;
 
           case 'a':
-            // TODO: optimize this
-            drawArc(ctx, x + l, y + t, [
+						do_command('drawArc', [x, y, [
               current[1],
               current[2],
               current[3],
               current[4],
               current[5],
-              current[6] + x + l,
-              current[7] + y + t
-            ]);
+              current[6] + x,
+              current[7] + y
+            ]]);
             x += current[6];
             y += current[7];
             break;
 
           case 'A':
-            // TODO: optimize this
-            drawArc(ctx, x + l, y + t, [
+						do_command('drawArc',[x, y, [
               current[1],
               current[2],
               current[3],
               current[4],
               current[5],
-              current[6] + l,
-              current[7] + t
-            ]);
+              current[6],
+              current[7]
+            ]]);
             x = current[6];
             y = current[7];
             break;
 
           case 'z':
           case 'Z':
-            ctx.closePath();
+						do_command('closePath');
             break;
         }
         previous = current;
+
       }
-      this._renderFill(ctx);
-      this._renderStroke(ctx);
+				this._renderFill(ctx);
+				this._renderStroke(ctx);
     },
 
     /**
@@ -571,7 +585,9 @@
           coords = [ ],
           currentPath,
           parsed,
-          re = /(-?\.\d+)|(-?\d+(\.\d+)?)/g,
+
+					re = /(-?\.\d+)|(-?\d+(\.\d+)?(e[\+-]\d+)?)/g,
+          //re = /(-?\.\d+)|(-?\d+(\.\d+)?)/g,
           match,
           coordsStr;
 
@@ -595,11 +611,14 @@
         }
 
         var command = coordsParsed[0].toLowerCase(),
-            commandLength = commandLengths[command];
+            commandLength = commandLengths[command],
+						actualCommand = coordsParsed[0];
 
         if (coordsParsed.length - 1 > commandLength) {
           for (var k = 1, klen = coordsParsed.length; k < klen; k += commandLength) {
-            result.push([ coordsParsed[0] ].concat(coordsParsed.slice(k, k + commandLength)));
+            result.push([ actualCommand ].concat(coordsParsed.slice(k, k + commandLength)));
+						// subsequent arguments are treated as relative command 
+						if (actualCommand === 'M') actualCommand = 'm';
           }
         }
         else {

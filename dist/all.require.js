@@ -8495,54 +8495,65 @@ fabric.util.object.extend(fabric.Object.prototype, {
             return [ 1, 0, 0, 1, -(this.width / 2 + this.pathOffset.x), -(this.height / 2 + this.pathOffset.y) ];
         },
         _render: function(ctx) {
+            var test_points = [];
             ctx.translate(-(this.width / 2 + this.pathOffset.x), -(this.height / 2 + this.pathOffset.y));
             ctx.beginPath();
             var current, previous = null, x = 0, y = 0, controlX = 0, controlY = 0, tempX, tempY, tempControlX, tempControlY, l = 0, t = 0;
+            function do_command(f, args) {
+                if (f === "drawArc") {
+                    drawArc.apply(null, args);
+                } else {
+                    ctx[f].apply(ctx, args);
+                }
+                return;
+                var s = fname + "(" + (args ? args.join(",") : "") + ")";
+                console.log(s);
+            }
             for (var i = 0, len = this.path.length; i < len; ++i) {
                 current = this.path[i];
                 switch (current[0]) {
                   case "l":
                     x += current[1];
                     y += current[2];
-                    ctx.lineTo(x + l, y + t);
+                    do_command("lineTo", [ x, y ]);
                     break;
 
                   case "L":
                     x = current[1];
                     y = current[2];
-                    ctx.lineTo(x + l, y + t);
+                    do_command("lineTo", [ x, y ]);
                     break;
 
                   case "h":
                     x += current[1];
-                    ctx.lineTo(x + l, y + t);
+                    do_command("lineTo", [ x, y ]);
                     break;
 
                   case "H":
                     x = current[1];
-                    ctx.lineTo(x + l, y + t);
+                    do_command("lineTo", [ x, y ]);
                     break;
 
                   case "v":
                     y += current[1];
-                    ctx.lineTo(x + l, y + t);
+                    do_command("lineTo", [ x, y ]);
                     break;
 
                   case "V":
                     y = current[1];
-                    ctx.lineTo(x + l, y + t);
+                    do_command("lineTo", [ x, y ]);
                     break;
 
                   case "m":
-                    x += current[1];
-                    y += current[2];
-                    ctx[previous && (previous[0] === "m" || previous[0] === "M") ? "lineTo" : "moveTo"](x + l, y + t);
+                    x = current[1];
+                    y = current[2];
+                    do_command("lineTo", [ x, y ]);
                     break;
 
                   case "M":
                     x = current[1];
                     y = current[2];
-                    ctx[previous && (previous[0] === "m" || previous[0] === "M") ? "lineTo" : "moveTo"](x + l, y + t);
+                    do_command("moveTo", [ x, y ]);
                     break;
 
                   case "c":
@@ -8550,7 +8561,7 @@ fabric.util.object.extend(fabric.Object.prototype, {
                     tempY = y + current[6];
                     controlX = x + current[3];
                     controlY = y + current[4];
-                    ctx.bezierCurveTo(x + current[1] + l, y + current[2] + t, controlX + l, controlY + t, tempX + l, tempY + t);
+                    do_command("bezierCurveTo", [ x + current[1], y + current[2], controlX, controlY, tempX, tempY ]);
                     x = tempX;
                     y = tempY;
                     break;
@@ -8560,7 +8571,7 @@ fabric.util.object.extend(fabric.Object.prototype, {
                     y = current[6];
                     controlX = current[3];
                     controlY = current[4];
-                    ctx.bezierCurveTo(current[1] + l, current[2] + t, controlX + l, controlY + t, x + l, y + t);
+                    do_command("bezierCurveTo", [ current[1], current[2], controlX, controlY, x, y ]);
                     break;
 
                   case "s":
@@ -8568,7 +8579,7 @@ fabric.util.object.extend(fabric.Object.prototype, {
                     tempY = y + current[4];
                     controlX = controlX ? 2 * x - controlX : x;
                     controlY = controlY ? 2 * y - controlY : y;
-                    ctx.bezierCurveTo(controlX + l, controlY + t, x + current[1] + l, y + current[2] + t, tempX + l, tempY + t);
+                    do_command("bezierCurveTo", [ controlX, controlY, x + current[1], y + current[2], tempX, tempY ]);
                     controlX = x + current[1];
                     controlY = y + current[2];
                     x = tempX;
@@ -8580,7 +8591,7 @@ fabric.util.object.extend(fabric.Object.prototype, {
                     tempY = current[4];
                     controlX = 2 * x - controlX;
                     controlY = 2 * y - controlY;
-                    ctx.bezierCurveTo(controlX + l, controlY + t, current[1] + l, current[2] + t, tempX + l, tempY + t);
+                    do_command("bezierCurveTo", [ controlX, controlY, current[1], current[2], tempX, tempY ]);
                     x = tempX;
                     y = tempY;
                     controlX = current[1];
@@ -8592,7 +8603,7 @@ fabric.util.object.extend(fabric.Object.prototype, {
                     tempY = y + current[4];
                     controlX = x + current[1];
                     controlY = y + current[2];
-                    ctx.quadraticCurveTo(controlX + l, controlY + t, tempX + l, tempY + t);
+                    do_command("quadraticCurveTo", [ controlX, controlY, tempX, tempY ]);
                     x = tempX;
                     y = tempY;
                     break;
@@ -8600,7 +8611,7 @@ fabric.util.object.extend(fabric.Object.prototype, {
                   case "Q":
                     tempX = current[3];
                     tempY = current[4];
-                    ctx.quadraticCurveTo(current[1] + l, current[2] + t, tempX + l, tempY + t);
+                    do_command("quadraticCurveTo", [ current[1], current[2], tempX, tempY ]);
                     x = tempX;
                     y = tempY;
                     controlX = current[1];
@@ -8622,7 +8633,7 @@ fabric.util.object.extend(fabric.Object.prototype, {
                     }
                     tempControlX = controlX;
                     tempControlY = controlY;
-                    ctx.quadraticCurveTo(controlX + l, controlY + t, tempX + l, tempY + t);
+                    do_command("quadraticCurveTo", [ controlX, controlY, tempX, tempY ]);
                     x = tempX;
                     y = tempY;
                     controlX = x + current[1];
@@ -8634,26 +8645,26 @@ fabric.util.object.extend(fabric.Object.prototype, {
                     tempY = current[2];
                     controlX = 2 * x - controlX;
                     controlY = 2 * y - controlY;
-                    ctx.quadraticCurveTo(controlX + l, controlY + t, tempX + l, tempY + t);
+                    do_command("quadraticCurveTo", [ controlX, controlY, tempX, tempY ]);
                     x = tempX;
                     y = tempY;
                     break;
 
                   case "a":
-                    drawArc(ctx, x + l, y + t, [ current[1], current[2], current[3], current[4], current[5], current[6] + x + l, current[7] + y + t ]);
+                    do_command("drawArc", [ x, y, [ current[1], current[2], current[3], current[4], current[5], current[6] + x, current[7] + y ] ]);
                     x += current[6];
                     y += current[7];
                     break;
 
                   case "A":
-                    drawArc(ctx, x + l, y + t, [ current[1], current[2], current[3], current[4], current[5], current[6] + l, current[7] + t ]);
+                    do_command("drawArc", [ x, y, [ current[1], current[2], current[3], current[4], current[5], current[6], current[7] ] ]);
                     x = current[6];
                     y = current[7];
                     break;
 
                   case "z":
                   case "Z":
-                    ctx.closePath();
+                    do_command("closePath");
                     break;
                 }
                 previous = current;
@@ -8734,7 +8745,7 @@ fabric.util.object.extend(fabric.Object.prototype, {
             return this.path.length;
         },
         _parsePath: function() {
-            var result = [], coords = [], currentPath, parsed, re = /(-?\.\d+)|(-?\d+(\.\d+)?)/g, match, coordsStr;
+            var result = [], coords = [], currentPath, parsed, re = /(-?\.\d+)|(-?\d+(\.\d+)?(e[\+-]\d+)?)/g, match, coordsStr;
             for (var i = 0, coordsParsed, len = this.path.length; i < len; i++) {
                 currentPath = this.path[i];
                 coordsStr = currentPath.slice(1).trim();
@@ -8749,10 +8760,11 @@ fabric.util.object.extend(fabric.Object.prototype, {
                         coordsParsed.push(parsed);
                     }
                 }
-                var command = coordsParsed[0].toLowerCase(), commandLength = commandLengths[command];
+                var command = coordsParsed[0].toLowerCase(), commandLength = commandLengths[command], actualCommand = coordsParsed[0];
                 if (coordsParsed.length - 1 > commandLength) {
                     for (var k = 1, klen = coordsParsed.length; k < klen; k += commandLength) {
-                        result.push([ coordsParsed[0] ].concat(coordsParsed.slice(k, k + commandLength)));
+                        result.push([ actualCommand ].concat(coordsParsed.slice(k, k + commandLength)));
+                        if (actualCommand === "M") actualCommand = "m";
                     }
                 } else {
                     result.push(coordsParsed);
