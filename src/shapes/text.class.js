@@ -434,7 +434,12 @@
      * @param {Array} textLines Array of all text lines
      */
     _renderTextFill: function(ctx, textLines) {
-      if (!this.fill && !this.skipFillStrokeCheck) return;
+			var fill = this.fill;
+			if ('undefined' === typeof(fill)) {
+				fill = ctx.fillStyle;
+			}
+
+      if (!fill && !this.skipFillStrokeCheck) return;
 
       this._boundaries = [ ];
       var lineHeights = 0;
@@ -759,6 +764,7 @@
               (i === 0 || this.useNative ? 'y' : 'dy'), '="',
               toFixed(this.useNative ? ((lineTopOffset * i) - this.height / 2) : (lineTopOffset * lineTopOffsetMultiplier), 2) , '" ',
               // doing this on <tspan> elements since setting opacity on containing <text> one doesn't work in Illustrator
+							//TODO: you can not know this without canvas !!!
               this._getFillAttributes(this.fill), '>',
               fabric.util.string.escapeXml(textLines[i]),
             '</tspan>'

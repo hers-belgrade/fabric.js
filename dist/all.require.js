@@ -8183,7 +8183,6 @@ fabric.util.object.extend(fabric.Object.prototype, {
             }
         },
         _render: function(ctx) {
-            return;
             ctx.save();
             var rx = this.rx || 0, ry = this.ry || 0, x = 0, y = 0, w = this.width, h = this.height, isInPathGroup = this.group && this.group.type !== "group";
             ctx.beginPath();
@@ -8369,7 +8368,6 @@ fabric.util.object.extend(fabric.Object.prototype, {
             return markup.join("");
         },
         _render: function(ctx) {
-            return;
             var point;
             ctx.beginPath();
             ctx.moveTo(this.points[0].x, this.points[0].y);
@@ -10212,7 +10210,11 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass({
             return -this.height / 2;
         },
         _renderTextFill: function(ctx, textLines) {
-            if (!this.fill && !this.skipFillStrokeCheck) return;
+            var fill = this.fill;
+            if ("undefined" === typeof fill) {
+                fill = ctx.fillStyle;
+            }
+            if (!fill && !this.skipFillStrokeCheck) return;
             this._boundaries = [];
             var lineHeights = 0;
             for (var i = 0, len = textLines.length; i < len; i++) {

@@ -88,7 +88,6 @@
      * @param ctx {CanvasRenderingContext2D} context to render on
      */
     _render: function(ctx) {
-			return;
 			ctx.save();
       var rx = this.rx || 0,
           ry = this.ry || 0,
