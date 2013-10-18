@@ -1,16 +1,67 @@
 (function (global) {
 	"use strict";
+
   var fabric = global.fabric || (global.fabric = { }),
       min = fabric.util.array.min,
       max = fabric.util.array.max,
       extend = fabric.util.object.extend,
       _toString = Object.prototype.toString,
-      drawArc = fabric.util.drawArc;
+      drawArc = fabric.util.drawArc,
+			degreesToRadians = fabric.util.degreesToRadians,
+			Matrix = fabric.util.Matrix,
+			matmult = fabric.util.multiplyTransformMatrices;
 
   if (fabric.Use) {
     fabric.warn('fabric.Use is already defined');
     return;
   }
+
+	function extract (obj) {
+		var w = ['top', 'left', 'transformMatrix'];
+		var ret = {};
+		for (var i in w) ret[w[i]] = obj[w[i]];
+		return ret;
+	}
+
+	///TODO: put this one in object class or so ...
+	function revert_matrix(obj) {
+		var x = obj.left;
+		var y = obj.top;
+
+		var t = new Matrix();
+
+		//first apply local transformations in current coordinate system, params specified separate from transform matrix
+		//
+		//TODO: scale is MISSING !!!
+
+		if (obj.angle) {
+			t.mult(Matrix.RotateMatrix_deg(obj.angle));
+		}
+
+		if (x || y) {
+			t.mult (Matrix.TranslationMatrix(-x, -y));
+		}
+
+
+		/// now apply original transform matrix reverse ....
+
+		var original_matrix = obj.transformMatrix;
+		if (!original_matrix) return t.val;
+
+		///TODO: scale missing
+		///TODO: rotation missing
+		t.mult (Matrix.TranslationMatrix(Matrix.ExtractTranslation(original_matrix, -1)));
+		return t.val;
+	}
+
+	function translate_matrix(x, y) {
+		var ret = unitMatrix();
+		ret[4] = x;
+		ret[5] = y;
+		return ret;
+	}
+
+	function unitMatrix () {return [1,0,0,1,0,0]}
 
 	fabric.Use = fabric.util.createClass (fabric.Object, {
 		type:'use',
@@ -29,7 +80,6 @@
 			this._originalElement = element;
 		},
 		setUsedObj: function(object) {
-			//console.log('setting used obj',object.id,'on',this.randomID,'with',this.clonesWaitingForUsedObj ? this.clonesWaitingForUsedObj.length : 'no', 'waiters');
 			this.usedObj = object;
 			var waiters = this.clonesWaitingForUsedObj;
 			if(!waiters){return;}
@@ -61,7 +111,6 @@
 				ret.usedObjHook = hook;
 				this.clonesWaitingForUsedObj = this.clonesWaitingForUsedObj || [];
 				this.clonesWaitingForUsedObj.push(hook);
-				//console.log(this.randomID,'has no usedobj still, but got a link',this['xlink:href'],this.clonesWaitingForUsedObj.length,'waiters');
 			}
 			return ret;
 		},
@@ -74,6 +123,11 @@
 		clone: function (callback, propertiesToInclude) {
 			throw "clone not implemented";
 		},
+
+		replaceUsedObject: function (obj) {
+			this.setUsedObj(obj);
+		},
+
 		_render: function (ctx,topctx) {
 			if(this.usedObj){
 				this.usedObj.render(ctx,topctx);
@@ -105,7 +159,7 @@
 		if(extraoptions.usedobjObj && extraoptions.usedobjFromObj){
 			//console.log(object);
 			extraoptions.usedobjFromObj(extraoptions.usedobjObj,function(usedobjinst){
-				inst.usedObj = usedobjinst;
+				inst.setUsedObj(usedobjinst);
 				callback(inst);
 			});
 		}else if(extraoptions.usedObjHook){

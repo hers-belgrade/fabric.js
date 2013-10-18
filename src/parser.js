@@ -22,6 +22,7 @@
     "stroke", "stroke-dasharray", "stroke-linecap", "stroke-linejoin", "stroke-miterlimit", "stroke-opacity", "stroke-width",
 		"inkscape:label",
 		"inkscape:groupmode",
+		"inkscape:event_target"
   ];
 
 
@@ -493,7 +494,7 @@
           }
         }
         catch(err) {
-          fabric.log(err);
+          fabric.error(err);
         }
       }
       else {
@@ -682,6 +683,7 @@
   fabric.parseSVGDocumentHierarchical = (function() {
 		console.log('Document parsing started ...');
     function processGroup(map,elements,g,options,cb){
+			//console.log('PROCESSING GROUP ', g);
       var processElement = (function(_cn,_cb){
         var childNodes = _cn, gmap = {}, gelements = [], cb = _cb;
         var worker = function(i){
@@ -690,7 +692,9 @@
 
 						//aparently, we propagate style options all the way down to element through group... so copy from parent and override with local data if any ...
 
-            var ga = fabric.parseAttributes(g,fabric.SHARED_ATTRIBUTES.concat(['x','y']).concat(fontAttributes).concat(fillAttributes));
+            var ga = fabric.parseAttributes(g,fabric.SHARED_ATTRIBUTES.concat(fontAttributes).concat(fillAttributes));
+						ga.left = 0;
+						ga.top = 0;
             ga.width = ga.width || options.width;
             ga.height = ga.height || options.height;
 

@@ -566,7 +566,7 @@
       }
 
       this.fire('after:render');
-			console.log('Render done after ', (((new Date()).getTime()) - _render_start));
+			//console.log('Render done after ', (((new Date()).getTime()) - _render_start));
 
       return this;
     },

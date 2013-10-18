@@ -3679,6 +3679,10 @@ if (typeof console !== 'undefined') {
       return console.warn.apply(console, arguments);
     };
   }
+
+	fabric.error = function (err) {
+		console.log(err.stack);
+	}
 }
 
 
@@ -3788,9 +3792,14 @@ fabric.Collection = {
    * @return {Self} thisArg
    */
   add: function () {
-    this._objects.push.apply(this._objects, arguments);
-    for (var i = arguments.length; i--; ) {
-      this._onObjectAdded(arguments[i]);
+		if (arguments.length == 0) return this;
+		var valid = Array.prototype.filter.call(arguments, function (v) {
+			return v;
+		});
+
+    this._objects.push.apply(this._objects, valid);
+    for (var i = valid.length; i--; ) {
+      this._onObjectAdded(valid[i]);
     }
     this.renderOnAddRemove && this.renderAll();
     return this;
@@ -3975,8 +3984,7 @@ fabric.Collection = {
 };
 
 
-(function() {
-
+(function(global) {
   var sqrt = Math.sqrt,
       atan2 = Math.atan2;
 
@@ -3984,6 +3992,10 @@ fabric.Collection = {
    * @namespace fabric.util
    */
   fabric.util = { };
+
+
+
+
 
   /**
    * Removes value from an array.
@@ -4119,14 +4131,45 @@ fabric.Collection = {
     * @param {Function} callback Callback; invoked with loaded image
     * @param {Any} context optional Context to invoke callback in
     */
+
+	var image_cahche = {};
+	function resetImageCache () {
+		image_cahche = {};
+	}
+	var image_pending = {};
+
   function loadImage(url, callback, context) {
+
+		function report_done (context,callback,img) {
+			('function' === typeof(callback)) && callback.call(context, img);
+		}
+
     if (url) {
+			if (image_cahche[url]) {
+				//console.log('WILL GET IT FROM CACHE ', url);
+				return report_done(context, callback, image_cahche[url]);
+			}
+
+			if (image_pending[url]) {
+				///subscribe to get info if pending for it ...
+				image_pending[url].push (function() { report_done(context, callback, image_cahche[url]); })
+				return;
+			}
+
       var img = fabric.util.createImage();
-      /** @ignore */
+			image_pending[url] = [];
+
       img.onload = function () {
-        callback && callback.call(context, img);
-        img = img.onload = null;
+        img.onload = null;
+				image_cahche[url] = img;
+				report_done(context, callback, img);
+				//console.log('will check if any pending :', image_pending[url].length);
+				while (image_pending[url].length) {
+					(image_pending[url].shift())();
+				}
+				delete image_pending[url];
       };
+
       img.src = url;
     }
     else {
@@ -4519,6 +4562,54 @@ fabric.Collection = {
 
     return segmentToBezierCache[argsString];
   }
+	///SOME MATRICES MATH AND OBJECTS ... move this to some more appropriate place ....
+	function Matrix(val) {
+		val = val || Matrix.UnityMatrix();
+		this.val = val;
+	}
+
+	Matrix.prototype.mult = function () {
+		for (var i in arguments) {
+			var el = arguments[i];
+			this.val = multiplyTransformMatrices(this.val, Matrix.getValidArr(el));
+		}
+		return this;
+	}
+
+	Matrix.getValidArr = function (m) {
+		if (!m) throw "Invalid argument for matrix transformation";
+		var v = (m instanceof Matrix) ? 
+			m.val : 
+			((m instanceof Array && m.length == 6) ? m: undefined);
+		if (!v) throw "Invalid argument for matrix transformation";
+		return v;
+	}
+
+	Matrix.UnityMatrix = function () {return [1,0,0,1,0,0];}
+	Matrix.TranslationMatrix = function (x, y) {
+		if (x instanceof Array) {
+			y = x[1];
+			x = x[0];
+		}
+		return [1,0,0,1,x,y];
+	}
+	Matrix.RotateMatrix_deg = function (angle_deg) {
+		return Matrix.RotateMatrix_rad(degreesToRadians(angle_deg));
+	}
+	Matrix.RotateMatrix_rad = function (angle_rad) {
+		var sin = Math.sin(rad), cos = Math.cos(rad);
+		return [cos, -sin, sin, cos, 0, 0];
+	}
+
+	Matrix.ExtractTranslation = function (matrix, scalar) {
+		scalar = scalar || 1;
+		var v = Matrix.getValidArr(matrix);
+		if (isNaN(v[4]) || isNaN(v[5])) throw "Invalid arguments in transform matrix";
+		return [scalar*v[4], scalar*v[5]];
+	}
+
+
+	fabric.util.Matrix = Matrix;
 
   fabric.util.removeFromArray = removeFromArray;
   fabric.util.degreesToRadians = degreesToRadians;
@@ -4542,8 +4633,9 @@ fabric.Collection = {
   fabric.util.multiplyTransformMatrices = multiplyTransformMatrices;
   fabric.util.getFunctionBody = getFunctionBody;
   fabric.util.drawArc = drawArc;
+	fabric.util.resetImageCache = resetImageCache;
 
-})();
+})(typeof exports !== 'undefined' ? exports : this);
 
 
 (function() {
@@ -6187,6 +6279,7 @@ fabric.util.string = {
     "stroke", "stroke-dasharray", "stroke-linecap", "stroke-linejoin", "stroke-miterlimit", "stroke-opacity", "stroke-width",
 		"inkscape:label",
 		"inkscape:groupmode",
+		"inkscape:event_target"
   ];
 
 
@@ -6658,7 +6751,7 @@ fabric.util.string = {
           }
         }
         catch(err) {
-          fabric.log(err);
+          fabric.error(err);
         }
       }
       else {
@@ -6847,6 +6940,7 @@ fabric.util.string = {
   fabric.parseSVGDocumentHierarchical = (function() {
 		console.log('Document parsing started ...');
     function processGroup(map,elements,g,options,cb){
+			//console.log('PROCESSING GROUP ', g);
       var processElement = (function(_cn,_cb){
         var childNodes = _cn, gmap = {}, gelements = [], cb = _cb;
         var worker = function(i){
@@ -6855,7 +6949,9 @@ fabric.util.string = {
 
 						//aparently, we propagate style options all the way down to element through group... so copy from parent and override with local data if any ...
 
-            var ga = fabric.parseAttributes(g,fabric.SHARED_ATTRIBUTES.concat(['x','y']).concat(fontAttributes).concat(fillAttributes));
+            var ga = fabric.parseAttributes(g,fabric.SHARED_ATTRIBUTES.concat(fontAttributes).concat(fillAttributes));
+						ga.left = 0;
+						ga.top = 0;
             ga.width = ga.width || options.width;
             ga.height = ga.height || options.height;
 
@@ -7327,7 +7423,8 @@ fabric.util.string = {
           cb.call(ctx,loaded);
           return;
         }
-        var picname = picnamearray[index];
+        var picname = picnamearray[index].name;
+				var root = picnamearray[index].root;
         if(isArray(picname)){
           return _loadArray(type,picname,function(_loaded){for(var i in _loaded){this[i]=_loaded[i];}_lf(index+1)},loaded);
         }
@@ -7337,7 +7434,7 @@ fabric.util.string = {
           //console.log('finally',loaded);
           _lf(index+1);
         };
-        var rn = fabric.workingDirectory+'/'+picname+'.'+type;
+        var rn = root+'/'+picname+'.'+type;
         //console.log('loading',fabric.workingDirectory,picname,type,rn);
         switch(type){
           case 'png':
@@ -7373,6 +7470,17 @@ fabric.util.string = {
    * @param {Object} hash with keys: sprites, svg. Values are arrays of appropriate resource names in the Working Directory
    */
   function loadResources(resobj,cb,ctx){
+		//preprocess paths so you can be able to change setWorkingDirectory at any moment
+		//
+		//
+		function prepere_map (obj) {
+			for (var i in obj) {
+				if (!obj[i].name && !obj[i].root) obj[i] = {name: obj[i], root:fabric.workingDirectory};
+			}
+		}
+		prepere_map(resobj.svg);
+		prepere_map(resobj.sprites);
+
     _loadArray('svg',resobj.svg,function(loaded){
       _loadArray('sprites',resobj.sprites,function(_loaded){
         for(var i in _loaded){
@@ -9547,7 +9655,7 @@ fabric.Pattern = fabric.util.createClass(/** @lends fabric.Pattern.prototype */ 
       }
 
       this.fire('after:render');
-			console.log('Render done after ', (((new Date()).getTime()) - _render_start));
+			//console.log('Render done after ', (((new Date()).getTime()) - _render_start));
 
       return this;
     },
@@ -11910,6 +12018,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
       capitalize = fabric.util.string.capitalize,
       matmult = fabric.util.multiplyTransformMatrices,
       degreesToRadians = fabric.util.degreesToRadians,
+			Matrix = fabric.util.Matrix,
       supportsLineDash = fabric.StaticCanvas.supports('setLineDash');
 
   if (fabric.Object) {
@@ -12339,6 +12448,33 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
 			}
 			*/
     },
+		clearAllTransformations : function () {
+			var fields = {'top':0, 'left':0, 'transformMatrix':undefined, 'scaleX' : 1, 'scaleY': 1, 'angle': 0, 'flipX': false, 'flipY': false};
+			for (var i in fields) {
+				this[i] = fields[i];
+			}
+		},
+
+
+		///TODO: zajebi transform fju, da se uklopi u ovo ....
+		prepareTransformMatrix : function () {
+      var m = this.transformMatrix || Matrix.UnityMatrix();
+      var em = this._extraTransformations();
+
+      if(this.left || this.top){
+        m = matmult(m,[1,0,0,1,this.left,this.top]);
+      }
+
+      if(this.angle){
+        var rad = degreesToRadians(this.angle),sin = Math.sin(rad),cos = Math.cos(rad);
+        m = matmult(m,[cos,-sin,sin,cos,0,0]);
+      }
+      var sx = this.scaleX * (this.flipX ? -1 : 1), sy = this.scaleY * (this.flipY ? -1 : 1);
+      if((sx!==1)||(sy!==1)){
+        m = matmult(m,[sx,0,0,sy,0,0]);
+      }
+			return m;
+		},
 
     /**
      * Transforms context when rendering an object
@@ -12380,7 +12516,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
         m = matmult(m,[cos,-sin,sin,cos,0,0]);
       }
       var sx = this.scaleX * (this.flipX ? -1 : 1), sy = this.scaleY * (this.flipY ? -1 : 1);
-      if((sx!==1)||(sx!==1)){
+      if((sx!==1)||(sy!==1)){
         ctx.scale( sx, sy );
         m = matmult(m,[sx,0,0,sy,0,0]);
       }
@@ -12393,6 +12529,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
         tl:{x:tl.x,y:tl.y},tr:{x:br.x,y:tl.y},br:{x:br.x,y:br.y},bl:{x:tl.x,y:br.y},
         ml:{x:tl.x,y:my},mt:{x:mx,y:tl.y},mr:{x:br.x,y:my},mb:{x:mx,y:br.y}
       };
+			this._currentLocalTransform = m;
     },
 
     _extraTransformations : function(ctx){
@@ -15785,8 +15922,8 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
       }
 
       var fromArray = _toString.call(path) === '[object Array]';
-
-      this.path = fromArray
+			var or_path = path;
+			this.path = fromArray
         ? path
         // one of commands (m,M,l,L,q,Q,c,C,etc.) followed by non-command characters (i.e. command values)
         : path.match && path.match(/[mzlhvcsqta][^mzlhvcsqta]*/gi);
@@ -15801,6 +15938,7 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
       if (options.sourcePath) {
         this.setSourcePath(options.sourcePath);
       }
+			return;
     },
 
     /**
@@ -15873,6 +16011,7 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
 
 			function do_command (f,args){
 				if (f === 'drawArc') {
+					args.unshift(ctx);
 					drawArc.apply(null, args);
 				}else{
 					ctx[f].apply(ctx, args);
@@ -16133,7 +16272,6 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
               current[6],
               current[7]
             ]]);
-            x = current[6];
             y = current[7];
             break;
 
@@ -16227,6 +16365,20 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
       return this.path.length;
     },
 
+		_improvedParsePath : function (path) {
+			var e_re = /(\w)([\s\d\.e\-\,\+]*)/g;
+			var match = e_re.exec(path);
+			var result = [];
+
+			while (match) {
+				path = path.slice(match[0].length);
+				result.push ({command:match[1], params:match[2].trim().split(' ').map(function(v){return v.split(',').map(function(v){return parseFloat(v)})})});
+				if (path.length === 0) break;
+				match = e_re.exec(path);
+			}
+			//console.log(result);
+		},
+
     /**
      * @private
      */
@@ -16235,11 +16387,12 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
           coords = [ ],
           currentPath,
           parsed,
-
 					re = /(-?\.\d+)|(-?\d+(\.\d+)?(e[\+-]\d+)?)/g,
-          //re = /(-?\.\d+)|(-?\d+(\.\d+)?)/g,
           match,
           coordsStr;
+
+
+
 
       for (var i = 0, coordsParsed, len = this.path.length; i < len; i++) {
         currentPath = this.path[i];
@@ -17517,6 +17670,8 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
    * @param {Function} [callback] Callback to invoke when image is created (newly created image is passed as a first argument)
    * @param {Object} [imgOptions] Options object
    */
+
+
   fabric.Image.fromURL = function(url, callback, imgOptions) {
     fabric.util.loadImage(url, function(img) {
       callback(new fabric.Image(img, imgOptions));
@@ -17726,17 +17881,68 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
 
 (function (global) {
 	"use strict";
+
   var fabric = global.fabric || (global.fabric = { }),
       min = fabric.util.array.min,
       max = fabric.util.array.max,
       extend = fabric.util.object.extend,
       _toString = Object.prototype.toString,
-      drawArc = fabric.util.drawArc;
+      drawArc = fabric.util.drawArc,
+			degreesToRadians = fabric.util.degreesToRadians,
+			Matrix = fabric.util.Matrix,
+			matmult = fabric.util.multiplyTransformMatrices;
 
   if (fabric.Use) {
     fabric.warn('fabric.Use is already defined');
     return;
   }
+
+	function extract (obj) {
+		var w = ['top', 'left', 'transformMatrix'];
+		var ret = {};
+		for (var i in w) ret[w[i]] = obj[w[i]];
+		return ret;
+	}
+
+	///TODO: put this one in object class or so ...
+	function revert_matrix(obj) {
+		var x = obj.left;
+		var y = obj.top;
+
+		var t = new Matrix();
+
+		//first apply local transformations in current coordinate system, params specified separate from transform matrix
+		//
+		//TODO: scale is MISSING !!!
+
+		if (obj.angle) {
+			t.mult(Matrix.RotateMatrix_deg(obj.angle));
+		}
+
+		if (x || y) {
+			t.mult (Matrix.TranslationMatrix(-x, -y));
+		}
+
+
+		/// now apply original transform matrix reverse ....
+
+		var original_matrix = obj.transformMatrix;
+		if (!original_matrix) return t.val;
+
+		///TODO: scale missing
+		///TODO: rotation missing
+		t.mult (Matrix.TranslationMatrix(Matrix.ExtractTranslation(original_matrix, -1)));
+		return t.val;
+	}
+
+	function translate_matrix(x, y) {
+		var ret = unitMatrix();
+		ret[4] = x;
+		ret[5] = y;
+		return ret;
+	}
+
+	function unitMatrix () {return [1,0,0,1,0,0]}
 
 	fabric.Use = fabric.util.createClass (fabric.Object, {
 		type:'use',
@@ -17755,7 +17961,6 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
 			this._originalElement = element;
 		},
 		setUsedObj: function(object) {
-			//console.log('setting used obj',object.id,'on',this.randomID,'with',this.clonesWaitingForUsedObj ? this.clonesWaitingForUsedObj.length : 'no', 'waiters');
 			this.usedObj = object;
 			var waiters = this.clonesWaitingForUsedObj;
 			if(!waiters){return;}
@@ -17787,7 +17992,6 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
 				ret.usedObjHook = hook;
 				this.clonesWaitingForUsedObj = this.clonesWaitingForUsedObj || [];
 				this.clonesWaitingForUsedObj.push(hook);
-				//console.log(this.randomID,'has no usedobj still, but got a link',this['xlink:href'],this.clonesWaitingForUsedObj.length,'waiters');
 			}
 			return ret;
 		},
@@ -17800,6 +18004,11 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
 		clone: function (callback, propertiesToInclude) {
 			throw "clone not implemented";
 		},
+
+		replaceUsedObject: function (obj) {
+			this.setUsedObj(obj);
+		},
+
 		_render: function (ctx,topctx) {
 			if(this.usedObj){
 				this.usedObj.render(ctx,topctx);
@@ -17831,7 +18040,7 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
 		if(extraoptions.usedobjObj && extraoptions.usedobjFromObj){
 			//console.log(object);
 			extraoptions.usedobjFromObj(extraoptions.usedobjObj,function(usedobjinst){
-				inst.usedObj = usedobjinst;
+				inst.setUsedObj(usedobjinst);
 				callback(inst);
 			});
 		}else if(extraoptions.usedObjHook){

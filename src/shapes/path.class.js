@@ -78,8 +78,8 @@
       }
 
       var fromArray = _toString.call(path) === '[object Array]';
-
-      this.path = fromArray
+			var or_path = path;
+			this.path = fromArray
         ? path
         // one of commands (m,M,l,L,q,Q,c,C,etc.) followed by non-command characters (i.e. command values)
         : path.match && path.match(/[mzlhvcsqta][^mzlhvcsqta]*/gi);
@@ -94,6 +94,7 @@
       if (options.sourcePath) {
         this.setSourcePath(options.sourcePath);
       }
+			return;
     },
 
     /**
@@ -166,6 +167,7 @@
 
 			function do_command (f,args){
 				if (f === 'drawArc') {
+					args.unshift(ctx);
 					drawArc.apply(null, args);
 				}else{
 					ctx[f].apply(ctx, args);
@@ -426,7 +428,6 @@
               current[6],
               current[7]
             ]]);
-            x = current[6];
             y = current[7];
             break;
 
@@ -520,6 +521,20 @@
       return this.path.length;
     },
 
+		_improvedParsePath : function (path) {
+			var e_re = /(\w)([\s\d\.e\-\,\+]*)/g;
+			var match = e_re.exec(path);
+			var result = [];
+
+			while (match) {
+				path = path.slice(match[0].length);
+				result.push ({command:match[1], params:match[2].trim().split(' ').map(function(v){return v.split(',').map(function(v){return parseFloat(v)})})});
+				if (path.length === 0) break;
+				match = e_re.exec(path);
+			}
+			//console.log(result);
+		},
+
     /**
      * @private
      */
@@ -528,11 +543,12 @@
           coords = [ ],
           currentPath,
           parsed,
-
 					re = /(-?\.\d+)|(-?\d+(\.\d+)?(e[\+-]\d+)?)/g,
-          //re = /(-?\.\d+)|(-?\d+(\.\d+)?)/g,
           match,
           coordsStr;
+
+
+
 
       for (var i = 0, coordsParsed, len = this.path.length; i < len; i++) {
         currentPath = this.path[i];

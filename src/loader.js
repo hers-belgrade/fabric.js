@@ -57,7 +57,8 @@
           cb.call(ctx,loaded);
           return;
         }
-        var picname = picnamearray[index];
+        var picname = picnamearray[index].name;
+				var root = picnamearray[index].root;
         if(isArray(picname)){
           return _loadArray(type,picname,function(_loaded){for(var i in _loaded){this[i]=_loaded[i];}_lf(index+1)},loaded);
         }
@@ -67,7 +68,7 @@
           //console.log('finally',loaded);
           _lf(index+1);
         };
-        var rn = fabric.workingDirectory+'/'+picname+'.'+type;
+        var rn = root+'/'+picname+'.'+type;
         //console.log('loading',fabric.workingDirectory,picname,type,rn);
         switch(type){
           case 'png':
@@ -103,6 +104,17 @@
    * @param {Object} hash with keys: sprites, svg. Values are arrays of appropriate resource names in the Working Directory
    */
   function loadResources(resobj,cb,ctx){
+		//preprocess paths so you can be able to change setWorkingDirectory at any moment
+		//
+		//
+		function prepere_map (obj) {
+			for (var i in obj) {
+				if (!obj[i].name && !obj[i].root) obj[i] = {name: obj[i], root:fabric.workingDirectory};
+			}
+		}
+		prepere_map(resobj.svg);
+		prepere_map(resobj.sprites);
+
     _loadArray('svg',resobj.svg,function(loaded){
       _loadArray('sprites',resobj.sprites,function(_loaded){
         for(var i in _loaded){

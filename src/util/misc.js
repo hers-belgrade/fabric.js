@@ -1,5 +1,4 @@
-(function() {
-
+(function(global) {
   var sqrt = Math.sqrt,
       atan2 = Math.atan2;
 
@@ -7,6 +6,10 @@
    * @namespace fabric.util
    */
   fabric.util = { };
+
+
+
+
 
   /**
    * Removes value from an array.
@@ -142,14 +145,45 @@
     * @param {Function} callback Callback; invoked with loaded image
     * @param {Any} context optional Context to invoke callback in
     */
+
+	var image_cahche = {};
+	function resetImageCache () {
+		image_cahche = {};
+	}
+	var image_pending = {};
+
   function loadImage(url, callback, context) {
+
+		function report_done (context,callback,img) {
+			('function' === typeof(callback)) && callback.call(context, img);
+		}
+
     if (url) {
+			if (image_cahche[url]) {
+				//console.log('WILL GET IT FROM CACHE ', url);
+				return report_done(context, callback, image_cahche[url]);
+			}
+
+			if (image_pending[url]) {
+				///subscribe to get info if pending for it ...
+				image_pending[url].push (function() { report_done(context, callback, image_cahche[url]); })
+				return;
+			}
+
       var img = fabric.util.createImage();
-      /** @ignore */
+			image_pending[url] = [];
+
       img.onload = function () {
-        callback && callback.call(context, img);
-        img = img.onload = null;
+        img.onload = null;
+				image_cahche[url] = img;
+				report_done(context, callback, img);
+				//console.log('will check if any pending :', image_pending[url].length);
+				while (image_pending[url].length) {
+					(image_pending[url].shift())();
+				}
+				delete image_pending[url];
       };
+
       img.src = url;
     }
     else {
@@ -542,6 +576,54 @@
 
     return segmentToBezierCache[argsString];
   }
+	///SOME MATRICES MATH AND OBJECTS ... move this to some more appropriate place ....
+	function Matrix(val) {
+		val = val || Matrix.UnityMatrix();
+		this.val = val;
+	}
+
+	Matrix.prototype.mult = function () {
+		for (var i in arguments) {
+			var el = arguments[i];
+			this.val = multiplyTransformMatrices(this.val, Matrix.getValidArr(el));
+		}
+		return this;
+	}
+
+	Matrix.getValidArr = function (m) {
+		if (!m) throw "Invalid argument for matrix transformation";
+		var v = (m instanceof Matrix) ? 
+			m.val : 
+			((m instanceof Array && m.length == 6) ? m: undefined);
+		if (!v) throw "Invalid argument for matrix transformation";
+		return v;
+	}
+
+	Matrix.UnityMatrix = function () {return [1,0,0,1,0,0];}
+	Matrix.TranslationMatrix = function (x, y) {
+		if (x instanceof Array) {
+			y = x[1];
+			x = x[0];
+		}
+		return [1,0,0,1,x,y];
+	}
+	Matrix.RotateMatrix_deg = function (angle_deg) {
+		return Matrix.RotateMatrix_rad(degreesToRadians(angle_deg));
+	}
+	Matrix.RotateMatrix_rad = function (angle_rad) {
+		var sin = Math.sin(rad), cos = Math.cos(rad);
+		return [cos, -sin, sin, cos, 0, 0];
+	}
+
+	Matrix.ExtractTranslation = function (matrix, scalar) {
+		scalar = scalar || 1;
+		var v = Matrix.getValidArr(matrix);
+		if (isNaN(v[4]) || isNaN(v[5])) throw "Invalid arguments in transform matrix";
+		return [scalar*v[4], scalar*v[5]];
+	}
+
+
+	fabric.util.Matrix = Matrix;
 
   fabric.util.removeFromArray = removeFromArray;
   fabric.util.degreesToRadians = degreesToRadians;
@@ -565,5 +647,6 @@
   fabric.util.multiplyTransformMatrices = multiplyTransformMatrices;
   fabric.util.getFunctionBody = getFunctionBody;
   fabric.util.drawArc = drawArc;
+	fabric.util.resetImageCache = resetImageCache;
 
-})();
+})(typeof exports !== 'undefined' ? exports : this);

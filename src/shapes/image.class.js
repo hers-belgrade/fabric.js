@@ -449,6 +449,8 @@
    * @param {Function} [callback] Callback to invoke when image is created (newly created image is passed as a first argument)
    * @param {Object} [imgOptions] Options object
    */
+
+
   fabric.Image.fromURL = function(url, callback, imgOptions) {
     fabric.util.loadImage(url, function(img) {
       callback(new fabric.Image(img, imgOptions));

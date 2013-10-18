@@ -2313,6 +2313,9 @@ if (typeof console !== "undefined") {
             return console.warn.apply(console, arguments);
         };
     }
+    fabric.error = function(err) {
+        console.log(err.stack);
+    };
 }
 
 (function() {
@@ -2368,9 +2371,13 @@ if (typeof console !== "undefined") {
 
 fabric.Collection = {
     add: function() {
-        this._objects.push.apply(this._objects, arguments);
-        for (var i = arguments.length; i--; ) {
-            this._onObjectAdded(arguments[i]);
+        if (arguments.length == 0) return this;
+        var valid = Array.prototype.filter.call(arguments, function(v) {
+            return v;
+        });
+        this._objects.push.apply(this._objects, valid);
+        for (var i = valid.length; i--; ) {
+            this._onObjectAdded(valid[i]);
         }
         this.renderOnAddRemove && this.renderAll();
         return this;
@@ -2476,7 +2483,7 @@ fabric.Collection = {
     }
 };
 
-(function() {
+(function(global) {
     var sqrt = Math.sqrt, atan2 = Math.atan2;
     fabric.util = {};
     function removeFromArray(array, value) {
@@ -2520,12 +2527,35 @@ fabric.Collection = {
         }
         return obj;
     }
+    var image_cahche = {};
+    function resetImageCache() {
+        image_cahche = {};
+    }
+    var image_pending = {};
     function loadImage(url, callback, context) {
+        function report_done(context, callback, img) {
+            "function" === typeof callback && callback.call(context, img);
+        }
         if (url) {
+            if (image_cahche[url]) {
+                return report_done(context, callback, image_cahche[url]);
+            }
+            if (image_pending[url]) {
+                image_pending[url].push(function() {
+                    report_done(context, callback, image_cahche[url]);
+                });
+                return;
+            }
             var img = fabric.util.createImage();
+            image_pending[url] = [];
             img.onload = function() {
-                callback && callback.call(context, img);
-                img = img.onload = null;
+                img.onload = null;
+                image_cahche[url] = img;
+                report_done(context, callback, img);
+                while (image_pending[url].length) {
+                    image_pending[url].shift()();
+                }
+                delete image_pending[url];
             };
             img.src = url;
         } else {
@@ -2748,6 +2778,47 @@ fabric.Collection = {
         segmentToBezierCache[argsString] = [ a00 * x1 + a01 * y1, a10 * x1 + a11 * y1, a00 * x2 + a01 * y2, a10 * x2 + a11 * y2, a00 * x3 + a01 * y3, a10 * x3 + a11 * y3 ];
         return segmentToBezierCache[argsString];
     }
+    function Matrix(val) {
+        val = val || Matrix.UnityMatrix();
+        this.val = val;
+    }
+    Matrix.prototype.mult = function() {
+        for (var i in arguments) {
+            var el = arguments[i];
+            this.val = multiplyTransformMatrices(this.val, Matrix.getValidArr(el));
+        }
+        return this;
+    };
+    Matrix.getValidArr = function(m) {
+        if (!m) throw "Invalid argument for matrix transformation";
+        var v = m instanceof Matrix ? m.val : m instanceof Array && m.length == 6 ? m : undefined;
+        if (!v) throw "Invalid argument for matrix transformation";
+        return v;
+    };
+    Matrix.UnityMatrix = function() {
+        return [ 1, 0, 0, 1, 0, 0 ];
+    };
+    Matrix.TranslationMatrix = function(x, y) {
+        if (x instanceof Array) {
+            y = x[1];
+            x = x[0];
+        }
+        return [ 1, 0, 0, 1, x, y ];
+    };
+    Matrix.RotateMatrix_deg = function(angle_deg) {
+        return Matrix.RotateMatrix_rad(degreesToRadians(angle_deg));
+    };
+    Matrix.RotateMatrix_rad = function(angle_rad) {
+        var sin = Math.sin(rad), cos = Math.cos(rad);
+        return [ cos, -sin, sin, cos, 0, 0 ];
+    };
+    Matrix.ExtractTranslation = function(matrix, scalar) {
+        scalar = scalar || 1;
+        var v = Matrix.getValidArr(matrix);
+        if (isNaN(v[4]) || isNaN(v[5])) throw "Invalid arguments in transform matrix";
+        return [ scalar * v[4], scalar * v[5] ];
+    };
+    fabric.util.Matrix = Matrix;
     fabric.util.removeFromArray = removeFromArray;
     fabric.util.degreesToRadians = degreesToRadians;
     fabric.util.radiansToDegrees = radiansToDegrees;
@@ -2770,7 +2841,8 @@ fabric.Collection = {
     fabric.util.multiplyTransformMatrices = multiplyTransformMatrices;
     fabric.util.getFunctionBody = getFunctionBody;
     fabric.util.drawArc = drawArc;
-})();
+    fabric.util.resetImageCache = resetImageCache;
+})(typeof exports !== "undefined" ? exports : this);
 
 (function() {
     var slice = Array.prototype.slice;
@@ -3733,7 +3805,7 @@ fabric.Collection = {
 (function(global) {
     "use strict";
     var fabric = global.fabric || (global.fabric = {}), extend = fabric.util.object.extend, capitalize = fabric.util.string.capitalize, clone = fabric.util.object.clone, toFixed = fabric.util.toFixed, multiplyTransformMatrices = fabric.util.multiplyTransformMatrices;
-    fabric.SHARED_ATTRIBUTES = [ "id", "transform", "fill", "fill-opacity", "fill-rule", "opacity", "display", "stroke", "stroke-dasharray", "stroke-linecap", "stroke-linejoin", "stroke-miterlimit", "stroke-opacity", "stroke-width", "inkscape:label", "inkscape:groupmode" ];
+    fabric.SHARED_ATTRIBUTES = [ "id", "transform", "fill", "fill-opacity", "fill-rule", "opacity", "display", "stroke", "stroke-dasharray", "stroke-linecap", "stroke-linejoin", "stroke-miterlimit", "stroke-opacity", "stroke-width", "inkscape:label", "inkscape:groupmode", "inkscape:event_target" ];
     var fontAttributes = "font-family font-style font-weight font-size text-decoration text-align".split(" ");
     var fillAttributes = "fill fill-opacity fill-rule".split(" ");
     var attributesMap = {
@@ -4006,7 +4078,7 @@ fabric.Collection = {
                         checkIfDone();
                     }
                 } catch (err) {
-                    fabric.log(err);
+                    fabric.error(err);
                 }
             } else {
                 checkIfDone();
@@ -4107,7 +4179,9 @@ fabric.Collection = {
                 var worker = function(i) {
                     var gc = childNodes[i];
                     if (!gc) {
-                        var ga = fabric.parseAttributes(g, fabric.SHARED_ATTRIBUTES.concat([ "x", "y" ]).concat(fontAttributes).concat(fillAttributes));
+                        var ga = fabric.parseAttributes(g, fabric.SHARED_ATTRIBUTES.concat(fontAttributes).concat(fillAttributes));
+                        ga.left = 0;
+                        ga.top = 0;
                         ga.width = ga.width || options.width;
                         ga.height = ga.height || options.height;
                         var group = new fabric.Group(gelements, ga);
@@ -4425,7 +4499,8 @@ fabric.Collection = {
                     cb.call(ctx, loaded);
                     return;
                 }
-                var picname = picnamearray[index];
+                var picname = picnamearray[index].name;
+                var root = picnamearray[index].root;
                 if (isArray(picname)) {
                     return _loadArray(type, picname, function(_loaded) {
                         for (var i in _loaded) {
@@ -4438,7 +4513,7 @@ fabric.Collection = {
                     loaded[picname] = resource;
                     _lf(index + 1);
                 }
-                var rn = fabric.workingDirectory + "/" + picname + "." + type;
+                var rn = root + "/" + picname + "." + type;
                 switch (type) {
                   case "png":
                     return fabric.Image.fromURL(rn, resourceloaded);
@@ -4460,6 +4535,16 @@ fabric.Collection = {
         fabric.workingDirectory = path;
     }
     function loadResources(resobj, cb, ctx) {
+        function prepere_map(obj) {
+            for (var i in obj) {
+                if (!obj[i].name && !obj[i].root) obj[i] = {
+                    name: obj[i],
+                    root: fabric.workingDirectory
+                };
+            }
+        }
+        prepere_map(resobj.svg);
+        prepere_map(resobj.sprites);
         _loadArray("svg", resobj.svg, function(loaded) {
             _loadArray("sprites", resobj.sprites, function(_loaded) {
                 for (var i in _loaded) {
@@ -5434,7 +5519,6 @@ fabric.Pattern = fabric.util.createClass({
                 this.drawControls(canvasToDrawOn);
             }
             this.fire("after:render");
-            console.log("Render done after ", new Date().getTime() - _render_start);
             return this;
         },
         _drawBackroundImage: function(canvasToDrawOn) {
@@ -6629,7 +6713,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
 
 (function(global) {
     "use strict";
-    var fabric = global.fabric || (global.fabric = {}), extend = fabric.util.object.extend, toFixed = fabric.util.toFixed, capitalize = fabric.util.string.capitalize, matmult = fabric.util.multiplyTransformMatrices, degreesToRadians = fabric.util.degreesToRadians, supportsLineDash = fabric.StaticCanvas.supports("setLineDash");
+    var fabric = global.fabric || (global.fabric = {}), extend = fabric.util.object.extend, toFixed = fabric.util.toFixed, capitalize = fabric.util.string.capitalize, matmult = fabric.util.multiplyTransformMatrices, degreesToRadians = fabric.util.degreesToRadians, Matrix = fabric.util.Matrix, supportsLineDash = fabric.StaticCanvas.supports("setLineDash");
     if (fabric.Object) {
         return;
     }
@@ -6717,6 +6801,37 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
             this._initPattern(options);
             this._initClipping(options);
         },
+        clearAllTransformations: function() {
+            var fields = {
+                top: 0,
+                left: 0,
+                transformMatrix: undefined,
+                scaleX: 1,
+                scaleY: 1,
+                angle: 0,
+                flipX: false,
+                flipY: false
+            };
+            for (var i in fields) {
+                this[i] = fields[i];
+            }
+        },
+        prepareTransformMatrix: function() {
+            var m = this.transformMatrix || Matrix.UnityMatrix();
+            var em = this._extraTransformations();
+            if (this.left || this.top) {
+                m = matmult(m, [ 1, 0, 0, 1, this.left, this.top ]);
+            }
+            if (this.angle) {
+                var rad = degreesToRadians(this.angle), sin = Math.sin(rad), cos = Math.cos(rad);
+                m = matmult(m, [ cos, -sin, sin, cos, 0, 0 ]);
+            }
+            var sx = this.scaleX * (this.flipX ? -1 : 1), sy = this.scaleY * (this.flipY ? -1 : 1);
+            if (sx !== 1 || sy !== 1) {
+                m = matmult(m, [ sx, 0, 0, sy, 0, 0 ]);
+            }
+            return m;
+        },
         transform: function(ctx, fromLeft) {
             var m = this.transformMatrix;
             this._currentTransform = ctx._currentTransform;
@@ -6744,7 +6859,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
                 m = matmult(m, [ cos, -sin, sin, cos, 0, 0 ]);
             }
             var sx = this.scaleX * (this.flipX ? -1 : 1), sy = this.scaleY * (this.flipY ? -1 : 1);
-            if (sx !== 1 || sx !== 1) {
+            if (sx !== 1 || sy !== 1) {
                 ctx.scale(sx, sy);
                 m = matmult(m, [ sx, 0, 0, sy, 0, 0 ]);
             }
@@ -6787,6 +6902,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
                     y: br.y
                 }
             };
+            this._currentLocalTransform = m;
         },
         _extraTransformations: function(ctx) {},
         untransform: function(ctx) {
@@ -8453,6 +8569,7 @@ fabric.util.object.extend(fabric.Object.prototype, {
                 throw new Error("`path` argument is required");
             }
             var fromArray = _toString.call(path) === "[object Array]";
+            var or_path = path;
             this.path = fromArray ? path : path.match && path.match(/[mzlhvcsqta][^mzlhvcsqta]*/gi);
             if (!this.path) return;
             if (!fromArray) {
@@ -8462,6 +8579,7 @@ fabric.util.object.extend(fabric.Object.prototype, {
             if (options.sourcePath) {
                 this.setSourcePath(options.sourcePath);
             }
+            return;
         },
         _initializePath: function(options) {
             var isWidthSet = "width" in options && options.width != null, isHeightSet = "height" in options && options.width != null, isLeftSet = "left" in options, isTopSet = "top" in options, origLeft = isLeftSet ? this.left : 0, origTop = isTopSet ? this.top : 0;
@@ -8499,6 +8617,7 @@ fabric.util.object.extend(fabric.Object.prototype, {
             var current, previous = null, x = 0, y = 0, controlX = 0, controlY = 0, tempX, tempY, tempControlX, tempControlY, l = 0, t = 0;
             function do_command(f, args) {
                 if (f === "drawArc") {
+                    args.unshift(ctx);
                     drawArc.apply(null, args);
                 } else {
                     ctx[f].apply(ctx, args);
@@ -8656,7 +8775,6 @@ fabric.util.object.extend(fabric.Object.prototype, {
 
                   case "A":
                     do_command("drawArc", [ x, y, [ current[1], current[2], current[3], current[4], current[5], current[6], current[7] ] ]);
-                    x = current[6];
                     y = current[7];
                     break;
 
@@ -8706,6 +8824,24 @@ fabric.util.object.extend(fabric.Object.prototype, {
         },
         complexity: function() {
             return this.path.length;
+        },
+        _improvedParsePath: function(path) {
+            var e_re = /(\w)([\s\d\.e\-\,\+]*)/g;
+            var match = e_re.exec(path);
+            var result = [];
+            while (match) {
+                path = path.slice(match[0].length);
+                result.push({
+                    command: match[1],
+                    params: match[2].trim().split(" ").map(function(v) {
+                        return v.split(",").map(function(v) {
+                            return parseFloat(v);
+                        });
+                    })
+                });
+                if (path.length === 0) break;
+                match = e_re.exec(path);
+            }
         },
         _parsePath: function() {
             var result = [], coords = [], currentPath, parsed, re = /(-?\.\d+)|(-?\d+(\.\d+)?(e[\+-]\d+)?)/g, match, coordsStr;
@@ -9459,10 +9595,40 @@ fabric.util.object.extend(fabric.Object.prototype, {
 
 (function(global) {
     "use strict";
-    var fabric = global.fabric || (global.fabric = {}), min = fabric.util.array.min, max = fabric.util.array.max, extend = fabric.util.object.extend, _toString = Object.prototype.toString, drawArc = fabric.util.drawArc;
+    var fabric = global.fabric || (global.fabric = {}), min = fabric.util.array.min, max = fabric.util.array.max, extend = fabric.util.object.extend, _toString = Object.prototype.toString, drawArc = fabric.util.drawArc, degreesToRadians = fabric.util.degreesToRadians, Matrix = fabric.util.Matrix, matmult = fabric.util.multiplyTransformMatrices;
     if (fabric.Use) {
         fabric.warn("fabric.Use is already defined");
         return;
+    }
+    function extract(obj) {
+        var w = [ "top", "left", "transformMatrix" ];
+        var ret = {};
+        for (var i in w) ret[w[i]] = obj[w[i]];
+        return ret;
+    }
+    function revert_matrix(obj) {
+        var x = obj.left;
+        var y = obj.top;
+        var t = new Matrix();
+        if (obj.angle) {
+            t.mult(Matrix.RotateMatrix_deg(obj.angle));
+        }
+        if (x || y) {
+            t.mult(Matrix.TranslationMatrix(-x, -y));
+        }
+        var original_matrix = obj.transformMatrix;
+        if (!original_matrix) return t.val;
+        t.mult(Matrix.TranslationMatrix(Matrix.ExtractTranslation(original_matrix, -1)));
+        return t.val;
+    }
+    function translate_matrix(x, y) {
+        var ret = unitMatrix();
+        ret[4] = x;
+        ret[5] = y;
+        return ret;
+    }
+    function unitMatrix() {
+        return [ 1, 0, 0, 1, 0, 0 ];
     }
     fabric.Use = fabric.util.createClass(fabric.Object, {
         type: "use",
@@ -9525,6 +9691,9 @@ fabric.util.object.extend(fabric.Object.prototype, {
         clone: function(callback, propertiesToInclude) {
             throw "clone not implemented";
         },
+        replaceUsedObject: function(obj) {
+            this.setUsedObj(obj);
+        },
         _render: function(ctx, topctx) {
             if (this.usedObj) {
                 this.usedObj.render(ctx, topctx);
@@ -9554,7 +9723,7 @@ fabric.util.object.extend(fabric.Object.prototype, {
         var inst = new fabric.Use(null, object);
         if (extraoptions.usedobjObj && extraoptions.usedobjFromObj) {
             extraoptions.usedobjFromObj(extraoptions.usedobjObj, function(usedobjinst) {
-                inst.usedObj = usedobjinst;
+                inst.setUsedObj(usedobjinst);
                 callback(inst);
             });
         } else if (extraoptions.usedObjHook) {

@@ -21,4 +21,8 @@ if (typeof console !== 'undefined') {
       return console.warn.apply(console, arguments);
     };
   }
+
+	fabric.error = function (err) {
+		console.log(err.stack);
+	}
 }

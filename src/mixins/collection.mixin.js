@@ -10,9 +10,14 @@ fabric.Collection = {
    * @return {Self} thisArg
    */
   add: function () {
-    this._objects.push.apply(this._objects, arguments);
-    for (var i = arguments.length; i--; ) {
-      this._onObjectAdded(arguments[i]);
+		if (arguments.length == 0) return this;
+		var valid = Array.prototype.filter.call(arguments, function (v) {
+			return v;
+		});
+
+    this._objects.push.apply(this._objects, valid);
+    for (var i = valid.length; i--; ) {
+      this._onObjectAdded(valid[i]);
     }
     this.renderOnAddRemove && this.renderAll();
     return this;

@@ -8,6 +8,7 @@
       capitalize = fabric.util.string.capitalize,
       matmult = fabric.util.multiplyTransformMatrices,
       degreesToRadians = fabric.util.degreesToRadians,
+			Matrix = fabric.util.Matrix,
       supportsLineDash = fabric.StaticCanvas.supports('setLineDash');
 
   if (fabric.Object) {
@@ -437,6 +438,33 @@
 			}
 			*/
     },
+		clearAllTransformations : function () {
+			var fields = {'top':0, 'left':0, 'transformMatrix':undefined, 'scaleX' : 1, 'scaleY': 1, 'angle': 0, 'flipX': false, 'flipY': false};
+			for (var i in fields) {
+				this[i] = fields[i];
+			}
+		},
+
+
+		///TODO: zajebi transform fju, da se uklopi u ovo ....
+		prepareTransformMatrix : function () {
+      var m = this.transformMatrix || Matrix.UnityMatrix();
+      var em = this._extraTransformations();
+
+      if(this.left || this.top){
+        m = matmult(m,[1,0,0,1,this.left,this.top]);
+      }
+
+      if(this.angle){
+        var rad = degreesToRadians(this.angle),sin = Math.sin(rad),cos = Math.cos(rad);
+        m = matmult(m,[cos,-sin,sin,cos,0,0]);
+      }
+      var sx = this.scaleX * (this.flipX ? -1 : 1), sy = this.scaleY * (this.flipY ? -1 : 1);
+      if((sx!==1)||(sy!==1)){
+        m = matmult(m,[sx,0,0,sy,0,0]);
+      }
+			return m;
+		},
 
     /**
      * Transforms context when rendering an object
@@ -478,7 +506,7 @@
         m = matmult(m,[cos,-sin,sin,cos,0,0]);
       }
       var sx = this.scaleX * (this.flipX ? -1 : 1), sy = this.scaleY * (this.flipY ? -1 : 1);
-      if((sx!==1)||(sx!==1)){
+      if((sx!==1)||(sy!==1)){
         ctx.scale( sx, sy );
         m = matmult(m,[sx,0,0,sy,0,0]);
       }
@@ -491,6 +519,7 @@
         tl:{x:tl.x,y:tl.y},tr:{x:br.x,y:tl.y},br:{x:br.x,y:br.y},bl:{x:tl.x,y:br.y},
         ml:{x:tl.x,y:my},mt:{x:mx,y:tl.y},mr:{x:br.x,y:my},mb:{x:mx,y:br.y}
       };
+			this._currentLocalTransform = m;
     },
 
     _extraTransformations : function(ctx){
