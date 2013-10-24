@@ -10288,6 +10288,10 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass({
         toString: function() {
             return "#<fabric.Text (" + this.complexity() + '): { "text": "' + this.text + '", "fontFamily": "' + this.fontFamily + '" }>';
         },
+        setText: function(t) {
+            t = typeof t === "undefined" ? "" : t;
+            this.set("text", "" + t);
+        },
         _extraTransformations: function() {
             var ty = -this.height, tx = 0;
             switch (this.textAlign) {
