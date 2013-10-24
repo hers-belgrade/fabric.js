@@ -3005,9 +3005,16 @@ fabric.Collection = {
 })();
 
 (function() {
-    function extend(destination, source) {
-        for (var property in source) {
-            destination[property] = source[property];
+    function extend(destination) {
+        function step(d, s) {
+            for (var property in s) {
+                d[property] = s[property];
+            }
+            return d;
+        }
+        var sources = Array.prototype.slice.call(arguments, 1);
+        for (var i in sources) {
+            destination = step(destination, sources[i]);
         }
         return destination;
     }
@@ -3805,7 +3812,7 @@ fabric.Collection = {
 (function(global) {
     "use strict";
     var fabric = global.fabric || (global.fabric = {}), extend = fabric.util.object.extend, capitalize = fabric.util.string.capitalize, clone = fabric.util.object.clone, toFixed = fabric.util.toFixed, multiplyTransformMatrices = fabric.util.multiplyTransformMatrices;
-    fabric.SHARED_ATTRIBUTES = [ "id", "transform", "fill", "fill-opacity", "fill-rule", "opacity", "display", "stroke", "stroke-dasharray", "stroke-linecap", "stroke-linejoin", "stroke-miterlimit", "stroke-opacity", "stroke-width", "inkscape:label", "inkscape:groupmode", "inkscape:event_target" ];
+    fabric.SHARED_ATTRIBUTES = [ "id", "transform", "fill", "fill-opacity", "fill-rule", "opacity", "display", "stroke", "stroke-dasharray", "stroke-linecap", "stroke-linejoin", "stroke-miterlimit", "stroke-opacity", "stroke-width" ];
     var fontAttributes = "font-family font-style font-weight font-size text-decoration text-align".split(" ");
     var fillAttributes = "fill fill-opacity fill-rule".split(" ");
     var attributesMap = {
@@ -3829,9 +3836,7 @@ fabric.Collection = {
         cy: "top",
         y: "top",
         transform: "transformMatrix",
-        "text-align": "textAlign",
-        "inkscape:label": "inkscapeLabel",
-        "inkscape:groupmode": "inkscapeGroupMode"
+        "text-align": "textAlign"
     };
     var colorAttributes = {
         stroke: "strokeOpacity",
@@ -7261,6 +7266,22 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
                 this.canvas.moveTo(this, index);
             }
             return this;
+        },
+        show: function() {
+            this.set({
+                opacity: 1,
+                display: "inline",
+                visible: true
+            });
+            this.fire("object:shown");
+        },
+        hide: function() {
+            this.set({
+                opacity: 0,
+                display: "none",
+                visible: false
+            });
+            this.fire("object:hidden");
         }
     });
     fabric.util.createAccessors(fabric.Object);
@@ -9251,6 +9272,23 @@ fabric.util.object.extend(fabric.Object.prototype, {
         });
     };
     fabric.Group.async = true;
+    fabric.Group.findChildGroups = function(s) {
+        if (!s || !s._objects) return [];
+        var ret = [];
+        for (var i in s._objects) {
+            if (s._objects[i].type === "group") ret.push(s._objects[i]);
+        }
+        return ret;
+    };
+    fabric.Group.find = function(s, id) {
+        if (s.id === id) return s;
+        if (!s._objects) return undefined;
+        for (var i in s._objects) {
+            var r = fabric.Group.find(s._objects[i], id);
+            if (r) return r;
+        }
+        return undefined;
+    };
 })(typeof exports !== "undefined" ? exports : this);
 
 (function(global) {

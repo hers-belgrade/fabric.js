@@ -1197,7 +1197,25 @@
         this.canvas.moveTo(this, index);
       }
       return this;
-    }
+    },
+		/**
+		 * Shows an object and fires shown event
+     * @return {fabric.Object} thisArg
+     * @chainable
+		 */
+		show: function () {
+			this.set({'opacity':1, 'display':'inline', 'visible': true});
+			this.fire ('object:shown');
+		},
+		/**
+		 * Hides an object and fires hidden event
+     * @return {fabric.Object} thisArg
+     * @chainable
+		 */
+		hide : function() {
+			this.set({'opacity':0, 'display':'none', 'visible': false});
+			this.fire ('object:hidden');
+		}
   });
 
   fabric.util.createAccessors(fabric.Object);

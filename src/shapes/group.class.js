@@ -391,5 +391,26 @@
    * @default
    */
   fabric.Group.async = true;
+	fabric.Group.findChildGroups = function (s) {
+		if (!s || !s._objects) return[];
+		var ret = [];
+		for (var i in s._objects) {
+			if (s._objects[i].type === 'group') ret.push (s._objects[i]);
+		}
+		return ret;
+	}
+
+
+	////TODO: PUT THIS IN SOME MORE GENERAL FORM !!!!
+	fabric.Group.find = function (s, id) {
+		if (s.id === id) return s;
+		if (!s._objects) return undefined;
+
+		for (var i in s._objects) {
+			var r = fabric.Group.find(s._objects[i], id);
+			if (r) return r;
+		}
+		return undefined;
+	}
 
 })(typeof exports !== 'undefined' ? exports : this);

@@ -4905,13 +4905,23 @@ fabric.Collection = {
    * @param {Object} source Where to copy from
    * @return {Object}
    */
-  function extend(destination, source) {
-    // JScript DontEnum bug is not taken care of
-    for (var property in source) {
-      destination[property] = source[property];
-    }
-    return destination;
-  }
+	function extend(destination) {
+
+		function step(d, s) {
+			// JScript DontEnum bug is not taken care of
+			for (var property in s) {
+				d[property] = s[property];
+			}
+			return d;
+		}
+
+
+		var sources = Array.prototype.slice.call(arguments, 1);
+		for (var i in sources) {
+			destination = step(destination, sources[i]);
+		}	
+		return destination;
+	}
 
   /**
    * Creates an empty object and copies all enumerable properties of another object to it
@@ -6277,9 +6287,6 @@ fabric.util.string = {
     "fill", "fill-opacity", "fill-rule",
     "opacity","display",
     "stroke", "stroke-dasharray", "stroke-linecap", "stroke-linejoin", "stroke-miterlimit", "stroke-opacity", "stroke-width",
-		"inkscape:label",
-		"inkscape:groupmode",
-		"inkscape:event_target"
   ];
 
 
@@ -6308,8 +6315,6 @@ fabric.util.string = {
     'y':                'top',
     'transform':        'transformMatrix',
 		'text-align':				'textAlign',
-		'inkscape:label':		'inkscapeLabel',
-		'inkscape:groupmode':'inkscapeGroupMode'
   };
 
   var colorAttributes = {
@@ -13207,7 +13212,25 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
         this.canvas.moveTo(this, index);
       }
       return this;
-    }
+    },
+		/**
+		 * Shows an object and fires shown event
+     * @return {fabric.Object} thisArg
+     * @chainable
+		 */
+		show: function () {
+			this.set({'opacity':1, 'display':'inline', 'visible': true});
+			this.fire ('object:shown');
+		},
+		/**
+		 * Hides an object and fires hidden event
+     * @return {fabric.Object} thisArg
+     * @chainable
+		 */
+		hide : function() {
+			this.set({'opacity':0, 'display':'none', 'visible': false});
+			this.fire ('object:hidden');
+		}
   });
 
   fabric.util.createAccessors(fabric.Object);
@@ -17215,6 +17238,27 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
    * @default
    */
   fabric.Group.async = true;
+	fabric.Group.findChildGroups = function (s) {
+		if (!s || !s._objects) return[];
+		var ret = [];
+		for (var i in s._objects) {
+			if (s._objects[i].type === 'group') ret.push (s._objects[i]);
+		}
+		return ret;
+	}
+
+
+	////TODO: PUT THIS IN SOME MORE GENERAL FORM !!!!
+	fabric.Group.find = function (s, id) {
+		if (s.id === id) return s;
+		if (!s._objects) return undefined;
+
+		for (var i in s._objects) {
+			var r = fabric.Group.find(s._objects[i], id);
+			if (r) return r;
+		}
+		return undefined;
+	}
 
 })(typeof exports !== 'undefined' ? exports : this);
 

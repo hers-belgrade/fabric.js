@@ -7,13 +7,23 @@
    * @param {Object} source Where to copy from
    * @return {Object}
    */
-  function extend(destination, source) {
-    // JScript DontEnum bug is not taken care of
-    for (var property in source) {
-      destination[property] = source[property];
-    }
-    return destination;
-  }
+	function extend(destination) {
+
+		function step(d, s) {
+			// JScript DontEnum bug is not taken care of
+			for (var property in s) {
+				d[property] = s[property];
+			}
+			return d;
+		}
+
+
+		var sources = Array.prototype.slice.call(arguments, 1);
+		for (var i in sources) {
+			destination = step(destination, sources[i]);
+		}	
+		return destination;
+	}
 
   /**
    * Creates an empty object and copies all enumerable properties of another object to it

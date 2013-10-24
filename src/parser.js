@@ -20,9 +20,6 @@
     "fill", "fill-opacity", "fill-rule",
     "opacity","display",
     "stroke", "stroke-dasharray", "stroke-linecap", "stroke-linejoin", "stroke-miterlimit", "stroke-opacity", "stroke-width",
-		"inkscape:label",
-		"inkscape:groupmode",
-		"inkscape:event_target"
   ];
 
 
@@ -51,8 +48,6 @@
     'y':                'top',
     'transform':        'transformMatrix',
 		'text-align':				'textAlign',
-		'inkscape:label':		'inkscapeLabel',
-		'inkscape:groupmode':'inkscapeGroupMode'
   };
 
   var colorAttributes = {
