@@ -10288,9 +10288,22 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass({
         toString: function() {
             return "#<fabric.Text (" + this.complexity() + '): { "text": "' + this.text + '", "fontFamily": "' + this.fontFamily + '" }>';
         },
-        setText: function(t) {
-            t = typeof t === "undefined" ? "" : t;
-            this.set("text", "" + t);
+        setText: function(t, span) {
+            t = typeof t === "undefined" ? "" : t + "";
+            if (this.tspans.length == 0) {
+                this.set("text", t);
+                return;
+            }
+            if (this.tspans.length == 1) {
+                this.tspans[0].set("text", t);
+                return;
+            }
+            for (var i in this.tspans) {
+                if (this.tspans[i].id == span) {
+                    this.tspans[i].set("text", t);
+                    return;
+                }
+            }
         },
         _extraTransformations: function() {
             var ty = -this.height, tx = 0;
