@@ -263,6 +263,11 @@
       this._renderTextFill(ctx, textLines);
       this._renderTextStroke(ctx, textLines);
       this._removeShadow(ctx);
+      if(this.tspans){
+        for(var i in this.tspans){
+          this.tspans[i].render(ctx);
+        }
+      }
       ctx.restore();
 
       this._renderTextDecoration(ctx, textLines);
@@ -891,7 +896,33 @@
 		}
     options = fabric.util.object.extend((options ? fabric.util.object.clone(options) : { }), parsedAttributes);
 
-    var text = new fabric.Text(element.textContent, options);
+    var cns = element.childNodes;
+    var tspans = [];
+    for(var i in cns){
+      var cn = cns[i];
+      if(cn.tagName!=='tspan'){
+        continue;
+      }
+      tspans.push(cn);
+    }
+
+    var text = new fabric.Text(tspans.length ? '' : element.textContent, options);
+
+    if(tspans.length){
+      text.tspans = [];
+      fabric.parseElements(tspans,function(instances){
+        for(var i in instances){
+          var inst = instances[i];
+          if(inst.left){
+            inst.left-=text.left;
+          }
+          if(inst.top){
+            inst.top-=text.top;
+          }
+        }
+        text.tspans = instances.slice();
+      });
+    }
 
     return text;
   };

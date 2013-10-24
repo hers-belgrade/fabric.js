@@ -219,6 +219,7 @@ var filesToInclude = [
 
   ifSpecifiedInclude('text', 'src/shapes/text.class.js'),
   ifSpecifiedInclude('cufon', 'src/shapes/text.cufon.js'),
+  ifSpecifiedInclude('text', 'src/shapes/tspan.class.js'),
 
   ifSpecifiedInclude('node', 'src/node.js'),
 
