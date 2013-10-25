@@ -200,6 +200,7 @@
     },
 		setText: function (t, span) {
 			t = (typeof(t) === 'undefined') ? '' : t+'';
+			if (!this.tspans) return this.set({'text': t});
 
 			if (this.tspans.length == 0) {
 				this.set('text',t);
