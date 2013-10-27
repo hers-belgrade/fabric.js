@@ -98,7 +98,7 @@
           isInPathGroup = this.group && this.group.type !== 'group';
 
       ctx.beginPath();
-      ctx.globalAlpha = isInPathGroup ? (ctx.globalAlpha * this.opacity) : this.opacity;
+      ctx.globalAlpha = this.opacity;
 
       var isRounded = rx !== 0 || ry !== 0;
 

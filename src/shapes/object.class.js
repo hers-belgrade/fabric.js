@@ -430,40 +430,12 @@
       this._initGradient(options);
       this._initPattern(options);
       this._initClipping(options);
-			/*
-			if(this.id==='kosilevo'){
-				console.log('options set');
-				console.log('angle',this.angle,'width',this.getWidth(),'height',this.getHeight(),'scale',this.scaleX,this.scaleY,'left',this.left,'top',this.top);
-				console.log('finally,center',fabric.util.rotatePoint(new fabric.Point(cx, cy), point, degreesToRadians(this.angle)));
-			}
-			*/
     },
 		clearAllTransformations : function () {
 			var fields = {'top':0, 'left':0, 'transformMatrix':undefined, 'scaleX' : 1, 'scaleY': 1, 'angle': 0, 'flipX': false, 'flipY': false};
 			for (var i in fields) {
 				this[i] = fields[i];
 			}
-		},
-
-
-		///TODO: zajebi transform fju, da se uklopi u ovo ....
-		prepareTransformMatrix : function () {
-      var m = this.transformMatrix || Matrix.UnityMatrix();
-      var em = this._extraTransformations();
-
-      if(this.left || this.top){
-        m = matmult(m,[1,0,0,1,this.left,this.top]);
-      }
-
-      if(this.angle){
-        var rad = degreesToRadians(this.angle),sin = Math.sin(rad),cos = Math.cos(rad);
-        m = matmult(m,[cos,-sin,sin,cos,0,0]);
-      }
-      var sx = this.scaleX * (this.flipX ? -1 : 1), sy = this.scaleY * (this.flipY ? -1 : 1);
-      if((sx!==1)||(sy!==1)){
-        m = matmult(m,[sx,0,0,sy,0,0]);
-      }
-			return m;
 		},
 
     /**
@@ -498,18 +470,19 @@
       }
       if(this.left || this.top){
         ctx.translate(this.left,this.top);
-        m = matmult(m,[1,0,0,1,this.left,this.top]);
       }
       if(this.angle){
         var rad = degreesToRadians(this.angle),sin = Math.sin(rad),cos = Math.cos(rad);
         ctx.rotate(rad);
-        m = matmult(m,[cos,-sin,sin,cos,0,0]);
       }
       var sx = this.scaleX * (this.flipX ? -1 : 1), sy = this.scaleY * (this.flipY ? -1 : 1);
       if((sx!==1)||(sy!==1)){
         ctx.scale( sx, sy );
-        m = matmult(m,[sx,0,0,sy,0,0]);
       }
+      if(!this._localTransformationMatrix){
+        this._cacheLocalTransformMatrix();
+      }
+      m = matmult(m,this._localTransformationMatrix);
       ctx._currentTransform = matmult(ctx._currentTransform,m);
       var xl = 0, xr = xl+this.width, yt = 0, yb = yt+this.height;
       var tl = fabric.util.pointInSpace(ctx._currentTransform,new fabric.Point(xl,yt));
@@ -763,7 +736,27 @@
 
       this[key] = value;
 
+      if(key in {top:1,left:1,angle:1}){
+        this._cacheLocalTransformMatrix();
+      }
+
       return this;
+    },
+
+    _cacheLocalTransformMatrix : function(){
+      var m = [1,0,0,1,0,0];
+      if(this.left || this.top){
+        m = matmult(m,[1,0,0,1,this.left,this.top]);
+      }
+      if(this.angle){
+        var rad = degreesToRadians(this.angle),sin = Math.sin(rad),cos = Math.cos(rad);
+        m = matmult(m,[cos,-sin,sin,cos,0,0]);
+      }
+      var sx = this.scaleX * (this.flipX ? -1 : 1), sy = this.scaleY * (this.flipY ? -1 : 1);
+      if((sx!==1)||(sy!==1)){
+        m = matmult(m,[sx,0,0,sy,0,0]);
+      }
+      this._localTransformationMatrix = m;
     },
 
     /**
@@ -865,21 +858,8 @@
      * @param {CanvasRenderingContext2D} ctx Context to render on
      */
     _renderFill: function(ctx) {
-
 			if (!this.fill || '' === this.fill) ctx.fillStyle = this.fill;
-
-      if (this.fill && this.fill.toLive) {
-        ctx.save();
-        ctx.translate(
-          -this.width / 2 + this.fill.offsetX || 0,
-          -this.height / 2 + this.fill.offsetY || 0);
-      }
-
       ctx.fill();
-
-      if (this.fill && this.fill.toLive) {
-        ctx.restore();
-      }
       if (this.shadow && !this.shadow.affectStroke) {
         this._removeShadow(ctx);
       }

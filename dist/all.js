@@ -4450,6 +4450,11 @@ fabric.Collection = {
     ];
   }
 
+  function matrixInverse(m){
+    var k = (m[0]*m[3]-m[1]*m[2]);
+    return [m[3]/k,-m[1]/k,-m[2]/k,m[0]/k,(-m[3]*m[4]+m[2]*m[5])/k,(m[1]*m[4]-m[0]*m[5])/k];
+  }
+
   function getFunctionBody(fn) {
     return (String(fn).match(/function[^{]*\{([\s\S]*)\}/) || {})[1];
   }
@@ -4631,6 +4636,7 @@ fabric.Collection = {
   fabric.util.clipContext = clipContext;
   fabric.util.pointInSpace = pointInSpace;
   fabric.util.multiplyTransformMatrices = multiplyTransformMatrices;
+  fabric.util.matrixInverse = matrixInverse;
   fabric.util.getFunctionBody = getFunctionBody;
   fabric.util.drawArc = drawArc;
 	fabric.util.resetImageCache = resetImageCache;
@@ -5869,7 +5875,8 @@ fabric.util.string = {
 			ctx.fillStyle = settings.overlayFill;
 		}
 		else if (settings.fill) {
-			ctx.fillStyle = settings.fill.toLive ? settings.fill.toLive(ctx) : settings.fill;
+      var fs = settings.fill.toLive ? settings.fill.toLive(settings,ctx) : settings.fill;
+			ctx.fillStyle = fs;
 		}
 	}
 
@@ -5879,7 +5886,7 @@ fabric.util.string = {
 		ctx.lineJoin = settings.strokeLineJoin;
 		ctx.miterLimit = settings.strokeMiterLimit;
 		if (settings.stroke) {
-			ctx.strokeStyle = settings.stroke.toLive ? settings.stroke.toLive(ctx) : settings.stroke;
+			ctx.strokeStyle = settings.stroke.toLive ? settings.stroke.toLive(settings,ctx) : settings.stroke;
 		}
 	}
 
@@ -6314,6 +6321,7 @@ fabric.util.string = {
     'cy':               'top',
     'y':                'top',
     'transform':        'transformMatrix',
+    'gradientTransform':'gradientTransformMatrix',
 		'text-align':				'textAlign',
   };
 
@@ -6344,7 +6352,7 @@ fabric.util.string = {
     else if (attr === 'strokeDashArray') {
       value = value.replace(/,/g, ' ').split(/\s+/);
     }
-    else if (attr === 'transformMatrix') {
+    else if (attr === 'transformMatrix' || attr === 'gradientTransformMatrix') {
 			value = fabric.parseTransformAttribute(value);
 			/*
       if (parentAttributes && parentAttributes.transformMatrix) {
@@ -6696,19 +6704,22 @@ fabric.util.string = {
     return oStyle;
   }
 
+  function gradientResolver(instance,attribute){
+    var attributeValue = instance.get(attribute);
+    if (/^url\(/.test(attributeValue)) {
+      var gradientId = attributeValue.slice(5, attributeValue.length - 1);
+      //console.log('setting gradient',gradientId,'as',attribute,'(',attributeValue,')');
+      if (fabric.gradientDefs[gradientId]) {
+        instance.set(attribute,
+          fabric.Gradient.fromElement(fabric.gradientDefs[gradientId], instance));
+      }
+    }
+  };
+
   function resolveGradients(instances) {
     for (var i = instances.length; i--; ) {
-      var instanceFillValue = instances[i].get('fill');
-
-      if (/^url\(/.test(instanceFillValue)) {
-
-        var gradientId = instanceFillValue.slice(5, instanceFillValue.length - 1);
-
-        if (fabric.gradientDefs[gradientId]) {
-          instances[i].set('fill',
-            fabric.Gradient.fromElement(fabric.gradientDefs[gradientId], instances[i]));
-        }
-      }
+      gradientResolver(instances[i],'fill');
+      gradientResolver(instances[i],'stroke');
     }
   }
 
@@ -6943,7 +6954,6 @@ fabric.util.string = {
    * @param {Function} callback Callback to call when parsing is finished; It's being passed an array of elements (parsed from a document).
    */
   fabric.parseSVGDocumentHierarchical = (function() {
-		console.log('Document parsing started ...');
     function processGroup(map,elements,g,options,cb){
 			//console.log('PROCESSING GROUP ', g);
       var processElement = (function(_cn,_cb){
@@ -6971,7 +6981,7 @@ fabric.util.string = {
             cb(g);
             return;
           }
-          var next = function(){setTimeout(function(){worker(i+1);},1)};
+          var next = function(){worker(i+1);};
           if(gc.tagName){
             if(gc.tagName!=='g'){
              if(/^(path|circle|polygon|polyline|ellipse|rect|line|image|text|use)$/.test(gc.tagName)){
@@ -7019,9 +7029,11 @@ fabric.util.string = {
     return function(doc, callback) {
       if (!doc) return;
 
-      var startTime = new Date(),
-          descendants = fabric.util.toArray(doc.getElementsByTagName('*'));
+      var startTime = new Date()/*,
+          descendants = fabric.util.toArray(doc.getElementsByTagName('*'));*/
 
+      console.log('Document parsing started ...',startTime.getTime());
+      /*
       if (descendants.length === 0) {
         // we're likely in node, where "o3-xml" library fails to gEBTN("*")
         // https://github.com/ajaxorg/node-o3-xml/issues/21
@@ -7032,6 +7044,7 @@ fabric.util.string = {
         }
         descendants = arr;
       }
+      */
 
       var viewBoxAttr = doc.getAttribute('viewBox'),
           widthAttr = doc.getAttribute('width'),
@@ -7060,9 +7073,11 @@ fabric.util.string = {
         height: height
       };
 
+      /*
       var docchildren = descendants.filter(function(el){
         return el.parentNode && el.parentNode.nodeName==='svg';
       });
+      */
 
       var hierarchy = {};
       var elements = [];
@@ -7093,6 +7108,7 @@ fabric.util.string = {
 							}
 						}
 					},elements[0]);
+          console.log('Document parsing ended ...',fabric.documentParsingTime);
           callback(elements[0], options);
         }
       });
@@ -7440,7 +7456,7 @@ fabric.util.string = {
           _lf(index+1);
         };
         var rn = root+'/'+picname+'.'+type;
-        //console.log('loading',fabric.workingDirectory,picname,type,rn);
+        console.log('loading',fabric.workingDirectory,picname,type,rn);
         switch(type){
           case 'png':
             return fabric.Image.fromURL(rn,resourceloaded);
@@ -7478,13 +7494,13 @@ fabric.util.string = {
 		//preprocess paths so you can be able to change setWorkingDirectory at any moment
 		//
 		//
-		function prepere_map (obj) {
+		function prepare_map (obj) {
 			for (var i in obj) {
-				if (!obj[i].name && !obj[i].root) obj[i] = {name: obj[i], root:fabric.workingDirectory};
+				if (!obj[i].name && !obj[i].root) obj[i] = {name: obj[i], root:fabric.workingDirectory||''};
 			}
 		}
-		prepere_map(resobj.svg);
-		prepere_map(resobj.sprites);
+		prepare_map(resobj.svg);
+		prepare_map(resobj.sprites);
 
     _loadArray('svg',resobj.svg,function(loaded){
       _loadArray('sprites',resobj.sprites,function(_loaded){
@@ -8509,6 +8525,7 @@ fabric.util.string = {
       this.coords = coords;
       this.gradientUnits = options.gradientUnits || 'objectBoundingBox';
       this.colorStops = options.colorStops.slice();
+      this.transformMatrix = options.transformMatrix;
     },
 
     /**
@@ -8610,18 +8627,39 @@ fabric.util.string = {
      * @param ctx
      * @return {CanvasGradient}
      */
-    toLive: function(ctx) {
+    toLive: function(object,ctx) {
       var gradient;
 
-      if (!this.type) return;
-
-      if (this.type === 'linear') {
-        gradient = ctx.createLinearGradient(
-          this.coords.x1, this.coords.y1, this.coords.x2, this.coords.y2);
+      if(!this.coords){return;}
+      var coords = this.coords;
+      var p1 = new fabric.Point(this.coords.x1,this.coords.y1);
+      var p2 = new fabric.Point(this.coords.x2,this.coords.y2);
+      if(this.transformMatrix){
+        p1 = fabric.util.pointInSpace(this.transformMatrix,p1);
+        p2 = fabric.util.pointInSpace(this.transformMatrix,p2);
       }
-      else if (this.type === 'radial') {
-        gradient = ctx.createRadialGradient(
-          this.coords.x1, this.coords.y1, this.coords.r1, this.coords.x2, this.coords.y2, this.coords.r2);
+      p1.x-=object.left;
+      p2.x-=object.left;
+      p1.y-=object.top;
+      p2.y-=object.top;
+      if(object.angle){
+        var rad = degreesToRadians(object.angle),sin=Math.sin(-rad),cos=Math.cos(-rad);
+        var rm = [cos,-sin,sin,cos,0,0];
+        p1 = fabric.util.pointInSpace(rm,p1);
+        p2 = fabric.util.pointInSpace(rm,p2);
+      }
+      coords = {x1:p1.x,y1:p1.y,x2:p2.x,y2:p2.y};
+      switch(this.type){
+        case 'linear':
+          gradient = ctx.createLinearGradient(
+            coords.x1, coords.y1, coords.x2, coords.y2);
+          break;
+        case 'radial':
+          gradient = ctx.createRadialGradient(
+            this.coords.x1, this.coords.y1, this.coords.r1, this.coords.x2, this.coords.y2, this.coords.r2);
+          break;
+        default:
+          return;
       }
 
       for (var i = 0, len = this.colorStops.length; i < len; i++) {
@@ -8686,13 +8724,19 @@ fabric.util.string = {
        *
        */
 
-      var parsedAttributes = fabric.parseAttributes(el,['gradientTransform']);
+      var parsedAttributes = fabric.parseAttributes(el,['gradientTransform','xlink:href']);
 
       var colorStopEls = el.getElementsByTagName('stop'),
           type = (el.nodeName === 'linearGradient' ? 'linear' : 'radial'),
           gradientUnits = el.getAttribute('gradientUnits') || 'objectBoundingBox',
           colorStops = [],
           coords = { };
+
+      var href = el.attributes['xlink:href'];
+      var ret;
+      if(href && href.textContent){
+          ret = fabric.Gradient.fromElement(fabric.gradientDefs[href.textContent.slice(1)],instance);
+      }
 
       if (type === 'linear') {
         coords = {
@@ -8713,8 +8757,6 @@ fabric.util.string = {
         };
       }
 
-      coords.transformMatrix = parsedAttributes.transformMatrix;
-
       for (var i = colorStopEls.length; i--; ) {
         colorStops.push(getColorStop(colorStopEls[i]));
       }
@@ -8725,8 +8767,15 @@ fabric.util.string = {
         type: type,
         coords: coords,
         gradientUnits: gradientUnits,
-        colorStops: colorStops
+        colorStops: ret? ret.colorStops : colorStops,
+        transformMatrix: parsedAttributes.gradientTransformMatrix
       });
+      if(!ret){
+        return myret;
+      }else{
+        myret.colorStops = ret.colorStops.slice();
+        return myret;
+      }
     },
     /* _FROM_SVG_END_ */
 
@@ -8760,12 +8809,13 @@ fabric.util.string = {
       }
       // normalize rendering point (should be from top/left corner rather than center of the shape)
       if (prop === 'x1' || prop === 'x2') {
-        options[prop] -= fabric.util.toFixed(object.width / 2, 2);
+        //options[prop] -= fabric.util.toFixed(object.width / 2, 2);
       }
       else if (prop === 'y1' || prop === 'y2') {
-        options[prop] -= fabric.util.toFixed(object.height / 2, 2);
+        //options[prop] -= fabric.util.toFixed(object.height / 2, 2);
       }
     }
+    /*
     var m = options.transformMatrix;
     if(m){
       options.x1+=m[4];
@@ -8777,6 +8827,7 @@ fabric.util.string = {
       options.y1*=m[3];
       options.y2*=m[3];
     }
+    */
   }
 
   /* _TO_SVG_START_ */
@@ -12445,40 +12496,12 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
       this._initGradient(options);
       this._initPattern(options);
       this._initClipping(options);
-			/*
-			if(this.id==='kosilevo'){
-				console.log('options set');
-				console.log('angle',this.angle,'width',this.getWidth(),'height',this.getHeight(),'scale',this.scaleX,this.scaleY,'left',this.left,'top',this.top);
-				console.log('finally,center',fabric.util.rotatePoint(new fabric.Point(cx, cy), point, degreesToRadians(this.angle)));
-			}
-			*/
     },
 		clearAllTransformations : function () {
 			var fields = {'top':0, 'left':0, 'transformMatrix':undefined, 'scaleX' : 1, 'scaleY': 1, 'angle': 0, 'flipX': false, 'flipY': false};
 			for (var i in fields) {
 				this[i] = fields[i];
 			}
-		},
-
-
-		///TODO: zajebi transform fju, da se uklopi u ovo ....
-		prepareTransformMatrix : function () {
-      var m = this.transformMatrix || Matrix.UnityMatrix();
-      var em = this._extraTransformations();
-
-      if(this.left || this.top){
-        m = matmult(m,[1,0,0,1,this.left,this.top]);
-      }
-
-      if(this.angle){
-        var rad = degreesToRadians(this.angle),sin = Math.sin(rad),cos = Math.cos(rad);
-        m = matmult(m,[cos,-sin,sin,cos,0,0]);
-      }
-      var sx = this.scaleX * (this.flipX ? -1 : 1), sy = this.scaleY * (this.flipY ? -1 : 1);
-      if((sx!==1)||(sy!==1)){
-        m = matmult(m,[sx,0,0,sy,0,0]);
-      }
-			return m;
 		},
 
     /**
@@ -12513,18 +12536,19 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
       }
       if(this.left || this.top){
         ctx.translate(this.left,this.top);
-        m = matmult(m,[1,0,0,1,this.left,this.top]);
       }
       if(this.angle){
         var rad = degreesToRadians(this.angle),sin = Math.sin(rad),cos = Math.cos(rad);
         ctx.rotate(rad);
-        m = matmult(m,[cos,-sin,sin,cos,0,0]);
       }
       var sx = this.scaleX * (this.flipX ? -1 : 1), sy = this.scaleY * (this.flipY ? -1 : 1);
       if((sx!==1)||(sy!==1)){
         ctx.scale( sx, sy );
-        m = matmult(m,[sx,0,0,sy,0,0]);
       }
+      if(!this._localTransformationMatrix){
+        this._cacheLocalTransformMatrix();
+      }
+      m = matmult(m,this._localTransformationMatrix);
       ctx._currentTransform = matmult(ctx._currentTransform,m);
       var xl = 0, xr = xl+this.width, yt = 0, yb = yt+this.height;
       var tl = fabric.util.pointInSpace(ctx._currentTransform,new fabric.Point(xl,yt));
@@ -12778,7 +12802,27 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
 
       this[key] = value;
 
+      if(key in {top:1,left:1,angle:1}){
+        this._cacheLocalTransformMatrix();
+      }
+
       return this;
+    },
+
+    _cacheLocalTransformMatrix : function(){
+      var m = [1,0,0,1,0,0];
+      if(this.left || this.top){
+        m = matmult(m,[1,0,0,1,this.left,this.top]);
+      }
+      if(this.angle){
+        var rad = degreesToRadians(this.angle),sin = Math.sin(rad),cos = Math.cos(rad);
+        m = matmult(m,[cos,-sin,sin,cos,0,0]);
+      }
+      var sx = this.scaleX * (this.flipX ? -1 : 1), sy = this.scaleY * (this.flipY ? -1 : 1);
+      if((sx!==1)||(sy!==1)){
+        m = matmult(m,[sx,0,0,sy,0,0]);
+      }
+      this._localTransformationMatrix = m;
     },
 
     /**
@@ -12880,21 +12924,8 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
      * @param {CanvasRenderingContext2D} ctx Context to render on
      */
     _renderFill: function(ctx) {
-
 			if (!this.fill || '' === this.fill) ctx.fillStyle = this.fill;
-
-      if (this.fill && this.fill.toLive) {
-        ctx.save();
-        ctx.translate(
-          -this.width / 2 + this.fill.offsetX || 0,
-          -this.height / 2 + this.fill.offsetY || 0);
-      }
-
       ctx.fill();
-
-      if (this.fill && this.fill.toLive) {
-        ctx.restore();
-      }
       if (this.shadow && !this.shadow.affectStroke) {
         this._removeShadow(ctx);
       }
@@ -15337,7 +15368,7 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
           isInPathGroup = this.group && this.group.type !== 'group';
 
       ctx.beginPath();
-      ctx.globalAlpha = isInPathGroup ? (ctx.globalAlpha * this.opacity) : this.opacity;
+      ctx.globalAlpha = this.opacity;
 
       var isRounded = rx !== 0 || ry !== 0;
 
@@ -20238,9 +20269,6 @@ fabric.util.object.extend(fabric.Text.prototype, {
   }
 
   fabric.Tspan = fabric.util.createClass(fabric.Text , /** @lends fabric.Text.prototype */ {
-
-
-
   });
 
   fabric.Tspan.fromElement = function(element, options){

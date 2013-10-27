@@ -5,7 +5,8 @@
 			ctx.fillStyle = settings.overlayFill;
 		}
 		else if (settings.fill) {
-			ctx.fillStyle = settings.fill.toLive ? settings.fill.toLive(ctx) : settings.fill;
+      var fs = settings.fill.toLive ? settings.fill.toLive(settings,ctx) : settings.fill;
+			ctx.fillStyle = fs;
 		}
 	}
 
@@ -15,7 +16,7 @@
 		ctx.lineJoin = settings.strokeLineJoin;
 		ctx.miterLimit = settings.strokeMiterLimit;
 		if (settings.stroke) {
-			ctx.strokeStyle = settings.stroke.toLive ? settings.stroke.toLive(ctx) : settings.stroke;
+			ctx.strokeStyle = settings.stroke.toLive ? settings.stroke.toLive(settings,ctx) : settings.stroke;
 		}
 	}
 

@@ -464,6 +464,11 @@
     ];
   }
 
+  function matrixInverse(m){
+    var k = (m[0]*m[3]-m[1]*m[2]);
+    return [m[3]/k,-m[1]/k,-m[2]/k,m[0]/k,(-m[3]*m[4]+m[2]*m[5])/k,(m[1]*m[4]-m[0]*m[5])/k];
+  }
+
   function getFunctionBody(fn) {
     return (String(fn).match(/function[^{]*\{([\s\S]*)\}/) || {})[1];
   }
@@ -645,6 +650,7 @@
   fabric.util.clipContext = clipContext;
   fabric.util.pointInSpace = pointInSpace;
   fabric.util.multiplyTransformMatrices = multiplyTransformMatrices;
+  fabric.util.matrixInverse = matrixInverse;
   fabric.util.getFunctionBody = getFunctionBody;
   fabric.util.drawArc = drawArc;
 	fabric.util.resetImageCache = resetImageCache;

@@ -83,6 +83,7 @@
       this.coords = coords;
       this.gradientUnits = options.gradientUnits || 'objectBoundingBox';
       this.colorStops = options.colorStops.slice();
+      this.transformMatrix = options.transformMatrix;
     },
 
     /**
@@ -184,18 +185,39 @@
      * @param ctx
      * @return {CanvasGradient}
      */
-    toLive: function(ctx) {
+    toLive: function(object,ctx) {
       var gradient;
 
-      if (!this.type) return;
-
-      if (this.type === 'linear') {
-        gradient = ctx.createLinearGradient(
-          this.coords.x1, this.coords.y1, this.coords.x2, this.coords.y2);
+      if(!this.coords){return;}
+      var coords = this.coords;
+      var p1 = new fabric.Point(this.coords.x1,this.coords.y1);
+      var p2 = new fabric.Point(this.coords.x2,this.coords.y2);
+      if(this.transformMatrix){
+        p1 = fabric.util.pointInSpace(this.transformMatrix,p1);
+        p2 = fabric.util.pointInSpace(this.transformMatrix,p2);
       }
-      else if (this.type === 'radial') {
-        gradient = ctx.createRadialGradient(
-          this.coords.x1, this.coords.y1, this.coords.r1, this.coords.x2, this.coords.y2, this.coords.r2);
+      p1.x-=object.left;
+      p2.x-=object.left;
+      p1.y-=object.top;
+      p2.y-=object.top;
+      if(object.angle){
+        var rad = degreesToRadians(object.angle),sin=Math.sin(-rad),cos=Math.cos(-rad);
+        var rm = [cos,-sin,sin,cos,0,0];
+        p1 = fabric.util.pointInSpace(rm,p1);
+        p2 = fabric.util.pointInSpace(rm,p2);
+      }
+      coords = {x1:p1.x,y1:p1.y,x2:p2.x,y2:p2.y};
+      switch(this.type){
+        case 'linear':
+          gradient = ctx.createLinearGradient(
+            coords.x1, coords.y1, coords.x2, coords.y2);
+          break;
+        case 'radial':
+          gradient = ctx.createRadialGradient(
+            this.coords.x1, this.coords.y1, this.coords.r1, this.coords.x2, this.coords.y2, this.coords.r2);
+          break;
+        default:
+          return;
       }
 
       for (var i = 0, len = this.colorStops.length; i < len; i++) {
@@ -260,13 +282,19 @@
        *
        */
 
-      var parsedAttributes = fabric.parseAttributes(el,['gradientTransform']);
+      var parsedAttributes = fabric.parseAttributes(el,['gradientTransform','xlink:href']);
 
       var colorStopEls = el.getElementsByTagName('stop'),
           type = (el.nodeName === 'linearGradient' ? 'linear' : 'radial'),
           gradientUnits = el.getAttribute('gradientUnits') || 'objectBoundingBox',
           colorStops = [],
           coords = { };
+
+      var href = el.attributes['xlink:href'];
+      var ret;
+      if(href && href.textContent){
+          ret = fabric.Gradient.fromElement(fabric.gradientDefs[href.textContent.slice(1)],instance);
+      }
 
       if (type === 'linear') {
         coords = {
@@ -287,8 +315,6 @@
         };
       }
 
-      coords.transformMatrix = parsedAttributes.transformMatrix;
-
       for (var i = colorStopEls.length; i--; ) {
         colorStops.push(getColorStop(colorStopEls[i]));
       }
@@ -299,8 +325,15 @@
         type: type,
         coords: coords,
         gradientUnits: gradientUnits,
-        colorStops: colorStops
+        colorStops: ret? ret.colorStops : colorStops,
+        transformMatrix: parsedAttributes.gradientTransformMatrix
       });
+      if(!ret){
+        return myret;
+      }else{
+        myret.colorStops = ret.colorStops.slice();
+        return myret;
+      }
     },
     /* _FROM_SVG_END_ */
 
@@ -334,12 +367,13 @@
       }
       // normalize rendering point (should be from top/left corner rather than center of the shape)
       if (prop === 'x1' || prop === 'x2') {
-        options[prop] -= fabric.util.toFixed(object.width / 2, 2);
+        //options[prop] -= fabric.util.toFixed(object.width / 2, 2);
       }
       else if (prop === 'y1' || prop === 'y2') {
-        options[prop] -= fabric.util.toFixed(object.height / 2, 2);
+        //options[prop] -= fabric.util.toFixed(object.height / 2, 2);
       }
     }
+    /*
     var m = options.transformMatrix;
     if(m){
       options.x1+=m[4];
@@ -351,6 +385,7 @@
       options.y1*=m[3];
       options.y2*=m[3];
     }
+    */
   }
 
   /* _TO_SVG_START_ */

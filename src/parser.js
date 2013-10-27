@@ -47,6 +47,7 @@
     'cy':               'top',
     'y':                'top',
     'transform':        'transformMatrix',
+    'gradientTransform':'gradientTransformMatrix',
 		'text-align':				'textAlign',
   };
 
@@ -77,7 +78,7 @@
     else if (attr === 'strokeDashArray') {
       value = value.replace(/,/g, ' ').split(/\s+/);
     }
-    else if (attr === 'transformMatrix') {
+    else if (attr === 'transformMatrix' || attr === 'gradientTransformMatrix') {
 			value = fabric.parseTransformAttribute(value);
 			/*
       if (parentAttributes && parentAttributes.transformMatrix) {
@@ -429,19 +430,22 @@
     return oStyle;
   }
 
+  function gradientResolver(instance,attribute){
+    var attributeValue = instance.get(attribute);
+    if (/^url\(/.test(attributeValue)) {
+      var gradientId = attributeValue.slice(5, attributeValue.length - 1);
+      //console.log('setting gradient',gradientId,'as',attribute,'(',attributeValue,')');
+      if (fabric.gradientDefs[gradientId]) {
+        instance.set(attribute,
+          fabric.Gradient.fromElement(fabric.gradientDefs[gradientId], instance));
+      }
+    }
+  };
+
   function resolveGradients(instances) {
     for (var i = instances.length; i--; ) {
-      var instanceFillValue = instances[i].get('fill');
-
-      if (/^url\(/.test(instanceFillValue)) {
-
-        var gradientId = instanceFillValue.slice(5, instanceFillValue.length - 1);
-
-        if (fabric.gradientDefs[gradientId]) {
-          instances[i].set('fill',
-            fabric.Gradient.fromElement(fabric.gradientDefs[gradientId], instances[i]));
-        }
-      }
+      gradientResolver(instances[i],'fill');
+      gradientResolver(instances[i],'stroke');
     }
   }
 
@@ -676,7 +680,6 @@
    * @param {Function} callback Callback to call when parsing is finished; It's being passed an array of elements (parsed from a document).
    */
   fabric.parseSVGDocumentHierarchical = (function() {
-		console.log('Document parsing started ...');
     function processGroup(map,elements,g,options,cb){
 			//console.log('PROCESSING GROUP ', g);
       var processElement = (function(_cn,_cb){
@@ -704,7 +707,7 @@
             cb(g);
             return;
           }
-          var next = function(){setTimeout(function(){worker(i+1);},1)};
+          var next = function(){worker(i+1);};
           if(gc.tagName){
             if(gc.tagName!=='g'){
              if(/^(path|circle|polygon|polyline|ellipse|rect|line|image|text|use)$/.test(gc.tagName)){
@@ -752,9 +755,11 @@
     return function(doc, callback) {
       if (!doc) return;
 
-      var startTime = new Date(),
-          descendants = fabric.util.toArray(doc.getElementsByTagName('*'));
+      var startTime = new Date()/*,
+          descendants = fabric.util.toArray(doc.getElementsByTagName('*'));*/
 
+      console.log('Document parsing started ...',startTime.getTime());
+      /*
       if (descendants.length === 0) {
         // we're likely in node, where "o3-xml" library fails to gEBTN("*")
         // https://github.com/ajaxorg/node-o3-xml/issues/21
@@ -765,6 +770,7 @@
         }
         descendants = arr;
       }
+      */
 
       var viewBoxAttr = doc.getAttribute('viewBox'),
           widthAttr = doc.getAttribute('width'),
@@ -793,9 +799,11 @@
         height: height
       };
 
+      /*
       var docchildren = descendants.filter(function(el){
         return el.parentNode && el.parentNode.nodeName==='svg';
       });
+      */
 
       var hierarchy = {};
       var elements = [];
@@ -826,6 +834,7 @@
 							}
 						}
 					},elements[0]);
+          console.log('Document parsing ended ...',fabric.documentParsingTime);
           callback(elements[0], options);
         }
       });

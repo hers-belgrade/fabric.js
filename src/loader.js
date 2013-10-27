@@ -69,7 +69,7 @@
           _lf(index+1);
         };
         var rn = root+'/'+picname+'.'+type;
-        //console.log('loading',fabric.workingDirectory,picname,type,rn);
+        console.log('loading',fabric.workingDirectory,picname,type,rn);
         switch(type){
           case 'png':
             return fabric.Image.fromURL(rn,resourceloaded);
@@ -107,13 +107,13 @@
 		//preprocess paths so you can be able to change setWorkingDirectory at any moment
 		//
 		//
-		function prepere_map (obj) {
+		function prepare_map (obj) {
 			for (var i in obj) {
-				if (!obj[i].name && !obj[i].root) obj[i] = {name: obj[i], root:fabric.workingDirectory};
+				if (!obj[i].name && !obj[i].root) obj[i] = {name: obj[i], root:fabric.workingDirectory||''};
 			}
 		}
-		prepere_map(resobj.svg);
-		prepere_map(resobj.sprites);
+		prepare_map(resobj.svg);
+		prepare_map(resobj.sprites);
 
     _loadArray('svg',resobj.svg,function(loaded){
       _loadArray('sprites',resobj.sprites,function(_loaded){
