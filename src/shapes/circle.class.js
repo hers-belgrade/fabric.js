@@ -94,7 +94,9 @@
       // multiply by currently set alpha (the one that was set by path group where this object is contained, for example)
       ctx.arc(noTransform ? this.left : 0, noTransform ? this.top : 0, this.radius, 0, piBy2, false);
       ctx.closePath();
+    },
 
+    _paint: function(ctx){
       this._renderFill(ctx);
       this._renderStroke(ctx);
     },

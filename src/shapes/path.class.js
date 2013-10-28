@@ -118,42 +118,14 @@
           this.height = options.height;
         }
       }
-      else { //Set center location relative to given height/width if not specified
-        if (!isTopSet) {
-          this.top = this.height / 2;
-        }
-        if (!isLeftSet) {
-          this.left = this.width / 2;
-        }
-      }
-      this.pathOffset = this.pathOffset || this._calculatePathOffset(origLeft, origTop); //Save top-left coords as offset
     },
-
-    /**
-     * @private
-     * @param {Boolean} positionSet When false, path offset is returned otherwise 0
-     */
-    _calculatePathOffset: function (origLeft, origTop) {
-      return {
-        x: this.left - origLeft - (this.width / 2),
-        y: this.top - origTop - (this.height / 2)
-      };
-    },
-
-    /*
-    _extraTransformations: function(){
-      return [1,0,0,1,-((this.width / 2) + this.pathOffset.x),-((this.height / 2) + this.pathOffset.y)];
-    },
-    */
 
     /**
      * @private
      * @param {CanvasRenderingContext2D} ctx context to render path on
      */
     _render: function(ctx) {
-			ctx.save();
       ctx.beginPath();
-      ctx.translate(-((this.width / 2) + this.pathOffset.x),-((this.height / 2) + this.pathOffset.y));
       var current, // current instruction
           previous = null,
           x = 0, // current x
@@ -164,9 +136,10 @@
           tempY,
           tempControlX,
           tempControlY,
-          l = 0,//-((this.width / 2) + this.pathOffset.x),
-          t = 0;//-((this.height / 2) + this.pathOffset.y);
+          l = 0,
+          t = 0;
 
+      var id = this.id;
 			function do_command (f,args){
 				if (f === 'drawArc') {
 					args.unshift(ctx);
@@ -174,9 +147,6 @@
 				}else{
 					ctx[f].apply(ctx, args);
 				}
-				return;
-				var s = fname+'('+((args)?args.join(','):'')+')';
-				console.log(s);
 			}
       for (var i = 0, len = this.path.length; i < len; ++i) {
 
@@ -217,9 +187,9 @@
             break;
 
           case 'm': // moveTo, relative
-            x = current[1];
-            y = current[2];
-						do_command('lineTo', [x, y]);
+            x += current[1];
+            y += current[2];
+						do_command('moveTo', [x, y]);
             break;
 
           case 'M': // moveTo, absolute
@@ -440,10 +410,13 @@
         }
         previous = current;
       }
+    },
+
+    _paint: function(ctx){
 			this._renderFill(ctx);
 			this._renderStroke(ctx);
-			ctx.restore();
     },
+
     /**
      * Returns string representation of an instance
      * @return {String} string representation of an instance
@@ -460,8 +433,7 @@
      */
     toObject: function(propertiesToInclude) {
       var o = extend(this.callSuper('toObject', propertiesToInclude), {
-        path: this.path,
-        pathOffset: this.pathOffset
+        path: this.path
       });
       if (this.sourcePath) {
         o.sourcePath = this.sourcePath;
@@ -505,7 +477,6 @@
           '<path ',
             'd="', path,
             '" style="', this.getSvgStyles(),
-            '" transform="translate(', (-this.width / 2), ' ', (-this.height/2), ')',
             '" stroke-linecap="round" ',
           '/>',
         '</g>'
@@ -534,7 +505,6 @@
 				if (path.length === 0) break;
 				match = e_re.exec(path);
 			}
-			//console.log(result);
 		},
 
     /**
@@ -548,9 +518,6 @@
 					re = /(-?\.\d+)|(-?\d+(\.\d+)?(e[\+-]\d+)?)/g,
           match,
           coordsStr;
-
-
-
 
       for (var i = 0, coordsParsed, len = this.path.length; i < len; i++) {
         currentPath = this.path[i];
@@ -649,8 +616,8 @@
           deltaY = maxY - minY;
 
       var o = {
-        left: this.left + (minX + deltaX / 2),
-        top: this.top + (minY + deltaY / 2),
+        left: this.left,
+        top: this.top,
         width: deltaX,
         height: deltaY
       };
@@ -714,7 +681,6 @@
     })(element);
     p.setObjectToPointAtRelativeLength = function(obj,fraction){
       var _p = this.getPointAtRelativeLength(fraction);
-      //console.log('obj going to (',p.x,',',p.y,')');
       obj.set('left',_p.x);
       obj.set('top',_p.y);
     };

@@ -468,6 +468,11 @@
       if(em){
         m = matmult(m,em);
       }
+
+			fabric.util.setStrokeToCanvas(ctx, this);
+			fabric.util.setFillToCanvas(ctx, this);
+      ctx.save();
+
       if(this.left || this.top){
         ctx.translate(this.left,this.top);
       }
@@ -814,21 +819,23 @@
 
       ctx.save();
 
-      this.transform(ctx);
+      this.transform(ctx); //there is a special ctx.save in this call
       if(topctx){
         this.drawBorderRect(topctx);
       }
-
-			fabric.util.setStrokeToCanvas(ctx, this);
-			fabric.util.setFillToCanvas(ctx, this);
 
       //this._setShadow(ctx);
       this.clipTo && fabric.util.clipContext(this, ctx);
       this._render(ctx, topctx);
       this.clipTo && ctx.restore();
+      ctx.restore();
+      this._paint(ctx);
       this._removeShadow(ctx);
 
 			this.untransform(ctx);
+    },
+
+    _paint : function(ctx){
     },
 
     /**

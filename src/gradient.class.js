@@ -196,6 +196,7 @@
         p1 = fabric.util.pointInSpace(this.transformMatrix,p1);
         p2 = fabric.util.pointInSpace(this.transformMatrix,p2);
       }
+      /*
       p1.x-=object.left;
       p2.x-=object.left;
       p1.y-=object.top;
@@ -206,6 +207,7 @@
         p1 = fabric.util.pointInSpace(rm,p1);
         p2 = fabric.util.pointInSpace(rm,p2);
       }
+      */
       coords = {x1:p1.x,y1:p1.y,x2:p2.x,y2:p2.y};
       switch(this.type){
         case 'linear':
@@ -228,7 +230,7 @@
         if (typeof opacity !== 'undefined') {
           color = new fabric.Color(color).setAlpha(opacity).toRgba();
         }
-        gradient.addColorStop(parseFloat(offset), color);
+        gradient.addColorStop(offset, color);
       }
 
       return gradient;
@@ -315,7 +317,7 @@
         };
       }
 
-      for (var i = colorStopEls.length; i--; ) {
+      for (var i = 0; i<colorStopEls.length; i++ ) {
         colorStops.push(getColorStop(colorStopEls[i]));
       }
 

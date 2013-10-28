@@ -5915,26 +5915,11 @@ fabric.util.string = {
 	}
 
 
-	function fixStrokeAndFillForLines (obj, ctx) {
-		//mislim da ovo nije potpuna istina ... ako mora da se dogodi fix da li teba da rady obj.stroke = obj.fill?
-		/*
-		ctx.strokeStyle = ctx.fillStyle;
-		ctx.fillStyle = 'none';
-		obj.stroke = obj.fill;
-		obj.fill = 'none';
-		obj._renderStroke(ctx);
-		obj._renderFill(ctx);
-		*/
-	}
-
 	fabric.util.setTextFillAndStroke = setTextFillAndStroke;
 	fabric.util.setFontDeclaration = setFontDeclaration;
 
 	fabric.util.setFillToCanvas = setFillToCanvas;
 	fabric.util.setStrokeToCanvas = setStrokeToCanvas;
-	fabric.util.fixStrokeAndFillForLines = fixStrokeAndFillForLines;
-
-
 
 })();
 
@@ -8638,6 +8623,7 @@ fabric.util.string = {
         p1 = fabric.util.pointInSpace(this.transformMatrix,p1);
         p2 = fabric.util.pointInSpace(this.transformMatrix,p2);
       }
+      /*
       p1.x-=object.left;
       p2.x-=object.left;
       p1.y-=object.top;
@@ -8648,6 +8634,7 @@ fabric.util.string = {
         p1 = fabric.util.pointInSpace(rm,p1);
         p2 = fabric.util.pointInSpace(rm,p2);
       }
+      */
       coords = {x1:p1.x,y1:p1.y,x2:p2.x,y2:p2.y};
       switch(this.type){
         case 'linear':
@@ -8670,7 +8657,7 @@ fabric.util.string = {
         if (typeof opacity !== 'undefined') {
           color = new fabric.Color(color).setAlpha(opacity).toRgba();
         }
-        gradient.addColorStop(parseFloat(offset), color);
+        gradient.addColorStop(offset, color);
       }
 
       return gradient;
@@ -8757,7 +8744,7 @@ fabric.util.string = {
         };
       }
 
-      for (var i = colorStopEls.length; i--; ) {
+      for (var i = 0; i<colorStopEls.length; i++ ) {
         colorStops.push(getColorStop(colorStopEls[i]));
       }
 
@@ -12534,6 +12521,11 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
       if(em){
         m = matmult(m,em);
       }
+
+			fabric.util.setStrokeToCanvas(ctx, this);
+			fabric.util.setFillToCanvas(ctx, this);
+      ctx.save();
+
       if(this.left || this.top){
         ctx.translate(this.left,this.top);
       }
@@ -12880,21 +12872,23 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
 
       ctx.save();
 
-      this.transform(ctx);
+      this.transform(ctx); //there is a special ctx.save in this call
       if(topctx){
         this.drawBorderRect(topctx);
       }
-
-			fabric.util.setStrokeToCanvas(ctx, this);
-			fabric.util.setFillToCanvas(ctx, this);
 
       //this._setShadow(ctx);
       this.clipTo && fabric.util.clipContext(this, ctx);
       this._render(ctx, topctx);
       this.clipTo && ctx.restore();
+      ctx.restore();
+      this._paint(ctx);
       this._removeShadow(ctx);
 
 			this.untransform(ctx);
+    },
+
+    _paint : function(ctx){
     },
 
     /**
@@ -14645,6 +14639,9 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
           this.height === 1 ? 0 : (yMult * -1 * this.height / 2));
       }
 
+    },
+
+    _paint: function(ctx){
       ctx.lineWidth = this.strokeWidth;
 
       // TODO: test this
@@ -14859,7 +14856,9 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
       // multiply by currently set alpha (the one that was set by path group where this object is contained, for example)
       ctx.arc(noTransform ? this.left : 0, noTransform ? this.top : 0, this.radius, 0, piBy2, false);
       ctx.closePath();
+    },
 
+    _paint: function(ctx){
       this._renderFill(ctx);
       this._renderStroke(ctx);
     },
@@ -15007,7 +15006,9 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
       ctx.lineTo(0, -heightBy2);
       ctx.lineTo(widthBy2, heightBy2);
       ctx.closePath();
+    },
 
+    _paint: function(ctx) {
       this._renderFill(ctx);
       this._renderStroke(ctx);
     },
@@ -15192,10 +15193,12 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
       ctx.save();
       ctx.transform(1, 0, 0, this.ry/this.rx, 0, 0);
       ctx.arc(noTransform ? this.left : 0, noTransform ? this.top : 0, this.rx, 0, piBy2, false);
+      ctx.restore();
+    },
 
+    _paint: function(ctx){
       this._renderFill(ctx);
       this._renderStroke(ctx);
-      ctx.restore();
     },
 
     /**
@@ -15353,7 +15356,6 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
      * @param ctx {CanvasRenderingContext2D} context to render on
      */
     _render: function(ctx) {
-			ctx.save();
       var rx = this.rx || 0,
           ry = this.ry || 0,
           x = 0,
@@ -15375,11 +15377,11 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
       ctx.lineTo(x,y+ry);
       isRounded && ctx.quadraticCurveTo(x,y,x+rx,y,x+rx,y);
       ctx.closePath();
+    },
 
+    _paint: function(ctx){
 			this._renderStroke(ctx);
 			this._renderFill(ctx);
-
-			ctx.restore();
     },
 
     /**
@@ -15607,7 +15609,9 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
         point = this.points[i];
         ctx.lineTo(point.x, point.y);
       }
+    },
 
+    _paint: function(ctx){
       this._renderFill(ctx);
       this._renderStroke(ctx);
     },
@@ -15806,6 +15810,9 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
         point = this.points[i];
         ctx.lineTo(point.x, point.y);
       }
+    },
+
+    _paint: function(ctx){
       this._renderFill(ctx);
       if (this.stroke || this.strokeDashArray) {
         ctx.closePath();
@@ -16009,42 +16016,14 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
           this.height = options.height;
         }
       }
-      else { //Set center location relative to given height/width if not specified
-        if (!isTopSet) {
-          this.top = this.height / 2;
-        }
-        if (!isLeftSet) {
-          this.left = this.width / 2;
-        }
-      }
-      this.pathOffset = this.pathOffset || this._calculatePathOffset(origLeft, origTop); //Save top-left coords as offset
     },
-
-    /**
-     * @private
-     * @param {Boolean} positionSet When false, path offset is returned otherwise 0
-     */
-    _calculatePathOffset: function (origLeft, origTop) {
-      return {
-        x: this.left - origLeft - (this.width / 2),
-        y: this.top - origTop - (this.height / 2)
-      };
-    },
-
-    /*
-    _extraTransformations: function(){
-      return [1,0,0,1,-((this.width / 2) + this.pathOffset.x),-((this.height / 2) + this.pathOffset.y)];
-    },
-    */
 
     /**
      * @private
      * @param {CanvasRenderingContext2D} ctx context to render path on
      */
     _render: function(ctx) {
-			ctx.save();
       ctx.beginPath();
-      ctx.translate(-((this.width / 2) + this.pathOffset.x),-((this.height / 2) + this.pathOffset.y));
       var current, // current instruction
           previous = null,
           x = 0, // current x
@@ -16055,9 +16034,10 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
           tempY,
           tempControlX,
           tempControlY,
-          l = 0,//-((this.width / 2) + this.pathOffset.x),
-          t = 0;//-((this.height / 2) + this.pathOffset.y);
+          l = 0,
+          t = 0;
 
+      var id = this.id;
 			function do_command (f,args){
 				if (f === 'drawArc') {
 					args.unshift(ctx);
@@ -16065,9 +16045,6 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
 				}else{
 					ctx[f].apply(ctx, args);
 				}
-				return;
-				var s = fname+'('+((args)?args.join(','):'')+')';
-				console.log(s);
 			}
       for (var i = 0, len = this.path.length; i < len; ++i) {
 
@@ -16108,9 +16085,9 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
             break;
 
           case 'm': // moveTo, relative
-            x = current[1];
-            y = current[2];
-						do_command('lineTo', [x, y]);
+            x += current[1];
+            y += current[2];
+						do_command('moveTo', [x, y]);
             break;
 
           case 'M': // moveTo, absolute
@@ -16331,10 +16308,13 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
         }
         previous = current;
       }
+    },
+
+    _paint: function(ctx){
 			this._renderFill(ctx);
 			this._renderStroke(ctx);
-			ctx.restore();
     },
+
     /**
      * Returns string representation of an instance
      * @return {String} string representation of an instance
@@ -16351,8 +16331,7 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
      */
     toObject: function(propertiesToInclude) {
       var o = extend(this.callSuper('toObject', propertiesToInclude), {
-        path: this.path,
-        pathOffset: this.pathOffset
+        path: this.path
       });
       if (this.sourcePath) {
         o.sourcePath = this.sourcePath;
@@ -16396,7 +16375,6 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
           '<path ',
             'd="', path,
             '" style="', this.getSvgStyles(),
-            '" transform="translate(', (-this.width / 2), ' ', (-this.height/2), ')',
             '" stroke-linecap="round" ',
           '/>',
         '</g>'
@@ -16425,7 +16403,6 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
 				if (path.length === 0) break;
 				match = e_re.exec(path);
 			}
-			//console.log(result);
 		},
 
     /**
@@ -16439,9 +16416,6 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
 					re = /(-?\.\d+)|(-?\d+(\.\d+)?(e[\+-]\d+)?)/g,
           match,
           coordsStr;
-
-
-
 
       for (var i = 0, coordsParsed, len = this.path.length; i < len; i++) {
         currentPath = this.path[i];
@@ -16540,8 +16514,8 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
           deltaY = maxY - minY;
 
       var o = {
-        left: this.left + (minX + deltaX / 2),
-        top: this.top + (minY + deltaY / 2),
+        left: this.left,
+        top: this.top,
         width: deltaX,
         height: deltaY
       };
@@ -16605,7 +16579,6 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
     })(element);
     p.setObjectToPointAtRelativeLength = function(obj,fraction){
       var _p = this.getPointAtRelativeLength(fraction);
-      //console.log('obj going to (',p.x,',',p.y,')');
       obj.set('left',_p.x);
       obj.set('top',_p.y);
     };

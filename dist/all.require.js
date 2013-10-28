@@ -3620,12 +3620,10 @@ fabric.Collection = {
         ctx.font = [ res.fontWeight, res.fontStyle, res.fontSize + "px", '"' + res.fontFamily + '"' ].join(" ");
         return res;
     }
-    function fixStrokeAndFillForLines(obj, ctx) {}
     fabric.util.setTextFillAndStroke = setTextFillAndStroke;
     fabric.util.setFontDeclaration = setFontDeclaration;
     fabric.util.setFillToCanvas = setFillToCanvas;
     fabric.util.setStrokeToCanvas = setStrokeToCanvas;
-    fabric.util.fixStrokeAndFillForLines = fixStrokeAndFillForLines;
 })();
 
 (function() {
@@ -5060,16 +5058,6 @@ fabric.Collection = {
                 p1 = fabric.util.pointInSpace(this.transformMatrix, p1);
                 p2 = fabric.util.pointInSpace(this.transformMatrix, p2);
             }
-            p1.x -= object.left;
-            p2.x -= object.left;
-            p1.y -= object.top;
-            p2.y -= object.top;
-            if (object.angle) {
-                var rad = degreesToRadians(object.angle), sin = Math.sin(-rad), cos = Math.cos(-rad);
-                var rm = [ cos, -sin, sin, cos, 0, 0 ];
-                p1 = fabric.util.pointInSpace(rm, p1);
-                p2 = fabric.util.pointInSpace(rm, p2);
-            }
             coords = {
                 x1: p1.x,
                 y1: p1.y,
@@ -5093,7 +5081,7 @@ fabric.Collection = {
                 if (typeof opacity !== "undefined") {
                     color = new fabric.Color(color).setAlpha(opacity).toRgba();
                 }
-                gradient.addColorStop(parseFloat(offset), color);
+                gradient.addColorStop(offset, color);
             }
             return gradient;
         }
@@ -5124,7 +5112,7 @@ fabric.Collection = {
                     r2: el.getAttribute("r") || "50%"
                 };
             }
-            for (var i = colorStopEls.length; i--; ) {
+            for (var i = 0; i < colorStopEls.length; i++) {
                 colorStops.push(getColorStop(colorStopEls[i]));
             }
             _convertPercentUnitsToValues(instance, coords);
@@ -6867,6 +6855,9 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
             if (em) {
                 m = matmult(m, em);
             }
+            fabric.util.setStrokeToCanvas(ctx, this);
+            fabric.util.setFillToCanvas(ctx, this);
+            ctx.save();
             if (this.left || this.top) {
                 ctx.translate(this.left, this.top);
             }
@@ -7106,14 +7097,15 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
             if (topctx) {
                 this.drawBorderRect(topctx);
             }
-            fabric.util.setStrokeToCanvas(ctx, this);
-            fabric.util.setFillToCanvas(ctx, this);
             this.clipTo && fabric.util.clipContext(this, ctx);
             this._render(ctx, topctx);
             this.clipTo && ctx.restore();
+            ctx.restore();
+            this._paint(ctx);
             this._removeShadow(ctx);
             this.untransform(ctx);
         },
+        _paint: function(ctx) {},
         _setShadow: function(ctx) {
             if (!this.shadow) return;
             ctx.shadowColor = this.shadow.color;
@@ -8077,6 +8069,8 @@ fabric.util.object.extend(fabric.Object.prototype, {
                 ctx.moveTo(this.width === 1 ? 0 : xMult * this.width / 2, this.height === 1 ? 0 : yMult * this.height / 2);
                 ctx.lineTo(this.width === 1 ? 0 : xMult * -1 * this.width / 2, this.height === 1 ? 0 : yMult * -1 * this.height / 2);
             }
+        },
+        _paint: function(ctx) {
             ctx.lineWidth = this.strokeWidth;
             var origStrokeStyle = ctx.strokeStyle;
             ctx.strokeStyle = this.stroke || ctx.fillStyle;
@@ -8154,6 +8148,8 @@ fabric.util.object.extend(fabric.Object.prototype, {
             ctx.beginPath();
             ctx.arc(noTransform ? this.left : 0, noTransform ? this.top : 0, this.radius, 0, piBy2, false);
             ctx.closePath();
+        },
+        _paint: function(ctx) {
             this._renderFill(ctx);
             this._renderStroke(ctx);
         },
@@ -8214,6 +8210,8 @@ fabric.util.object.extend(fabric.Object.prototype, {
             ctx.lineTo(0, -heightBy2);
             ctx.lineTo(widthBy2, heightBy2);
             ctx.closePath();
+        },
+        _paint: function(ctx) {
             this._renderFill(ctx);
             this._renderStroke(ctx);
         },
@@ -8281,9 +8279,11 @@ fabric.util.object.extend(fabric.Object.prototype, {
             ctx.save();
             ctx.transform(1, 0, 0, this.ry / this.rx, 0, 0);
             ctx.arc(noTransform ? this.left : 0, noTransform ? this.top : 0, this.rx, 0, piBy2, false);
+            ctx.restore();
+        },
+        _paint: function(ctx) {
             this._renderFill(ctx);
             this._renderStroke(ctx);
-            ctx.restore();
         },
         complexity: function() {
             return 1;
@@ -8344,7 +8344,6 @@ fabric.util.object.extend(fabric.Object.prototype, {
             }
         },
         _render: function(ctx) {
-            ctx.save();
             var rx = this.rx || 0, ry = this.ry || 0, x = 0, y = 0, w = this.width, h = this.height;
             ctx.beginPath();
             var isRounded = rx !== 0 || ry !== 0;
@@ -8358,9 +8357,10 @@ fabric.util.object.extend(fabric.Object.prototype, {
             ctx.lineTo(x, y + ry);
             isRounded && ctx.quadraticCurveTo(x, y, x + rx, y, x + rx, y);
             ctx.closePath();
+        },
+        _paint: function(ctx) {
             this._renderStroke(ctx);
             this._renderFill(ctx);
-            ctx.restore();
         },
         _renderDashedStroke: function(ctx) {
             var x = 0, y = 0, w = this.width, h = this.height;
@@ -8453,6 +8453,8 @@ fabric.util.object.extend(fabric.Object.prototype, {
                 point = this.points[i];
                 ctx.lineTo(point.x, point.y);
             }
+        },
+        _paint: function(ctx) {
             this._renderFill(ctx);
             this._renderStroke(ctx);
         },
@@ -8535,6 +8537,8 @@ fabric.util.object.extend(fabric.Object.prototype, {
                 point = this.points[i];
                 ctx.lineTo(point.x, point.y);
             }
+        },
+        _paint: function(ctx) {
             this._renderFill(ctx);
             if (this.stroke || this.strokeDashArray) {
                 ctx.closePath();
@@ -8635,27 +8639,12 @@ fabric.util.object.extend(fabric.Object.prototype, {
                 if (isHeightSet) {
                     this.height = options.height;
                 }
-            } else {
-                if (!isTopSet) {
-                    this.top = this.height / 2;
-                }
-                if (!isLeftSet) {
-                    this.left = this.width / 2;
-                }
             }
-            this.pathOffset = this.pathOffset || this._calculatePathOffset(origLeft, origTop);
-        },
-        _calculatePathOffset: function(origLeft, origTop) {
-            return {
-                x: this.left - origLeft - this.width / 2,
-                y: this.top - origTop - this.height / 2
-            };
         },
         _render: function(ctx) {
-            ctx.save();
             ctx.beginPath();
-            ctx.translate(-(this.width / 2 + this.pathOffset.x), -(this.height / 2 + this.pathOffset.y));
             var current, previous = null, x = 0, y = 0, controlX = 0, controlY = 0, tempX, tempY, tempControlX, tempControlY, l = 0, t = 0;
+            var id = this.id;
             function do_command(f, args) {
                 if (f === "drawArc") {
                     args.unshift(ctx);
@@ -8663,9 +8652,6 @@ fabric.util.object.extend(fabric.Object.prototype, {
                 } else {
                     ctx[f].apply(ctx, args);
                 }
-                return;
-                var s = fname + "(" + (args ? args.join(",") : "") + ")";
-                console.log(s);
             }
             for (var i = 0, len = this.path.length; i < len; ++i) {
                 current = this.path[i];
@@ -8703,9 +8689,9 @@ fabric.util.object.extend(fabric.Object.prototype, {
                     break;
 
                   case "m":
-                    x = current[1];
-                    y = current[2];
-                    do_command("lineTo", [ x, y ]);
+                    x += current[1];
+                    y += current[2];
+                    do_command("moveTo", [ x, y ]);
                     break;
 
                   case "M":
@@ -8826,17 +8812,17 @@ fabric.util.object.extend(fabric.Object.prototype, {
                 }
                 previous = current;
             }
+        },
+        _paint: function(ctx) {
             this._renderFill(ctx);
             this._renderStroke(ctx);
-            ctx.restore();
         },
         toString: function() {
             return "#<fabric.Path (" + this.complexity() + '): { "top": ' + this.top + ', "left": ' + this.left + " }>";
         },
         toObject: function(propertiesToInclude) {
             var o = extend(this.callSuper("toObject", propertiesToInclude), {
-                path: this.path,
-                pathOffset: this.pathOffset
+                path: this.path
             });
             if (this.sourcePath) {
                 o.sourcePath = this.sourcePath;
@@ -8860,7 +8846,7 @@ fabric.util.object.extend(fabric.Object.prototype, {
                 chunks.push(this.path[i].join(" "));
             }
             var path = chunks.join(" ");
-            markup.push('<g transform="', this.group ? "" : this.getSvgTransform(), '">', "<path ", 'd="', path, '" style="', this.getSvgStyles(), '" transform="translate(', -this.width / 2, " ", -this.height / 2, ")", '" stroke-linecap="round" ', "/>", "</g>");
+            markup.push('<g transform="', this.group ? "" : this.getSvgTransform(), '">', "<path ", 'd="', path, '" style="', this.getSvgStyles(), '" stroke-linecap="round" ', "/>", "</g>");
             return markup.join("");
         },
         complexity: function() {
@@ -8933,8 +8919,8 @@ fabric.util.object.extend(fabric.Object.prototype, {
             }, this);
             var minX = min(aX), minY = min(aY), maxX = max(aX), maxY = max(aY), deltaX = maxX - minX, deltaY = maxY - minY;
             var o = {
-                left: this.left + (minX + deltaX / 2),
-                top: this.top + (minY + deltaY / 2),
+                left: this.left,
+                top: this.top,
                 width: deltaX,
                 height: deltaY
             };

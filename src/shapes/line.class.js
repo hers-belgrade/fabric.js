@@ -108,6 +108,9 @@
           this.height === 1 ? 0 : (yMult * -1 * this.height / 2));
       }
 
+    },
+
+    _paint: function(ctx){
       ctx.lineWidth = this.strokeWidth;
 
       // TODO: test this

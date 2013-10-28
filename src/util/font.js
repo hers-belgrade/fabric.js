@@ -45,25 +45,10 @@
 	}
 
 
-	function fixStrokeAndFillForLines (obj, ctx) {
-		//mislim da ovo nije potpuna istina ... ako mora da se dogodi fix da li teba da rady obj.stroke = obj.fill?
-		/*
-		ctx.strokeStyle = ctx.fillStyle;
-		ctx.fillStyle = 'none';
-		obj.stroke = obj.fill;
-		obj.fill = 'none';
-		obj._renderStroke(ctx);
-		obj._renderFill(ctx);
-		*/
-	}
-
 	fabric.util.setTextFillAndStroke = setTextFillAndStroke;
 	fabric.util.setFontDeclaration = setFontDeclaration;
 
 	fabric.util.setFillToCanvas = setFillToCanvas;
 	fabric.util.setStrokeToCanvas = setStrokeToCanvas;
-	fabric.util.fixStrokeAndFillForLines = fixStrokeAndFillForLines;
-
-
 
 })();

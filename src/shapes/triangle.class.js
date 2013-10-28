@@ -51,7 +51,9 @@
       ctx.lineTo(0, -heightBy2);
       ctx.lineTo(widthBy2, heightBy2);
       ctx.closePath();
+    },
 
+    _paint: function(ctx) {
       this._renderFill(ctx);
       this._renderStroke(ctx);
     },

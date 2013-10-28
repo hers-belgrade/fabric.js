@@ -111,6 +111,9 @@
         point = this.points[i];
         ctx.lineTo(point.x, point.y);
       }
+    },
+
+    _paint: function(ctx){
       this._renderFill(ctx);
       if (this.stroke || this.strokeDashArray) {
         ctx.closePath();
