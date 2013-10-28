@@ -91,14 +91,12 @@
 			ctx.save();
       var rx = this.rx || 0,
           ry = this.ry || 0,
-          x = 0, //-this.width / 2,
-          y = 0, //-this.height / 2,
+          x = 0,
+          y = 0,
           w = this.width,
-          h = this.height,
-          isInPathGroup = this.group && this.group.type !== 'group';
+          h = this.height;
 
       ctx.beginPath();
-      ctx.globalAlpha = this.opacity;
 
       var isRounded = rx !== 0 || ry !== 0;
 

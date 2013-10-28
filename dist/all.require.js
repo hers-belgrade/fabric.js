@@ -8152,7 +8152,6 @@ fabric.util.object.extend(fabric.Object.prototype, {
         },
         _render: function(ctx, noTransform) {
             ctx.beginPath();
-            ctx.globalAlpha = this.group ? ctx.globalAlpha * this.opacity : this.opacity;
             ctx.arc(noTransform ? this.left : 0, noTransform ? this.top : 0, this.radius, 0, piBy2, false);
             ctx.closePath();
             this._renderFill(ctx);
@@ -8280,10 +8279,6 @@ fabric.util.object.extend(fabric.Object.prototype, {
         _render: function(ctx, noTransform) {
             ctx.beginPath();
             ctx.save();
-            ctx.globalAlpha = this.group ? ctx.globalAlpha * this.opacity : this.opacity;
-            if (this.transformMatrix && this.group) {
-                ctx.translate(this.cx, this.cy);
-            }
             ctx.transform(1, 0, 0, this.ry / this.rx, 0, 0);
             ctx.arc(noTransform ? this.left : 0, noTransform ? this.top : 0, this.rx, 0, piBy2, false);
             this._renderFill(ctx);
@@ -8350,9 +8345,8 @@ fabric.util.object.extend(fabric.Object.prototype, {
         },
         _render: function(ctx) {
             ctx.save();
-            var rx = this.rx || 0, ry = this.ry || 0, x = 0, y = 0, w = this.width, h = this.height, isInPathGroup = this.group && this.group.type !== "group";
+            var rx = this.rx || 0, ry = this.ry || 0, x = 0, y = 0, w = this.width, h = this.height;
             ctx.beginPath();
-            ctx.globalAlpha = this.opacity;
             var isRounded = rx !== 0 || ry !== 0;
             ctx.moveTo(x + rx, y);
             ctx.lineTo(x + w - rx, y);
@@ -8656,9 +8650,6 @@ fabric.util.object.extend(fabric.Object.prototype, {
                 x: this.left - origLeft - this.width / 2,
                 y: this.top - origTop - this.height / 2
             };
-        },
-        _extraTransformations: function() {
-            return [ 1, 0, 0, 1, -(this.width / 2 + this.pathOffset.x), -(this.height / 2 + this.pathOffset.y) ];
         },
         _render: function(ctx) {
             ctx.save();
@@ -9362,36 +9353,6 @@ fabric.util.object.extend(fabric.Object.prototype, {
                 width: element.width,
                 height: element.height
             };
-        },
-        render1: function(ctx, noTransform) {
-            if (!this.visible) return;
-            ctx.save();
-            var m = this.transformMatrix;
-            var isInPathGroup = this.group && this.group.type !== "group";
-            if (isInPathGroup) {
-                ctx.translate(-this.group.width / 2 + this.width / 2, -this.group.height / 2 + this.height / 2);
-            }
-            if (m) {
-                ctx.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
-            }
-            if (!noTransform) {
-                this.transform(ctx);
-            }
-            ctx.save();
-            this._setShadow(ctx);
-            this.clipTo && fabric.util.clipContext(this, ctx);
-            this._render(ctx);
-            if (this.shadow && !this.shadow.affectStroke) {
-                this._removeShadow(ctx);
-            }
-            this._renderStroke(ctx);
-            this.clipTo && ctx.restore();
-            ctx.restore();
-            if (this.active && !noTransform) {
-                this.drawBorders(ctx);
-                this.drawControls(ctx);
-            }
-            ctx.restore();
         },
         _stroke: function(ctx) {
             ctx.save();

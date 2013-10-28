@@ -140,9 +140,11 @@
       };
     },
 
+    /*
     _extraTransformations: function(){
       return [1,0,0,1,-((this.width / 2) + this.pathOffset.x),-((this.height / 2) + this.pathOffset.y)];
     },
+    */
 
     /**
      * @private

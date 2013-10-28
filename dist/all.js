@@ -14857,7 +14857,6 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
     _render: function(ctx, noTransform) {
       ctx.beginPath();
       // multiply by currently set alpha (the one that was set by path group where this object is contained, for example)
-      ctx.globalAlpha = this.group ? (ctx.globalAlpha * this.opacity) : this.opacity;
       ctx.arc(noTransform ? this.left : 0, noTransform ? this.top : 0, this.radius, 0, piBy2, false);
       ctx.closePath();
 
@@ -15191,10 +15190,6 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
     _render: function(ctx, noTransform) {
       ctx.beginPath();
       ctx.save();
-      ctx.globalAlpha = this.group ? (ctx.globalAlpha * this.opacity) : this.opacity;
-      if (this.transformMatrix && this.group) {
-        ctx.translate(this.cx, this.cy);
-      }
       ctx.transform(1, 0, 0, this.ry/this.rx, 0, 0);
       ctx.arc(noTransform ? this.left : 0, noTransform ? this.top : 0, this.rx, 0, piBy2, false);
 
@@ -15361,14 +15356,12 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
 			ctx.save();
       var rx = this.rx || 0,
           ry = this.ry || 0,
-          x = 0, //-this.width / 2,
-          y = 0, //-this.height / 2,
+          x = 0,
+          y = 0,
           w = this.width,
-          h = this.height,
-          isInPathGroup = this.group && this.group.type !== 'group';
+          h = this.height;
 
       ctx.beginPath();
-      ctx.globalAlpha = this.opacity;
 
       var isRounded = rx !== 0 || ry !== 0;
 
@@ -16038,9 +16031,11 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
       };
     },
 
+    /*
     _extraTransformations: function(){
       return [1,0,0,1,-((this.width / 2) + this.pathOffset.x),-((this.height / 2) + this.pathOffset.y)];
     },
+    */
 
     /**
      * @private
@@ -17385,48 +17380,6 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
         width: element.width,
         height: element.height
       };
-    },
-
-    /**
-     * Renders image on a specified context
-     * @param {CanvasRenderingContext2D} ctx Context to render on
-     * @param {Boolean} [noTransform] When true, context is not transformed
-     */
-    render1: function(ctx, noTransform) {
-      // do not render if object is not visible
-      if (!this.visible) return;
-
-      ctx.save();
-      var m = this.transformMatrix;
-      var isInPathGroup = this.group && this.group.type !== 'group';
-
-      // this._resetWidthHeight();
-      if (isInPathGroup) {
-        ctx.translate(-this.group.width/2 + this.width/2, -this.group.height/2 + this.height/2);
-      }
-      if (m) {
-        ctx.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
-      }
-      if (!noTransform) {
-        this.transform(ctx);
-      }
-
-      ctx.save();
-      this._setShadow(ctx);
-      this.clipTo && fabric.util.clipContext(this, ctx);
-      this._render(ctx);
-      if (this.shadow && !this.shadow.affectStroke) {
-        this._removeShadow(ctx);
-      }
-      this._renderStroke(ctx);
-      this.clipTo && ctx.restore();
-      ctx.restore();
-
-      if (this.active && !noTransform) {
-        this.drawBorders(ctx);
-        this.drawControls(ctx);
-      }
-      ctx.restore();
     },
 
     /**
