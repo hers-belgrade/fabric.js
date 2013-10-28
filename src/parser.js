@@ -106,7 +106,7 @@
   function _setStrokeFillOpacity(attributes) {
     for (var attr in colorAttributes) {
 
-      if (!attributes[attr] || typeof attributes[colorAttributes[attr]] === 'undefined') continue;
+      if (!attributes[attr] || attributes[attr]==='none' || typeof attributes[colorAttributes[attr]] === 'undefined') continue;
 
       if (attributes[attr].indexOf('url(') === 0) continue;
 

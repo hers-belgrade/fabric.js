@@ -835,6 +835,8 @@
 			this.untransform(ctx);
     },
 
+    accountForGradientTransform: function(p1,p2){},
+
     _paint : function(ctx){
     },
 

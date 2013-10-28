@@ -187,7 +187,9 @@
     _initDimensions: function() {
       if (this.__skipDimension) return;
       var canvasEl = fabric.util.createCanvasElement();
-      this._render(canvasEl.getContext('2d'));
+      var ctx = canvasEl.getContext('2d');
+      ctx._currentTransform = [1,0,0,1,0,0];
+      this._render(ctx);
     },
 
     /**
@@ -277,11 +279,6 @@
       this._renderTextFill(ctx, textLines);
       this._renderTextStroke(ctx, textLines);
       this._removeShadow(ctx);
-      if(this.tspans){
-        for(var i in this.tspans){
-          this.tspans[i].render(ctx);
-        }
-      }
       ctx.restore();
 
       this._renderTextDecoration(ctx, textLines);
@@ -516,6 +513,35 @@
       }
       ctx.closePath();
       ctx.restore();
+    },
+
+    untransform: function(ctx){
+      this.callSuper('untransform',ctx);
+      if(this.tspans){
+        ctx.save();
+        for(var i in this.tspans){
+          var tspan = this.tspans[i];
+          //ctx.translate(0,this._getFontSize() * this.lineHeight);
+          ctx.save();
+          //ctx.translate(-tspan.left||0,-tspan.top||0);
+          tspan.render(ctx);
+          ctx.restore();
+        }
+        ctx.restore();
+      }
+    },
+
+    accountForGradientTransform: function(p1,p2){
+      p1.x-=this.left;
+      p2.x-=this.left;
+      p1.y-=this.top;
+      p2.y-=this.top;
+      if(this.angle){
+        var rad = degreesToRadians(this.angle),sin=Math.sin(-rad),cos=Math.cos(-rad);
+        var rm = [cos,-sin,sin,cos,0,0];
+        p1 = fabric.util.pointInSpace(rm,p1);
+        p2 = fabric.util.pointInSpace(rm,p2);
+      }
     },
 
     _getHeightOfLine: function() {
@@ -927,15 +953,10 @@
       fabric.parseElements(tspans,function(instances){
         for(var i in instances){
           var inst = instances[i];
-          if(inst.left){
-            inst.left-=text.left;
-          }
-          if(inst.top){
-            inst.top-=text.top;
-          }
+          inst.textParent = text;
         }
         text.tspans = instances.slice();
-      });
+      },fabric.util.object.clone(options));
     }
 
     return text;

@@ -6365,7 +6365,7 @@ fabric.util.string = {
   function _setStrokeFillOpacity(attributes) {
     for (var attr in colorAttributes) {
 
-      if (!attributes[attr] || typeof attributes[colorAttributes[attr]] === 'undefined') continue;
+      if (!attributes[attr] || attributes[attr]==='none' || typeof attributes[colorAttributes[attr]] === 'undefined') continue;
 
       if (attributes[attr].indexOf('url(') === 0) continue;
 
@@ -8623,18 +8623,7 @@ fabric.util.string = {
         p1 = fabric.util.pointInSpace(this.transformMatrix,p1);
         p2 = fabric.util.pointInSpace(this.transformMatrix,p2);
       }
-      /*
-      p1.x-=object.left;
-      p2.x-=object.left;
-      p1.y-=object.top;
-      p2.y-=object.top;
-      if(object.angle){
-        var rad = degreesToRadians(object.angle),sin=Math.sin(-rad),cos=Math.cos(-rad);
-        var rm = [cos,-sin,sin,cos,0,0];
-        p1 = fabric.util.pointInSpace(rm,p1);
-        p2 = fabric.util.pointInSpace(rm,p2);
-      }
-      */
+      object.accountForGradientTransform(p1,p2);
       coords = {x1:p1.x,y1:p1.y,x2:p2.x,y2:p2.y};
       switch(this.type){
         case 'linear':
@@ -12887,6 +12876,8 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
 
 			this.untransform(ctx);
     },
+
+    accountForGradientTransform: function(p1,p2){},
 
     _paint : function(ctx){
     },
@@ -19353,7 +19344,9 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass(/** @lends fabric.Imag
     _initDimensions: function() {
       if (this.__skipDimension) return;
       var canvasEl = fabric.util.createCanvasElement();
-      this._render(canvasEl.getContext('2d'));
+      var ctx = canvasEl.getContext('2d');
+      ctx._currentTransform = [1,0,0,1,0,0];
+      this._render(ctx);
     },
 
     /**
@@ -19443,11 +19436,6 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass(/** @lends fabric.Imag
       this._renderTextFill(ctx, textLines);
       this._renderTextStroke(ctx, textLines);
       this._removeShadow(ctx);
-      if(this.tspans){
-        for(var i in this.tspans){
-          this.tspans[i].render(ctx);
-        }
-      }
       ctx.restore();
 
       this._renderTextDecoration(ctx, textLines);
@@ -19682,6 +19670,35 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass(/** @lends fabric.Imag
       }
       ctx.closePath();
       ctx.restore();
+    },
+
+    untransform: function(ctx){
+      this.callSuper('untransform',ctx);
+      if(this.tspans){
+        ctx.save();
+        for(var i in this.tspans){
+          var tspan = this.tspans[i];
+          //ctx.translate(0,this._getFontSize() * this.lineHeight);
+          ctx.save();
+          //ctx.translate(-tspan.left||0,-tspan.top||0);
+          tspan.render(ctx);
+          ctx.restore();
+        }
+        ctx.restore();
+      }
+    },
+
+    accountForGradientTransform: function(p1,p2){
+      p1.x-=this.left;
+      p2.x-=this.left;
+      p1.y-=this.top;
+      p2.y-=this.top;
+      if(this.angle){
+        var rad = degreesToRadians(this.angle),sin=Math.sin(-rad),cos=Math.cos(-rad);
+        var rm = [cos,-sin,sin,cos,0,0];
+        p1 = fabric.util.pointInSpace(rm,p1);
+        p2 = fabric.util.pointInSpace(rm,p2);
+      }
     },
 
     _getHeightOfLine: function() {
@@ -20093,15 +20110,10 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass(/** @lends fabric.Imag
       fabric.parseElements(tspans,function(instances){
         for(var i in instances){
           var inst = instances[i];
-          if(inst.left){
-            inst.left-=text.left;
-          }
-          if(inst.top){
-            inst.top-=text.top;
-          }
+          inst.textParent = text;
         }
         text.tspans = instances.slice();
-      });
+      },fabric.util.object.clone(options));
     }
 
     return text;
@@ -20216,7 +20228,19 @@ fabric.util.object.extend(fabric.Text.prototype, {
   });
 
   fabric.Tspan.fromElement = function(element, options){
-    return new fabric.Text.fromElement(element,options);
+    if (!element) {
+      return null;
+    }
+
+    var parsedAttributes = fabric.parseAttributes(element, fabric.Text.ATTRIBUTE_NAMES);
+		//tweak textAlign
+		switch(parsedAttributes.textAlign){
+			case 'end':
+				parsedAttributes.textAlign='right';
+				break;
+		}
+    options = fabric.util.object.extend((options ? fabric.util.object.clone(options) : { }), parsedAttributes);
+    return new fabric.Tspan(element.textContent, options);
   };
 
 })(typeof exports !== 'undefined' ? exports : this);

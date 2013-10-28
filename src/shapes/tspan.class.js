@@ -9,7 +9,19 @@
   });
 
   fabric.Tspan.fromElement = function(element, options){
-    return new fabric.Text.fromElement(element,options);
+    if (!element) {
+      return null;
+    }
+
+    var parsedAttributes = fabric.parseAttributes(element, fabric.Text.ATTRIBUTE_NAMES);
+		//tweak textAlign
+		switch(parsedAttributes.textAlign){
+			case 'end':
+				parsedAttributes.textAlign='right';
+				break;
+		}
+    options = fabric.util.object.extend((options ? fabric.util.object.clone(options) : { }), parsedAttributes);
+    return new fabric.Tspan(element.textContent, options);
   };
 
 })(typeof exports !== 'undefined' ? exports : this);
