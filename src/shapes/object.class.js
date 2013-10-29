@@ -106,13 +106,6 @@
     opacity:                  1,
 
     /**
-     * Angle of rotation of an object (in degrees)
-     * @type Number
-     * @default
-     */
-    angle:                    0,
-
-    /**
      * Size of object's controlling corners (in pixels)
      * @type Number
      * @default
@@ -476,10 +469,6 @@
       if(this.left || this.top){
         ctx.translate(this.left,this.top);
       }
-      if(this.angle){
-        var rad = degreesToRadians(this.angle),sin = Math.sin(rad),cos = Math.cos(rad);
-        ctx.rotate(rad);
-      }
       var sx = this.scaleX * (this.flipX ? -1 : 1), sy = this.scaleY * (this.flipY ? -1 : 1);
       if((sx!==1)||(sy!==1)){
         ctx.scale( sx, sy );
@@ -540,7 +529,6 @@
         strokeMiterLimit:   toFixed(this.strokeMiterLimit, NUM_FRACTION_DIGITS),
         scaleX:             toFixed(this.scaleX, NUM_FRACTION_DIGITS),
         scaleY:             toFixed(this.scaleY, NUM_FRACTION_DIGITS),
-        angle:              toFixed(this.getAngle(), NUM_FRACTION_DIGITS),
         flipX:              this.flipX,
         flipY:              this.flipY,
         opacity:            toFixed(this.opacity, NUM_FRACTION_DIGITS),
@@ -752,10 +740,6 @@
       var m = [1,0,0,1,0,0];
       if(this.left || this.top){
         m = matmult(m,[1,0,0,1,this.left,this.top]);
-      }
-      if(this.angle){
-        var rad = degreesToRadians(this.angle),sin = Math.sin(rad),cos = Math.cos(rad);
-        m = matmult(m,[cos,-sin,sin,cos,0,0]);
       }
       var sx = this.scaleX * (this.flipX ? -1 : 1), sy = this.scaleY * (this.flipY ? -1 : 1);
       if((sx!==1)||(sy!==1)){

@@ -12148,13 +12148,6 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
     opacity:                  1,
 
     /**
-     * Angle of rotation of an object (in degrees)
-     * @type Number
-     * @default
-     */
-    angle:                    0,
-
-    /**
      * Size of object's controlling corners (in pixels)
      * @type Number
      * @default
@@ -12426,6 +12419,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
       if (options) {
         this.setOptions(options);
       }
+      var a = this.getAngle();
     },
 
     /**
@@ -12517,10 +12511,6 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
 
       if(this.left || this.top){
         ctx.translate(this.left,this.top);
-      }
-      if(this.angle){
-        var rad = degreesToRadians(this.angle),sin = Math.sin(rad),cos = Math.cos(rad);
-        ctx.rotate(rad);
       }
       var sx = this.scaleX * (this.flipX ? -1 : 1), sy = this.scaleY * (this.flipY ? -1 : 1);
       if((sx!==1)||(sy!==1)){
@@ -12794,10 +12784,6 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
       var m = [1,0,0,1,0,0];
       if(this.left || this.top){
         m = matmult(m,[1,0,0,1,this.left,this.top]);
-      }
-      if(this.angle){
-        var rad = degreesToRadians(this.angle),sin = Math.sin(rad),cos = Math.cos(rad);
-        m = matmult(m,[cos,-sin,sin,cos,0,0]);
       }
       var sx = this.scaleX * (this.flipX ? -1 : 1), sy = this.scaleY * (this.flipY ? -1 : 1);
       if((sx!==1)||(sy!==1)){
@@ -19693,12 +19679,6 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass(/** @lends fabric.Imag
       p2.x-=this.left;
       p1.y-=this.top;
       p2.y-=this.top;
-      if(this.angle){
-        var rad = degreesToRadians(this.angle),sin=Math.sin(-rad),cos=Math.cos(-rad);
-        var rm = [cos,-sin,sin,cos,0,0];
-        p1 = fabric.util.pointInSpace(rm,p1);
-        p2 = fabric.util.pointInSpace(rm,p2);
-      }
     },
 
     _getHeightOfLine: function() {

@@ -536,12 +536,6 @@
       p2.x-=this.left;
       p1.y-=this.top;
       p2.y-=this.top;
-      if(this.angle){
-        var rad = degreesToRadians(this.angle),sin=Math.sin(-rad),cos=Math.cos(-rad);
-        var rm = [cos,-sin,sin,cos,0,0];
-        p1 = fabric.util.pointInSpace(rm,p1);
-        p2 = fabric.util.pointInSpace(rm,p2);
-      }
     },
 
     _getHeightOfLine: function() {

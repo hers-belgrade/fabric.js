@@ -6753,7 +6753,6 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
         flipX: false,
         flipY: false,
         opacity: 1,
-        angle: 0,
         cornerSize: 12,
         transparentCorners: true,
         hoverCursor: null,
@@ -6795,6 +6794,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
             if (options) {
                 this.setOptions(options);
             }
+            var a = this.getAngle();
         },
         _initGradient: function(options) {
             if (options.fill && options.fill.colorStops && !(options.fill instanceof fabric.Gradient)) {
@@ -6861,10 +6861,6 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
             ctx.save();
             if (this.left || this.top) {
                 ctx.translate(this.left, this.top);
-            }
-            if (this.angle) {
-                var rad = degreesToRadians(this.angle), sin = Math.sin(rad), cos = Math.cos(rad);
-                ctx.rotate(rad);
             }
             var sx = this.scaleX * (this.flipX ? -1 : 1), sy = this.scaleY * (this.flipY ? -1 : 1);
             if (sx !== 1 || sy !== 1) {
@@ -7058,10 +7054,6 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
             var m = [ 1, 0, 0, 1, 0, 0 ];
             if (this.left || this.top) {
                 m = matmult(m, [ 1, 0, 0, 1, this.left, this.top ]);
-            }
-            if (this.angle) {
-                var rad = degreesToRadians(this.angle), sin = Math.sin(rad), cos = Math.cos(rad);
-                m = matmult(m, [ cos, -sin, sin, cos, 0, 0 ]);
             }
             var sx = this.scaleX * (this.flipX ? -1 : 1), sy = this.scaleY * (this.flipY ? -1 : 1);
             if (sx !== 1 || sy !== 1) {
@@ -10467,12 +10459,6 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass({
             p2.x -= this.left;
             p1.y -= this.top;
             p2.y -= this.top;
-            if (this.angle) {
-                var rad = degreesToRadians(this.angle), sin = Math.sin(-rad), cos = Math.cos(-rad);
-                var rm = [ cos, -sin, sin, cos, 0, 0 ];
-                p1 = fabric.util.pointInSpace(rm, p1);
-                p2 = fabric.util.pointInSpace(rm, p2);
-            }
         },
         _getHeightOfLine: function() {
             return this._getFontSize() * this.lineHeight;
