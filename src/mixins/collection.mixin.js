@@ -194,7 +194,7 @@ fabric.Collection = {
 	 * @param {Boolean} skipGroup when true, group is skipped and only objects are traversed through
 	 */
 	distributePositionEvent: function (e,eventname) {
-    for (var i = this._objects.length-1; i>=0; i--){
+    for (var i = this._objects.length-1; i>=0 && !e.block_further_processing; i--){
       this._objects[i].processPositionEvent(e,eventname);
     }
 	},

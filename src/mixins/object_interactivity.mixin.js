@@ -5,6 +5,15 @@
 
   fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prototype */ {
 
+		block_mouse_propagation : function () {
+			this._propagation_stop_handle = function (e) {
+				e.e.block_further_processing = true;
+			}
+			this.on('mouse:down', this._propagation_stop_handle);
+			this.on('mouse:up', this._propagation_stop_handle);
+		},
+
+
     /**
      * Determines which one of the four corners has been clicked
      * @private

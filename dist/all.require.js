@@ -2477,8 +2477,9 @@ fabric.Collection = {
         });
     },
     distributePositionEvent: function(e, eventname) {
-        for (var i = this._objects.length - 1; i >= 0; i--) {
+        for (var i = this._objects.length - 1; i >= 0 && !e.block_further_processing; i--) {
             this._objects[i].processPositionEvent(e, eventname);
+            if (e.block_further_processing) console.log("!!!!!!!!!!!!!!!!!!!!!", eventname, this._objects[i].id);
         }
     }
 };
@@ -7618,6 +7619,16 @@ fabric.util.object.extend(fabric.Object.prototype, {
 (function() {
     var getPointer = fabric.util.getPointer, degreesToRadians = fabric.util.degreesToRadians;
     fabric.util.object.extend(fabric.Object.prototype, {
+        block_mouse_propagation: function() {
+            this._propagation_stop_handle = function(e) {
+                console.log("!!!!", e);
+                e.e.block_further_processing = true;
+                console.log(e);
+            };
+            this.on("mouse:down", this._propagation_stop_handle);
+            this.on("mouse:up", this._propagation_stop_handle);
+            console.log("done for ", this.id);
+        },
         _findTargetCorner: function(e, offset) {
             if (!this.hasControls || !this.active) return false;
             var pointer = getPointer(e, this.canvas.upperCanvasEl), ex = pointer.x - offset.left, ey = pointer.y - offset.top, xPoints, lines;

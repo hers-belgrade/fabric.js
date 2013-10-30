@@ -3976,8 +3976,9 @@ fabric.Collection = {
 	 * @param {Boolean} skipGroup when true, group is skipped and only objects are traversed through
 	 */
 	distributePositionEvent: function (e,eventname) {
-    for (var i = this._objects.length-1; i>=0; i--){
+    for (var i = this._objects.length-1; i>=0 && !e.block_further_processing; i--){
       this._objects[i].processPositionEvent(e,eventname);
+			if (e.block_further_processing) console.log('!!!!!!!!!!!!!!!!!!!!!', eventname, this._objects[i].id);
     }
 	},
 
@@ -13877,6 +13878,18 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
       degreesToRadians = fabric.util.degreesToRadians;
 
   fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prototype */ {
+
+		block_mouse_propagation : function () {
+			this._propagation_stop_handle = function (e) {
+				console.log('!!!!',e);
+				e.e.block_further_processing = true;
+				console.log(e);
+			}
+			this.on('mouse:down', this._propagation_stop_handle);
+			this.on('mouse:up', this._propagation_stop_handle);
+			console.log('done for ',this.id);
+		},
+
 
     /**
      * Determines which one of the four corners has been clicked
