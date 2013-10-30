@@ -6794,7 +6794,6 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
             if (options) {
                 this.setOptions(options);
             }
-            var a = this.getAngle();
         },
         _initGradient: function(options) {
             if (options.fill && options.fill.colorStops && !(options.fill instanceof fabric.Gradient)) {
@@ -6839,7 +6838,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
                 this[i] = fields[i];
             }
         },
-        transform: function(ctx, fromLeft) {
+        transform: function(ctx) {
             var m = this.transformMatrix;
             this._currentTransform = ctx._currentTransform;
             if (m) {
@@ -6851,7 +6850,6 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
                 this.savedAlpha = ctx.globalAlpha;
                 ctx.globalAlpha = ctx.globalAlpha * this.opacity;
             }
-            var center = fromLeft ? this._getLeftTopCoords() : this.getCenterPoint();
             var em = this._extraTransformations();
             if (em) {
                 m = matmult(m, em);
@@ -6909,6 +6907,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
                     y: br.y
                 }
             };
+            this._currentGlobalTransform = ctx._currentTransform;
             this._currentLocalTransform = m;
         },
         _extraTransformations: function(ctx) {},
@@ -6941,7 +6940,6 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
                 strokeMiterLimit: toFixed(this.strokeMiterLimit, NUM_FRACTION_DIGITS),
                 scaleX: toFixed(this.scaleX, NUM_FRACTION_DIGITS),
                 scaleY: toFixed(this.scaleY, NUM_FRACTION_DIGITS),
-                angle: toFixed(this.getAngle(), NUM_FRACTION_DIGITS),
                 flipX: this.flipX,
                 flipY: this.flipY,
                 opacity: toFixed(this.opacity, NUM_FRACTION_DIGITS),
@@ -7043,8 +7041,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
             this[key] = value;
             if (key in {
                 top: 1,
-                left: 1,
-                angle: 1
+                left: 1
             }) {
                 this._cacheLocalTransformMatrix();
             }
@@ -7584,6 +7581,9 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
                     e: e
                 });
             }
+        },
+        globalToLocal: function(globalpoint) {
+            return fabric.util.pointInSpace(fabric.util.matrixInverse(this._currentGlobalTransform), globalpoint);
         },
         setCoords: function(tl, br) {
             return this;

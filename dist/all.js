@@ -12419,7 +12419,6 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
       if (options) {
         this.setOptions(options);
       }
-      var a = this.getAngle();
     },
 
     /**
@@ -12479,7 +12478,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
      * @param {CanvasRenderingContext2D} ctx Context
      * @param {Boolean} fromLeft When true, context is transformed to object's top/left corner. This is used when rendering text on Node
      */
-    transform: function(ctx, fromLeft) {
+    transform: function(ctx) {
       var m = this.transformMatrix;
       this._currentTransform = ctx._currentTransform;
       if (m) {
@@ -12496,10 +12495,6 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
 				//ctx.globalAlpha = 1 - ((1-ctx.globalAlpha)+(1-this.opacity));
 			}
 
-      var center = fromLeft ? this._getLeftTopCoords() : this.getCenterPoint();
-			//console.log(this.id,'translating by',center.x,center.y,'which is',(fromLeft ? 'topleft' : 'center'));
-      //ctx.translate(center.x, center.y);
-			//console.log(this.id,'translating by',this.left,this.top);
       var em = this._extraTransformations();
       if(em){
         m = matmult(m,em);
@@ -12529,6 +12524,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
         tl:{x:tl.x,y:tl.y},tr:{x:br.x,y:tl.y},br:{x:br.x,y:br.y},bl:{x:tl.x,y:br.y},
         ml:{x:tl.x,y:my},mt:{x:mx,y:tl.y},mr:{x:br.x,y:my},mb:{x:mx,y:br.y}
       };
+			this._currentGlobalTransform = ctx._currentTransform;
 			this._currentLocalTransform = m;
     },
 
@@ -12572,7 +12568,6 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
         strokeMiterLimit:   toFixed(this.strokeMiterLimit, NUM_FRACTION_DIGITS),
         scaleX:             toFixed(this.scaleX, NUM_FRACTION_DIGITS),
         scaleY:             toFixed(this.scaleY, NUM_FRACTION_DIGITS),
-        angle:              toFixed(this.getAngle(), NUM_FRACTION_DIGITS),
         flipX:              this.flipX,
         flipY:              this.flipY,
         opacity:            toFixed(this.opacity, NUM_FRACTION_DIGITS),
@@ -12773,7 +12768,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
 
       this[key] = value;
 
-      if(key in {top:1,left:1,angle:1}){
+      if(key in {top:1,left:1}){
         this._cacheLocalTransformMatrix();
       }
 
@@ -13812,6 +13807,10 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
         this.fire(eventname,{e:e});
       }
     },
+
+		globalToLocal : function(globalpoint){
+			return fabric.util.pointInSpace(fabric.util.matrixInverse(this._currentGlobalTransform),globalpoint);
+		},
 
     /**
      * Sets corner position coordinates based on current angle, width and height

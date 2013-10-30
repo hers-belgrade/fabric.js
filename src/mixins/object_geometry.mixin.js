@@ -321,6 +321,10 @@
       }
     },
 
+		globalToLocal : function(globalpoint){
+			return fabric.util.pointInSpace(fabric.util.matrixInverse(this._currentGlobalTransform),globalpoint);
+		},
+
     /**
      * Sets corner position coordinates based on current angle, width and height
      * @return {fabric.Object} thisArg

@@ -436,7 +436,7 @@
      * @param {CanvasRenderingContext2D} ctx Context
      * @param {Boolean} fromLeft When true, context is transformed to object's top/left corner. This is used when rendering text on Node
      */
-    transform: function(ctx, fromLeft) {
+    transform: function(ctx) {
       var m = this.transformMatrix;
       this._currentTransform = ctx._currentTransform;
       if (m) {
@@ -453,10 +453,6 @@
 				//ctx.globalAlpha = 1 - ((1-ctx.globalAlpha)+(1-this.opacity));
 			}
 
-      var center = fromLeft ? this._getLeftTopCoords() : this.getCenterPoint();
-			//console.log(this.id,'translating by',center.x,center.y,'which is',(fromLeft ? 'topleft' : 'center'));
-      //ctx.translate(center.x, center.y);
-			//console.log(this.id,'translating by',this.left,this.top);
       var em = this._extraTransformations();
       if(em){
         m = matmult(m,em);
@@ -486,6 +482,7 @@
         tl:{x:tl.x,y:tl.y},tr:{x:br.x,y:tl.y},br:{x:br.x,y:br.y},bl:{x:tl.x,y:br.y},
         ml:{x:tl.x,y:my},mt:{x:mx,y:tl.y},mr:{x:br.x,y:my},mb:{x:mx,y:br.y}
       };
+			this._currentGlobalTransform = ctx._currentTransform;
 			this._currentLocalTransform = m;
     },
 
@@ -729,7 +726,7 @@
 
       this[key] = value;
 
-      if(key in {top:1,left:1,angle:1}){
+      if(key in {top:1,left:1}){
         this._cacheLocalTransformMatrix();
       }
 
