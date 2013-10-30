@@ -462,21 +462,25 @@
 			fabric.util.setFillToCanvas(ctx, this);
       ctx.save();
 
-      if(this.left || this.top){
-        ctx.translate(this.left,this.top);
-      }
-      var sx = this.scaleX * (this.flipX ? -1 : 1), sy = this.scaleY * (this.flipY ? -1 : 1);
-      if((sx!==1)||(sy!==1)){
-        ctx.scale( sx, sy );
-      }
       if(!this._localTransformationMatrix){
         this._cacheLocalTransformMatrix();
       }
+      ctx.transform.apply(ctx,this._localTransformationMatrix);
       m = matmult(m,this._localTransformationMatrix);
       ctx._currentTransform = matmult(ctx._currentTransform,m);
       var xl = 0, xr = xl+this.width, yt = 0, yb = yt+this.height;
       var tl = fabric.util.pointInSpace(ctx._currentTransform,new fabric.Point(xl,yt));
       var br = fabric.util.pointInSpace(ctx._currentTransform,new fabric.Point(xr,yb));
+      if(tl.x>br.x){
+        var x = tl.x;
+        tl.x = br.x;
+        br.x = x;
+      }
+      if(tl.y>br.y){
+        var y = tl.y;
+        tl.y = br.y;
+        br.y = y;
+      }
       var mx = (tl.x+br.x)/2, my = (tl.y+br.y)/2;
       this.oCoords = {
         tl:{x:tl.x,y:tl.y},tr:{x:br.x,y:tl.y},br:{x:br.x,y:br.y},bl:{x:tl.x,y:br.y},
@@ -489,7 +493,7 @@
     _extraTransformations : function(ctx){
     },
 
-		untransform: function(ctx){
+		untransform: function(ctx,topctx){
       ctx._currentTransform = this._currentTransform;
 			if(typeof this.savedAlpha !== 'undefined'){
 				ctx.globalAlpha = this.savedAlpha;
@@ -742,6 +746,11 @@
       if((sx!==1)||(sy!==1)){
         m = matmult(m,[sx,0,0,sy,0,0]);
       }
+      var rp = this.rotationParams;
+      if(rp){
+        m = matmult(m,[rp.cos,rp.sin,-rp.sin,rp.cos,rp.x,-rp.y]);
+        m = matmult(m,[1,0,0,1,-rp.x,rp.y]);
+      }
       this._localTransformationMatrix = m;
     },
 
@@ -772,10 +781,8 @@
 
     drawBorderRect : function(ctx){
       if(!this.oCoords){return;}
-      if( this.oCoords.tl.x &&
-          this.oCoords.tl.y &&
-          (this.oCoords.br.x-this.oCoords.tl.x) > 0 &&
-          (this.oCoords.br.y-this.oCoords.tl.y) > 0){
+      if( (this.oCoords.br.x-this.oCoords.tl.x) >= 0 &&
+          (this.oCoords.br.y-this.oCoords.tl.y) >= 0){
         ctx.strokeStyle = this.borderRectColor;
         ctx.strokeRect(
           this.oCoords.tl.x,
@@ -783,6 +790,8 @@
           this.oCoords.br.x-this.oCoords.tl.x,
           this.oCoords.br.y-this.oCoords.tl.y
         );
+      }else{
+        console.log('invalid border rect',this.oCoords.tl,this.oCoords.br);
       }
     },
 
@@ -813,7 +822,7 @@
       this._paint(ctx);
       this._removeShadow(ctx);
 
-			this.untransform(ctx);
+			this.untransform(ctx,topctx);
     },
 
     accountForGradientTransform: function(p1,p2){},

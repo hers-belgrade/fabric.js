@@ -185,11 +185,17 @@
      * @private
      */
     _initDimensions: function() {
+      /*
       if (this.__skipDimension) return;
       var canvasEl = fabric.util.createCanvasElement();
       var ctx = canvasEl.getContext('2d');
       ctx._currentTransform = [1,0,0,1,0,0];
       this._render(ctx);
+      */
+      var canvasEl = fabric.util.createCanvasElement();
+      var ctx = canvasEl.getContext('2d');
+      var metrics = ctx.measureText(this.text);
+      this.width = metrics.width;
     },
 
     /**
@@ -515,8 +521,8 @@
       ctx.restore();
     },
 
-    untransform: function(ctx){
-      this.callSuper('untransform',ctx);
+    untransform: function(ctx,topctx){
+      this.callSuper('untransform',ctx,topctx);
       if(this.tspans){
         ctx.save();
         for(var i in this.tspans){
@@ -524,7 +530,7 @@
           //ctx.translate(0,this._getFontSize() * this.lineHeight);
           ctx.save();
           //ctx.translate(-tspan.left||0,-tspan.top||0);
-          tspan.render(ctx);
+          tspan.render(ctx,topctx);
           ctx.restore();
         }
         ctx.restore();

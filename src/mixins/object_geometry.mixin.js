@@ -268,23 +268,22 @@
     },
 
     /**
-     * Scales an object (equally by x and y)
-     * @param value {Number} scale factor
+     * Rotates an object for a given angle around a given point
+     * @param angle {Number} angle in degrees
+     * @param x {Number} x
+     * @param y {Number} y
      * @return {fabric.Object} thisArg
      * @chainable
      */
-    scale: function(value) {
-      value = this._constrainScale(value);
-
-      if (value < 0) {
-        this.flipX = !this.flipX;
-        this.flipY = !this.flipY;
-        value *= -1;
+    rotate: function(angle,x,y) {
+      var rp = this.rotationParams || {angle:0,sin:0,cos:1,x:0,y:0};
+      var a = rp.angle+fabric.util.degreesToRadians(angle);
+      while(a>2*Math.PI){
+        a-=2*Math.PI;
       }
-
-      this.scaleX = value;
-      this.scaleY = value;
-      this.setCoords();
+      var sin=Math.sin(a),cos=Math.cos(a);
+      this.rotationParams = {angle:a,sin:sin,cos:cos,x:x,y:y};
+      this._cacheLocalTransformMatrix();
       return this;
     },
 
@@ -324,6 +323,11 @@
 		globalToLocal : function(globalpoint){
 			return fabric.util.pointInSpace(fabric.util.matrixInverse(this._currentGlobalTransform),globalpoint);
 		},
+
+    containsGlobalPoint : function(globalpoint){
+      var lp = globalToLocal(globalToLocal);
+      return lp.x>0 && lp.x<this.width && lp.y>0 && lp.y<this.height;
+    },
 
     /**
      * Sets corner position coordinates based on current angle, width and height
