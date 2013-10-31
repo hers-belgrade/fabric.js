@@ -7,10 +7,6 @@
    */
   fabric.util = { };
 
-
-
-
-
   /**
    * Removes value from an array.
    * Presence of value (and its position in an array) is determined via `Array.prototype.indexOf`
@@ -625,6 +621,21 @@
 		var v = Matrix.getValidArr(matrix);
 		if (isNaN(v[4]) || isNaN(v[5])) throw "Invalid arguments in transform matrix";
 		return [scalar*v[4], scalar*v[5]];
+	}
+
+	Matrix.GetScale = function (matrix) {
+		if (!matrix) return 1;
+		return Math.sqrt (matrix[0] * matrix[0] + matrix[1]*matrix[1]);
+	}
+
+	Matrix.CalculateTransformToObject = function (object_list) {
+			var ret = Matrix.UnityMatrix();
+			for (var i in object_list) {
+				var ct = object_list[i].transformMatrix;
+				if (!ct) continue;
+				ret = multiplyTransformMatrices(ret, ct);
+			}
+			return ret;
 	}
 
 

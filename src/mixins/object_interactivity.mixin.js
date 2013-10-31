@@ -11,6 +11,8 @@
 			}
 			this.on('mouse:down', this._propagation_stop_handle);
 			this.on('mouse:up', this._propagation_stop_handle);
+			this.on('object:over', this._propagation_stop_handle);
+			this.on('object:out', this._propagation_stop_handle);
 		},
 
 
