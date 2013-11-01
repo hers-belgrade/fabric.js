@@ -903,8 +903,11 @@
     clone: function(callback, propertiesToInclude) {
       if (this.constructor.fromObject) {
         return this.constructor.fromObject(this.toObject(propertiesToInclude), callback);
-      }
-      return new fabric.Object(this.toObject(propertiesToInclude));
+      }else{
+				var ret = new fabric.Object(this.toObject(propertiesToInclude));
+				('function' === typeof(callback)) && callback(ret);
+      	return ret;
+			}
     },
 
     /**

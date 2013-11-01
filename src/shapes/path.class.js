@@ -435,6 +435,7 @@
       var o = extend(this.callSuper('toObject', propertiesToInclude), {
         path: this.path
       });
+			o._path_element = this._path_element;
       if (this.sourcePath) {
         o.sourcePath = this.sourcePath;
       }
@@ -623,7 +624,15 @@
       };
 
       return o;
-    }
+    },
+		setObjectToPointAtRelativeLength : function(obj,fraction){
+			var _p = this.getPointAtRelativeLength(fraction);
+			obj.set('left',_p.x);
+			obj.set('top',_p.y);
+		},
+		getPointAtRelativeLength: function(fraction){
+			return this._path_element.getPointAtLength(this._path_element.getTotalLength()*fraction);
+		}
   });
 
   /**
@@ -648,7 +657,8 @@
       });
     }
     else {
-      callback(new fabric.Path(object.path, object));
+			var ret = new fabric.Path(object.path, object);
+      callback(ret);
     }
   };
 
@@ -671,20 +681,8 @@
    */
   fabric.Path.fromElement = function(element, callback, options) {
     var parsedAttributes = fabric.parseAttributes(element, fabric.Path.ATTRIBUTE_NAMES);
-    var p = new fabric.Path(parsedAttributes.d, extend(parsedAttributes, options));
-    p.totalLength = element.getTotalLength();
-    p.getPointAtRelativeLength = (function(_el){
-      var el = _el;
-      return function(fraction){
-        return el.getPointAtLength(el.getTotalLength()*fraction);
-      };
-    })(element);
-    p.setObjectToPointAtRelativeLength = function(obj,fraction){
-      var _p = this.getPointAtRelativeLength(fraction);
-      obj.set('left',_p.x);
-      obj.set('top',_p.y);
-    };
-    callback && callback(p);
+    var p = new fabric.Path(parsedAttributes.d, extend(parsedAttributes, options,{_path_element: element}));
+		callback && callback(p);
   };
   /* _FROM_SVG_END_ */
 
