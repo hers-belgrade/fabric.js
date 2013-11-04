@@ -6,6 +6,9 @@
   }
 
   fabric.Tspan = fabric.util.createClass(fabric.Text , /** @lends fabric.Text.prototype */ {
+		toObject: function (propertiesToInclude) {
+			return this.callSuper('toObject', propertiesToInclude);
+		}
   });
 
   fabric.Tspan.fromElement = function(element, options){
@@ -23,6 +26,7 @@
     options = fabric.util.object.extend((options ? fabric.util.object.clone(options) : { }), parsedAttributes);
     return new fabric.Tspan(element.textContent, options);
   };
+
 
 })(typeof exports !== 'undefined' ? exports : this);
 
