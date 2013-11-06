@@ -58,7 +58,7 @@
           return;
         }
         var picname = picnamearray[index].name;
-				var root = picnamearray[index].root;
+        var root = picnamearray[index].root;
         if(isArray(picname)){
           return _loadArray(type,picname,function(_loaded){for(var i in _loaded){this[i]=_loaded[i];}_lf(index+1)},loaded);
         }
@@ -85,35 +85,27 @@
     _lf(0);
   };
 
-  /**
-   * Sets the path for further call to loadResources
-   * @static
-   * @function
-   * @memberOf fabric
-   * @param {String} path to working directory
-   */
-  function setWorkingDirectory(path){
-    fabric.workingDirectory = path;
-  };
 
   /**
-   * Sets the path for further call to loadResources
+   * Batch resource loading
    * @static
    * @function
    * @memberOf fabric
-   * @param {Object} hash with keys: sprites, svg. Values are arrays of appropriate resource names in the Working Directory
+   * @param {Object} hash with keys: root, sprites, svg, png. 
+   * root is the path to the root directory.
+   * svg, sprites, png map to arrays of appropriate resource names in the root Directory
    */
   function loadResources(resobj,cb,ctx){
-		//preprocess paths so you can be able to change setWorkingDirectory at any moment
-		//
-		//
-		function prepare_map (obj) {
-			for (var i in obj) {
-				if (!obj[i].name && !obj[i].root) obj[i] = {name: obj[i], root:fabric.workingDirectory||''};
-			}
-		}
-		prepare_map(resobj.svg);
-		prepare_map(resobj.sprites);
+    //preprocess paths so you can be able to change setWorkingDirectory at any moment
+    //
+    //
+    function prepare_map (obj) {
+      for (var i in obj) {
+        if (!obj[i].name && !obj[i].root) obj[i] = {name: obj[i], root:resobj.root||''};
+      }
+    }
+    prepare_map(resobj.svg);
+    prepare_map(resobj.sprites);
 
     _loadArray('svg',resobj.svg,function(loaded){
       _loadArray('sprites',resobj.sprites,function(_loaded){
@@ -126,7 +118,6 @@
   };
 
   extend(fabric, {
-    setWorkingDirectory : setWorkingDirectory,
     loadResources : loadResources
   });
 })(typeof exports !== 'undefined' ? exports : this);

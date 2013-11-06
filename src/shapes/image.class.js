@@ -146,6 +146,7 @@
      */
     toObject: function(propertiesToInclude) {
       return extend(this.callSuper('toObject', propertiesToInclude), {
+        element: this._element,
         src: this._originalElement.src || this._originalElement._src,
         filters: this.filters.map(function(filterObj) {
           return filterObj && filterObj.toObject();
@@ -376,6 +377,7 @@
    * @param {Function} [callback] Callback to invoke when an image instance is created
    */
   fabric.Image.fromObject = function(object, callback) {
+    if(!object.element){
     var img = fabric.document.createElement('img'),
         src = object.src;
 
@@ -398,6 +400,16 @@
     };
 
     img.src = src;
+    }else{
+      var el = object.element;
+      delete object.element;
+      fabric.Image.prototype._initFilters.call(object, object, function(filters) {
+        object.filters = filters || [ ];
+
+        var instance = new fabric.Image(el, object);
+				('function' === typeof(callback)) && callback(instance);
+      });
+    }
   };
 
   /**
