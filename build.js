@@ -221,6 +221,11 @@ var filesToInclude = [
   ifSpecifiedInclude('cufon', 'src/shapes/text.cufon.js'),
   ifSpecifiedInclude('text', 'src/shapes/tspan.class.js'),
 
+  ifSpecifiedInclude('components', 'src/components/mouseaware.js'),
+  ifSpecifiedInclude('components', 'src/components/hoverable.js'),
+  ifSpecifiedInclude('components', 'src/components/clickable.js'),
+  ifSpecifiedInclude('components', 'src/components/textbutton.js'),
+
   ifSpecifiedInclude('node', 'src/node.js'),
 
   ifSpecifiedAMDInclude(amdLib)

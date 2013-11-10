@@ -971,9 +971,7 @@
    * @return {fabric.Text} Instance of fabric.Text
    */
   fabric.Text.fromObject = function(object) {
-		var ret = new fabric.Text(object.text, clone(object));
-		('function' === typeof(callback)) && callback(ret);
-    return ret;
+		return new fabric.Text(object.text, clone(object));
   };
 
   fabric.util.createAccessors(fabric.Text);

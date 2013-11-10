@@ -131,48 +131,20 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
   },
 
   /**
-   * @private
-   * @param {String} format
-   * @param {Function} callback
-   */
-  _toDataURL: function (format, callback) {
-    this.clone(function (clone) {
-      callback(clone.toDataURL(format));
-    });
-  },
-
-  /**
-   * @private
-   * @param {String} format
-   * @param {Number} multiplier
-   * @param {Function} callback
-   */
-  _toDataURLWithMultiplier: function (format, multiplier, callback) {
-    this.clone(function (clone) {
-      callback(clone.toDataURLWithMultiplier(format, multiplier));
-    });
-  },
-
-  /**
    * Clones canvas instance
-   * @param {Object} [callback] Receives cloned instance as a first argument
    */
   clone: function (callback) {
-    var data = JSON.stringify(this);
-    this.cloneWithoutData(function(clone) {
-      clone.loadFromJSON(data, function() {
-        callback && callback(clone);
-      });
-    });
+    var clone = this.cloneWithoutData();
+    clone.loadFromJSON(JSON.stringify(this));
+    return clone;
   },
 
   /**
    * Clones canvas instance without cloning existing data.
    * This essentially copies canvas dimensions, clipping properties, etc.
    * but leaves data empty (so that you can populate it with your own)
-   * @param {Object} [callback] Receives cloned instance as a first argument
    */
-  cloneWithoutData: function(callback) {
+  cloneWithoutData: function() {
     var el = fabric.document.createElement('canvas');
 
     el.width = this.getWidth();
@@ -183,13 +155,10 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
     if (this.backgroundImage) {
       clone.setBackgroundImage(this.backgroundImage.src, function() {
         clone.renderAll();
-        callback && callback(clone);
       });
       clone.backgroundImageOpacity = this.backgroundImageOpacity;
       clone.backgroundImageStretch = this.backgroundImageStretch;
     }
-    else {
-      callback && callback(clone);
-    }
+    return clone;
   }
 });

@@ -81,7 +81,8 @@
    * @param {Object} object Object to create an instance from
    * @param {Function} [callback] Callback to invoke when a mask filter instance is created
    */
-  fabric.Image.filters.Mask.fromObject = function(object, callback) {
+  fabric.Image.filters.Mask.fromObject = function(object) {
+    return new fabric.Image.filters.Mask(object);
     var img = fabric.document.createElement('img'),
         src = object.mask.src;
 

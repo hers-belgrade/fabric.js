@@ -212,8 +212,9 @@
    * @param {Object} object
    * @param {Function} callback Callback to invoke when an fabric.PathGroup instance is created
    */
-  fabric.PathGroup.fromObject = function(object, callback) {
+  fabric.PathGroup.fromObject = function(object) {
     if (typeof object.paths === 'string') {
+      throw "no cloning from un-parsed paths supported";
       fabric.loadSVGFromURL(object.paths, function (elements) {
 
         var pathUrl = object.paths;
@@ -225,10 +226,9 @@
       });
     }
     else {
-      fabric.util.enlivenObjects(object.paths, function(enlivenedObjects) {
-        delete object.paths;
-        callback(new fabric.PathGroup(enlivenedObjects, object));
-      });
+      var paths = object.paths;
+      delete object.paths;
+      return new fabric.PathGroup(fabric.util.enlivenObjects(object.paths, object));
     }
   };
 

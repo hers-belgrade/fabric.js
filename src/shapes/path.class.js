@@ -78,8 +78,8 @@
       }
 
       var fromArray = _toString.call(path) === '[object Array]';
-			var or_path = path;
-			this.path = fromArray
+      var or_path = path;
+      this.path = fromArray
         ? path
         // one of commands (m,M,l,L,q,Q,c,C,etc.) followed by non-command characters (i.e. command values)
         : path.match && path.match(/[mzlhvcsqta][^mzlhvcsqta]*/gi);
@@ -94,7 +94,7 @@
       if (options.sourcePath) {
         this.setSourcePath(options.sourcePath);
       }
-			return;
+      return;
     },
 
     /**
@@ -140,14 +140,14 @@
           t = 0;
 
       var id = this.id;
-			function do_command (f,args){
-				if (f === 'drawArc') {
-					args.unshift(ctx);
-					drawArc.apply(null, args);
-				}else{
-					ctx[f].apply(ctx, args);
-				}
-			}
+      function do_command (f,args){
+        if (f === 'drawArc') {
+          args.unshift(ctx);
+          drawArc.apply(null, args);
+        }else{
+          ctx[f].apply(ctx, args);
+        }
+      }
       for (var i = 0, len = this.path.length; i < len; ++i) {
 
         current = this.path[i];
@@ -157,45 +157,45 @@
           case 'l': // lineto, relative
             x += current[1];
             y += current[2];
-						do_command('lineTo',[x, y]);
+            do_command('lineTo',[x, y]);
             break;
 
           case 'L': // lineto, absolute
             x = current[1];
             y = current[2];
-						do_command('lineTo',[x,y]);
+            do_command('lineTo',[x,y]);
             break;
 
           case 'h': // horizontal lineto, relative
             x += current[1];
-						do_command('lineTo', [x,y]);
+            do_command('lineTo', [x,y]);
             break;
 
           case 'H': // horizontal lineto, absolute
             x = current[1];
-						do_command('lineTo', [x,y]);
+            do_command('lineTo', [x,y]);
             break;
 
           case 'v': // vertical lineto, relative
             y += current[1];
-						do_command('lineTo', [x,y]);
+            do_command('lineTo', [x,y]);
             break;
 
           case 'V': // verical lineto, absolute
             y = current[1];
-						do_command('lineTo', [x,y])
+            do_command('lineTo', [x,y])
             break;
 
           case 'm': // moveTo, relative
             x += current[1];
             y += current[2];
-						do_command('moveTo', [x, y]);
+            do_command('moveTo', [x, y]);
             break;
 
           case 'M': // moveTo, absolute
             x = current[1];
             y = current[2];
-						do_command('moveTo', [x,y]);
+            do_command('moveTo', [x,y]);
             break;
 
           case 'c': // bezierCurveTo, relative
@@ -210,9 +210,9 @@
               controlY,
               tempX,
               tempY
-							]
+              ]
             );
-						
+            
             x = tempX;
             y = tempY;
             break;
@@ -222,14 +222,14 @@
             y = current[6];
             controlX = current[3];
             controlY = current[4];
-						do_command('bezierCurveTo', [
+            do_command('bezierCurveTo', [
               current[1],
               current[2],
               controlX,
               controlY,
               x,
               y
-							]
+              ]
             );
             break;
 
@@ -242,14 +242,14 @@
             // calculate reflection of previous control points
             controlX = controlX ? (2 * x - controlX) : x;
             controlY = controlY ? (2 * y - controlY) : y;
-						do_command( 'bezierCurveTo',[
+            do_command( 'bezierCurveTo',[
               controlX,
               controlY,
               x + current[1],
               y + current[2],
               tempX,
               tempY
-							]
+              ]
             );
             // set control point to 2nd one of this command
             // "... the first control point is assumed to be the reflection of the second control point on the previous command relative to the current point."
@@ -266,14 +266,14 @@
             // calculate reflection of previous control points
             controlX = 2*x - controlX;
             controlY = 2*y - controlY;
-						do_command('bezierCurveTo',[
+            do_command('bezierCurveTo',[
               controlX,
               controlY,
               current[1],
               current[2],
               tempX,
               tempY
-							]
+              ]
             );
             x = tempX;
             y = tempY;
@@ -292,7 +292,7 @@
 
             controlX = x + current[1];
             controlY = y + current[2];
-						do_command( 'quadraticCurveTo',[
+            do_command( 'quadraticCurveTo',[
               controlX,
               controlY,
               tempX,
@@ -306,7 +306,7 @@
             tempX = current[3];
             tempY = current[4];
 
-						do_command('quadraticCurveTo',[
+            do_command('quadraticCurveTo',[
               current[1],
               current[2],
               tempX,
@@ -344,12 +344,12 @@
 
             tempControlX = controlX;
             tempControlY = controlY;
-						do_command('quadraticCurveTo', [
+            do_command('quadraticCurveTo', [
               controlX,
               controlY,
               tempX,
               tempY
-							]
+              ]
             );
 
             x = tempX;
@@ -370,14 +370,14 @@
               controlY,
               tempX,
               tempY
-							]
+              ]
             );
             x = tempX;
             y = tempY;
             break;
 
           case 'a':
-						do_command('drawArc', [x, y, [
+            do_command('drawArc', [x, y, [
               current[1],
               current[2],
               current[3],
@@ -391,7 +391,7 @@
             break;
 
           case 'A':
-						do_command('drawArc',[x, y, [
+            do_command('drawArc',[x, y, [
               current[1],
               current[2],
               current[3],
@@ -405,7 +405,7 @@
 
           case 'z':
           case 'Z':
-						do_command('closePath');
+            do_command('closePath');
             break;
         }
         previous = current;
@@ -413,8 +413,8 @@
     },
 
     _paint: function(ctx){
-			this._renderFill(ctx);
-			this._renderStroke(ctx);
+      this._renderFill(ctx);
+      this._renderStroke(ctx);
     },
 
     /**
@@ -435,7 +435,7 @@
       var o = extend(this.callSuper('toObject', propertiesToInclude), {
         path: this.path
       });
-			o._path_element = this._path_element;
+      o._path_element = this._path_element;
       if (this.sourcePath) {
         o.sourcePath = this.sourcePath;
       }
@@ -495,18 +495,18 @@
       return this.path.length;
     },
 
-		_improvedParsePath : function (path) {
-			var e_re = /(\w)([\s\d\.e\-\,\+]*)/g;
-			var match = e_re.exec(path);
-			var result = [];
+    _improvedParsePath : function (path) {
+      var e_re = /(\w)([\s\d\.e\-\,\+]*)/g;
+      var match = e_re.exec(path);
+      var result = [];
 
-			while (match) {
-				path = path.slice(match[0].length);
-				result.push ({command:match[1], params:match[2].trim().split(' ').map(function(v){return v.split(',').map(function(v){return parseFloat(v)})})});
-				if (path.length === 0) break;
-				match = e_re.exec(path);
-			}
-		},
+      while (match) {
+        path = path.slice(match[0].length);
+        result.push ({command:match[1], params:match[2].trim().split(' ').map(function(v){return v.split(',').map(function(v){return parseFloat(v)})})});
+        if (path.length === 0) break;
+        match = e_re.exec(path);
+      }
+    },
 
     /**
      * @private
@@ -516,7 +516,7 @@
           coords = [ ],
           currentPath,
           parsed,
-					re = /(-?\.\d+)|(-?\d+(\.\d+)?(e[\+-]\d+)?)/g,
+          re = /(-?\.\d+)|(-?\d+(\.\d+)?(e[\+-]\d+)?)/g,
           match,
           coordsStr;
 
@@ -541,13 +541,15 @@
 
         var command = coordsParsed[0].toLowerCase(),
             commandLength = commandLengths[command],
-						actualCommand = coordsParsed[0];
+            actualCommand = coordsParsed[0];
 
         if (coordsParsed.length - 1 > commandLength) {
           for (var k = 1, klen = coordsParsed.length; k < klen; k += commandLength) {
             result.push([ actualCommand ].concat(coordsParsed.slice(k, k + commandLength)));
-						// subsequent arguments are treated as relative command 
-						if (actualCommand === 'M') actualCommand = 'm';
+            // subsequent arguments are treated as relative command 
+            //if (actualCommand === 'M') actualCommand = 'm';
+            if (actualCommand === 'M') actualCommand = 'L';
+            if (actualCommand === 'm') actualCommand = 'l';
           }
         }
         else {
@@ -625,14 +627,14 @@
 
       return o;
     },
-		setObjectToPointAtRelativeLength : function(obj,fraction){
-			var _p = this.getPointAtRelativeLength(fraction);
-			obj.set('left',_p.x);
-			obj.set('top',_p.y);
-		},
-		getPointAtRelativeLength: function(fraction){
-			return this._path_element.getPointAtLength(this._path_element.getTotalLength()*fraction);
-		}
+    setObjectToPointAtRelativeLength : function(obj,fraction){
+      var _p = this.getPointAtRelativeLength(fraction);
+      obj.set('left',_p.x);
+      obj.set('top',_p.y);
+    },
+    getPointAtRelativeLength: function(fraction){
+      return this._path_element.getPointAtLength(this._path_element.getTotalLength()*fraction);
+    }
   });
 
   /**
@@ -642,8 +644,9 @@
    * @param {Object} object
    * @param {Function} callback Callback to invoke when an fabric.Path instance is created
    */
-  fabric.Path.fromObject = function(object, callback) {
+  fabric.Path.fromObject = function(object) {
     if (typeof object.path === 'string') {
+      throw "no cloning from un-parsed Paths supported";
       fabric.loadSVGFromURL(object.path, function (elements) {
         var path = elements[0];
 
@@ -657,8 +660,7 @@
       });
     }
     else {
-			var ret = new fabric.Path(object.path, object);
-      callback(ret);
+      return new fabric.Path(object.path, object);
     }
   };
 
@@ -682,7 +684,7 @@
   fabric.Path.fromElement = function(element, callback, options) {
     var parsedAttributes = fabric.parseAttributes(element, fabric.Path.ATTRIBUTE_NAMES);
     var p = new fabric.Path(parsedAttributes.d, extend(parsedAttributes, options,{_path_element: element}));
-		callback && callback(p);
+    callback && callback(p);
   };
   /* _FROM_SVG_END_ */
 

@@ -16,6 +16,7 @@
 
   fabric.SHARED_ATTRIBUTES = [
 		"id",
+    "inkscape:static",
     "transform",
     "fill", "fill-opacity", "fill-rule",
     "opacity","display",
@@ -28,6 +29,8 @@
 
   var attributesMap = {
 		'id':								'id',
+    'inkscape:static':  'performCache',
+    'inkscape:mouse':   'wantsMouse',
     'fill-opacity':     'fillOpacity',
     'fill-rule':        'fillRule',
     'font-family':      'fontFamily',
@@ -680,6 +683,7 @@
    * @param {Function} callback Callback to call when parsing is finished; It's being passed an array of elements (parsed from a document).
    */
   fabric.parseSVGDocumentHierarchical = (function() {
+    var genericAttributes = fabric.SHARED_ATTRIBUTES.concat(fontAttributes).concat(fillAttributes);
     function processGroup(map,elements,g,options,cb){
 			//console.log('PROCESSING GROUP ', g);
       var processElement = (function(_cn,_cb){
@@ -690,7 +694,7 @@
 
 						//aparently, we propagate style options all the way down to element through group... so copy from parent and override with local data if any ...
 
-            var ga = fabric.parseAttributes(g,fabric.SHARED_ATTRIBUTES.concat(fontAttributes).concat(fillAttributes));
+            var ga = fabric.parseAttributes(g,genericAttributes);
 						ga.left = 0;
 						ga.top = 0;
             ga.width = ga.width || options.width;
@@ -755,10 +759,7 @@
     return function(doc, callback) {
       if (!doc) return;
 
-      var startTime = new Date()/*,
-          descendants = fabric.util.toArray(doc.getElementsByTagName('*'));*/
-
-      console.log('Document parsing started ...',startTime.getTime());
+      var startTime = new Date();
       /*
       if (descendants.length === 0) {
         // we're likely in node, where "o3-xml" library fails to gEBTN("*")
@@ -825,16 +826,11 @@
 							var objtouse = this.getObjectById(objlink);
 							//console.log('resolving',objlink,objtouse ? 'successfully' : 'unsuccefully','to',obj.randomID, objtouse.type);
 							if(objtouse){
-								objtouse.clone((function(_obj){
-									var obj = _obj;
-									return function(instance){
-										obj.setUsedObj(instance);
-									}
-								})(obj));
+								obj.setUsedObj(objtouse.clone());
 							}
 						}
 					},elements[0]);
-          console.log('Document parsing ended ...',fabric.documentParsingTime);
+          console.log('Parsed in',fabric.documentParsingTime);
           callback(elements[0], options);
         }
       });
@@ -951,6 +947,7 @@
        }
        if (!xml.documentElement) return;
 
+       console.log(xml.baseURI,'loaded');
        fabric.parseSVGDocumentHierarchical(xml.documentElement, function (results, options) {
          svgCache.set(url, {
            objects: fabric.util.array.invoke(results, 'toObject'),

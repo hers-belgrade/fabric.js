@@ -53,6 +53,7 @@
       this._objects = objects || [];
       for (var i = this._objects.length; i--; ) {
         var o = this._objects[i];
+        this._checkObjectAdded(o);
         if(o.id){
           this[o.id] = o;
         }
@@ -124,10 +125,11 @@
      * @private
      */
     _onObjectAdded: function(object) {
+      this._checkObjectAdded(object);
       object.group = this;
-			if(object.id){
-				this[object.id] = object;
-			}
+      if(object.id){
+        this[object.id] = object;
+      }
       this._calcBounds();
     },
 
@@ -146,57 +148,11 @@
      * @return {Object} object representation of an instance
      */
     toObject: function(propertiesToInclude) {
+      var objprops = propertiesToInclude ? propertiesToInclude.concat(['performCache']) : ['performCache'];
       var ret = extend(this.callSuper('toObject', ['anchorX','anchorY'].concat(propertiesToInclude)), {
-        objects: invoke(this._objects, 'toObject', propertiesToInclude)
+        objects: invoke(this._objects, 'toObject', objprops)
       });
-			if(this.id==='g4831-8'){
-				console.log('toObject:',ret);
-			}
-			return ret;
-    },
-
-    /**
-     * Renders instance on a given context
-     * @param {CanvasRenderingContext2D} ctx context to render instance on
-     * @param {Boolean} [noTransform] When true, context is not transformed
-     */
-    render1: function(ctx, noTransform) {
-      // do not render if object is not visible
-      if (!this.visible) return;
-
-      ctx.save();
-      this.transform(ctx);
-
-      var groupScaleFactor = Math.max(this.scaleX, this.scaleY);
-
-      this.clipTo && fabric.util.clipContext(this, ctx);
-
-      //The array is now sorted in order of highest first, so start from end.
-      for (var i = 0, len = this._objects.length; i < len; i++) {
-
-        var object = this._objects[i],
-            originalScaleFactor = object.borderScaleFactor,
-            originalHasRotatingPoint = object.hasRotatingPoint;
-
-        // do not render if object is not visible
-        if (!object.visible) continue;
-
-        object.borderScaleFactor = groupScaleFactor;
-        object.hasRotatingPoint = false;
-
-        object.render(ctx);
-
-        object.borderScaleFactor = originalScaleFactor;
-        object.hasRotatingPoint = originalHasRotatingPoint;
-      }
-      this.clipTo && ctx.restore();
-
-      if (!noTransform && this.active) {
-        this.drawBorders(ctx);
-        this.drawControls(ctx);
-      }
-      ctx.restore();
-      this.setCoords();
+      return ret;
     },
 
     processPositionEvent : function(e,eventname){
@@ -212,16 +168,40 @@
       }
     },
 
-		_render: function(ctx, topctx){
-			fabric.util.setTextFillAndStroke(ctx, this);
-			fabric.util.setFontDeclaration(ctx, this);
+    _checkObjectAdded: function(obj){
+      if(obj.performCache==='true'){
+        this._clipper = obj;
+      }
+    },
+
+    _renderContent: function(ctx,topctx){
+      fabric.util.setTextFillAndStroke(ctx, this);
+      fabric.util.setFontDeclaration(ctx, this);
       ctx.translate(-this.anchorX||0,-this.anchorY||0);
       for (var i = 0, len = this._objects.length; i < len; i++) {
         var object = this._objects[i];
-				object.render(ctx, topctx);
-			}
+        object.render(ctx, topctx);
+      }
       this._calcBounds();
-		},
+    },
+
+    _render: function(ctx, topctx){
+      if(this._clipper){
+        if(!this._cachedImage){
+          var canvas = fabric.util.createCanvasElement();
+          var _ctx = canvas.getContext('2d');
+          _ctx.width = this._clipper.width;
+          _ctx.height = this._clipper.height;
+          _ctx._currentTransform = [1,0,0,1,0,0];
+          this._renderContent(_ctx);
+          this._cachedImage = fabric.util.createImage();
+          this._cachedImage.src = canvas.toDataURL();
+        }
+        ctx.drawImage(this._cachedImage,0,0,this._cachedImage.width,this._cachedImage.height);
+      }else{
+        this._renderContent(ctx,topctx);
+      }
+    },
 
     /**
      * Retores original state of each of group objects (original state is that which was before group was created).
@@ -230,7 +210,7 @@
      * @chainable
      */
     _restoreObjectsState: function() {
-			return;
+      return;
       this._objects.forEach(this._restoreObjectState, this);
       return this;
     },
@@ -242,7 +222,7 @@
      * @return {fabric.Group} thisArg
      */
     _restoreObjectState: function(object) {
-			return;
+      return;
 
       var groupLeft = this.get('left'),
           groupTop = this.get('top'),
@@ -284,7 +264,7 @@
      * @chainable
      */
     saveCoords: function() {
-			return this;
+      return this;
       this._originalLeft = this.get('left');
       this._originalTop = this.get('top');
       return this;
@@ -376,11 +356,8 @@
    * @param {Object} [options] Options object
    * @return {fabric.Group} An instance of fabric.Group
    */
-  fabric.Group.fromObject = function(object, callback) {
-    fabric.util.enlivenObjects(object.objects, function(enlivenedObjects) {
-      delete object.objects;
-			('function' === typeof(callback)) && callback(new fabric.Group(enlivenedObjects, object));
-    });
+  fabric.Group.fromObject = function(object) {
+    return new fabric.Group(fabric.util.enlivenObjects(object.objects),object);
   };
 
   /**
@@ -391,26 +368,26 @@
    * @default
    */
   fabric.Group.async = true;
-	fabric.Group.findChildGroups = function (s) {
-		if (!s || !s._objects) return[];
-		var ret = [];
-		for (var i in s._objects) {
-			if (s._objects[i].type === 'group') ret.push (s._objects[i]);
-		}
-		return ret;
-	}
+  fabric.Group.findChildGroups = function (s) {
+    if (!s || !s._objects) return[];
+    var ret = [];
+    for (var i in s._objects) {
+      if (s._objects[i].type === 'group') ret.push (s._objects[i]);
+    }
+    return ret;
+  }
 
 
-	////TODO: PUT THIS IN SOME MORE GENERAL FORM !!!!
-	fabric.Group.find = function (s, id) {
-		if (s.id === id) return s;
-		if (!s._objects) return undefined;
+  ////TODO: PUT THIS IN SOME MORE GENERAL FORM !!!!
+  fabric.Group.find = function (s, id) {
+    if (s.id === id) return s;
+    if (!s._objects) return undefined;
 
-		for (var i in s._objects) {
-			var r = fabric.Group.find(s._objects[i], id);
-			if (r) return r;
-		}
-		return undefined;
-	}
+    for (var i in s._objects) {
+      var r = fabric.Group.find(s._objects[i], id);
+      if (r) return r;
+    }
+    return undefined;
+  }
 
 })(typeof exports !== 'undefined' ? exports : this);

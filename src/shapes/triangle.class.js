@@ -118,9 +118,7 @@
    * @return {Object} instance of Canvas.Triangle
    */
   fabric.Triangle.fromObject = function(object) {
-		var ret = new fabric.Triangle(object);
-		('function' === typeof(callback)) && callback(ret);
-    return ret;
+		return new fabric.Triangle(object);
   };
 
 })(typeof exports !== 'undefined' ? exports : this);

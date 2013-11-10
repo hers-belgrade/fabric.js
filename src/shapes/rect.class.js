@@ -237,10 +237,8 @@
    * @param object {Object} object to create an instance from
    * @return {Object} instance of fabric.Rect
    */
-  fabric.Rect.fromObject = function(object,callback) {
-		var ret = new fabric.Rect(object);
-		('function' === typeof(callback)) && callback(ret);
-    return ret;
+  fabric.Rect.fromObject = function(object) {
+		return new fabric.Rect(object);
   };
 
 })(typeof exports !== 'undefined' ? exports : this);

@@ -55,8 +55,8 @@
    * @param {Object} object Object to create an instance from
    * @param {Function} [callback] Callback to invoke when an image instance is created
    */
-  fabric.Sprite.fromObject = function(object, callback) {
-		('function' === typeof(callback)) && callback(new fabric.Sprite(object.element,object));
+  fabric.Sprite.fromObject = function(object) {
+		return new fabric.Sprite(object.element,object);
   };
 
 
@@ -149,8 +149,8 @@
    * @param {Object} object Object to create an instance from
    * @param {Function} [callback] Callback to invoke when an image instance is created
    */
-  fabric.StateableSprite.fromObject = function(object,callback) {
-    callback && callback(new fabric.StateableSprite(object));
+  fabric.StateableSprite.fromObject = function(object) {
+    return new fabric.StateableSprite(object);
   };
 
 })(typeof exports !== 'undefined' ? exports : this);

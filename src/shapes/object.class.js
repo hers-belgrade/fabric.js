@@ -382,9 +382,10 @@
     /**
      * @private
      */
-    _initGradient: function(options) {
-      if (options.fill && options.fill.colorStops && !(options.fill instanceof fabric.Gradient)) {
-        this.set('fill', new fabric.Gradient(options.fill));
+    _initGradient: function(options,attributename) {
+      var optval = options[attributename];
+      if (optval && optval.colorStops && !(optval instanceof fabric.Gradient)) {
+        this.set(attributename, new fabric.Gradient(optval));
       }
     },
 
@@ -412,6 +413,24 @@
       }
     },
 
+    invokeOnCanvas: function(method){
+      var canvas = this.canvas;
+      if(!canvas){
+        var group = this.group;
+        while(group&&!canvas){
+          canvas = group.canvas;
+          group = group.group;
+        }
+      }
+      if(canvas){
+        var m = canvas[method];
+        if(typeof m === 'function'){
+          var args = Array.prototype.slice.call(arguments,1);
+          m.apply(canvas,args);
+        }
+      }
+    },
+
     /**
      * Sets object's properties from options
      * @param {Object} [options] Options object
@@ -420,7 +439,8 @@
       for (var prop in options) {
         this.set(prop, options[prop]);
       }
-      this._initGradient(options);
+      this._initGradient(options,'fill');
+      this._initGradient(options,'stroke');
       this._initPattern(options);
       this._initClipping(options);
     },
@@ -701,6 +721,24 @@
       return this;
     },
 
+    getObjectsByPath: function(path){
+      var temp = this;
+      var ret=[];
+      for(var i=0; i<path.length&&temp; i++){
+        temp = temp[path[i]];
+        ret.push(temp);
+      }
+      return ret;
+    },
+
+    getObjectByPath: function(path){
+      var ret=this;
+      for(var i=0; i<path.length&&ret; i++){
+        ret = ret[path[i]];
+      }
+      return ret;
+    },
+
     /**
      * @private
      * @param {String} key
@@ -896,17 +934,14 @@
 
     /**
      * Clones an instance
-     * @param {Function} callback Callback is invoked with a clone as a first argument
      * @param {Array} [propertiesToInclude] Any properties that you might want to additionally include in the outpu
      * @return {fabric.Object} clone of an instance
      */
-    clone: function(callback, propertiesToInclude) {
+    clone: function(propertiesToInclude) {
       if (this.constructor.fromObject) {
-        return this.constructor.fromObject(this.toObject(propertiesToInclude), callback);
+        return this.constructor.fromObject(this.toObject(propertiesToInclude));
       }else{
-				var ret = new fabric.Object(this.toObject(propertiesToInclude));
-				('function' === typeof(callback)) && callback(ret);
-      	return ret;
+				new fabric.Object(this.toObject(propertiesToInclude));
 			}
     },
 

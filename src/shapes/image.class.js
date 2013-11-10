@@ -212,11 +212,10 @@
 
     /**
      * Returns a clone of an instance
-     * @param {Function} callback Callback is invoked with a clone as a first argument
      * @param {Array} propertiesToInclude Any properties that you might want to additionally include in the output
      */
-    clone: function(callback, propertiesToInclude) {
-      this.constructor.fromObject(this.toObject(propertiesToInclude), callback);
+    clone: function(propertiesToInclude) {
+      return this.constructor.fromObject(this.toObject(propertiesToInclude));
     },
 
     /**
@@ -322,15 +321,8 @@
      * @param {Object} object Object with filters property
      * @param {Function} callback Callback to invoke when all fabric.Image.filters instances are created
      */
-    _initFilters: function(object, callback) {
-      if (object.filters && object.filters.length) {
-        fabric.util.enlivenObjects(object.filters, function(enlivenedObjects) {
-          callback && callback(enlivenedObjects);
-        }, 'fabric.Image.filters');
-      }
-      else {
-        callback && callback();
-      }
+    _initFilters: function(object) {
+      return fabric.util.enlivenObjects(object.filters);
     },
 
     /**
@@ -376,40 +368,11 @@
    * @param {Object} object Object to create an instance from
    * @param {Function} [callback] Callback to invoke when an image instance is created
    */
-  fabric.Image.fromObject = function(object, callback) {
-    if(!object.element){
-    var img = fabric.document.createElement('img'),
-        src = object.src;
-
-    /** @ignore */
-    img.onload = function() {
-      fabric.Image.prototype._initFilters.call(object, object, function(filters) {
-        object.filters = filters || [ ];
-
-        var instance = new fabric.Image(img, object);
-				('function' === typeof(callback)) && callback(instance);
-        img = img.onload = img.onerror = null;
-      });
-    };
-
-    /** @ignore */
-    img.onerror = function() {
-      fabric.log('Error loading ' + img.src);
-      callback && callback(null, true);
-      img = img.onload = img.onerror = null;
-    };
-
-    img.src = src;
-    }else{
-      var el = object.element;
-      delete object.element;
-      fabric.Image.prototype._initFilters.call(object, object, function(filters) {
-        object.filters = filters || [ ];
-
-        var instance = new fabric.Image(el, object);
-				('function' === typeof(callback)) && callback(instance);
-      });
-    }
+  fabric.Image.fromObject = function(object) {
+    var el = object.element;
+    delete object.element;
+    object.filters =fabric.Image.prototype._initFilters.call(object, object) || [ ];
+    return new fabric.Image(el,object);
   };
 
   /**

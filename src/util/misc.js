@@ -194,39 +194,16 @@
    * @param {Array} objects Objects to enliven
    * @param {Function} callback Callback to invoke when all objects are created
    */
-  function enlivenObjects(objects, callback, namespace) {
-    function onLoaded() {
-      (++numLoadedObjects === numTotalObjects && ('function' === typeof(callback))) && callback(enlivenedObjects);
-    }
-
-    var enlivenedObjects = [ ],
-        numLoadedObjects = 0,
-        numTotalObjects = objects.length;
-
-		if (objects.length === 0 && 'function' === typeof(callback)) {
-			callback({});
-			return;
-		}
-
+  function enlivenObjects(objects, namespace) {
+    var ret = [];
     objects.forEach(function (o, index) {
       if (!o.type) {
         return;
       }
-
       var klass = fabric.util.getKlass(o.type, namespace);
-      if (klass.async) {
-        klass.fromObject(o, function (o, error) {
-          if (!error) {
-            enlivenedObjects[index] = o;
-          }
-          onLoaded();
-        });
-      }
-      else {
-        enlivenedObjects[index] = klass.fromObject(o);
-        onLoaded();
-      }
+      ret.push(klass.fromObject(o));
     });
+    return ret;
   }
 
   /**

@@ -117,7 +117,10 @@
     });
   };
 
-  fabric.Image.fromObject = function(object, callback) {
+  fabric.Image.fromObject = function(object) {
+    var el = object.element;
+    delete object.element;
+    return new fabric.Image(el,object);
     fabric.util.loadImage(object.src, function(img) {
       var oImg = new fabric.Image(img);
 

@@ -148,6 +148,7 @@
      */
     _initStatic: function(el, options) {
       this._objects = [];
+      this._mouseListeners = [];
 
       this._createLowerCanvas(el);
       this._initOptions(options);
@@ -183,7 +184,7 @@
      * @return {fabric.Canvas} thisArg
      * @chainable
      */
-    setOverlayImage: function (url, callback, options) { // TODO (kangax): test callback
+    setOverlayImage: function (url, options) {
       fabric.util.loadImage(url, function(img) {
         this.overlayImage = img;
         if (options && ('overlayImageLeft' in options)) {
@@ -192,7 +193,6 @@
         if (options && ('overlayImageTop' in options)) {
           this.overlayImageTop = options.overlayImageTop;
         }
-        callback && callback();
       }, this);
 
       return this;
@@ -392,6 +392,37 @@
       return this;
     },
 
+    addToMouseListeners: function (obj){
+      if(obj.wantsMouse){
+        this._mouseListeners.push(obj);
+      }
+    },
+
+    removeFromMouseListeners: function (obj){
+      if(obj.wantsMouse){
+        var mii = this._mouseListeners.indexOf(obj);
+        if(mii>=0){
+          this._mouseListeners.splice(mii,1);
+        }
+      }
+    },
+
+    /**
+     * Method that determines what object we are clicking on
+     * @param {Event} e mouse event
+     * @param {Boolean} skipGroup when true, group is skipped and only objects are traversed through
+     */
+    distributePositionEvent: function (e,eventname) {
+      /*
+      for (var i = this._objects.length-1; i>=0 && !e.block_further_processing; i--){
+        this._objects[i].processPositionEvent(e,eventname);
+      }
+      */
+      for(var i =this._mouseListeners.length-1; i>=0; i--){
+        this._mouseListeners[i].processPositionEvent(e,eventname);
+      }
+    },
+
     /**
      * Returns &lt;canvas> element corresponding to this instance
      * @return {HTMLCanvasElement}
@@ -441,6 +472,10 @@
      * @private
      */
     _onObjectAdded: function(obj) {
+      this.addToMouseListeners(obj);
+      if(obj._objects){
+        obj.forEachObjectRecursive(this.addToMouseListeners,this);
+      }
       this.stateful && obj.setupState();
       obj.setCoords();
       obj.canvas = this;
@@ -452,6 +487,10 @@
      * @private
      */
     _onObjectRemoved: function(obj) {
+      this.removeFromMouseListeners(obj);
+      if(obj._objects){
+        obj.forEachObjectRecursive(this.removeFromMouseListeners,this);
+      }
       this.fire('object:removed', { target: obj });
       obj.fire('removed');
     },

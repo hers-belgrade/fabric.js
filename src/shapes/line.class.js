@@ -220,10 +220,8 @@
    * @param {Object} object Object to create an instance from
    * @return {fabric.Line} instance of fabric.Line
    */
-  fabric.Line.fromObject = function(object, callback) {
-		var ret = new fabric.Line([object.x1, object.y1, object.x2, object.y2], object);
-		('function' === typeof(callback)) && callback(ret);
-    return ret;
+  fabric.Line.fromObject = function(object) {
+		return new fabric.Line([object.x1, object.y1, object.x2, object.y2], object);
   };
 
 })(typeof exports !== 'undefined' ? exports : this);

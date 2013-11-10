@@ -96,22 +96,8 @@ fabric.Collection = {
 					return feoret;
 				}
 			}
-      var cbret = callback.call(context, obj, i, objects, patharray);
-			if(cbret){
-				return cbret;
-			}
-    }
-    return;
-	},
-
-	forEachObjectRecursiveAsync: function(callback, context, patharray) {
-		patharray = patharray || [];
-    var objects = this.getObjects(),
-        i = objects.length;
-    while (i--) {
-			var obj = objects[i];
-			if(obj.forEachObjectRecursive){
-				var feoret = obj.forEachObjectRecursive(callback,context,patharray.concat([obj]));
+			if(obj.usedObj && obj.usedObj.forEachObjectRecursive){
+				var feoret = obj.usedObj.forEachObjectRecursive(callback,context,patharray.concat([obj]));
 				if(feoret){
 					return feoret;
 				}
@@ -187,16 +173,5 @@ fabric.Collection = {
       obj.toGrayscale();
     });
   },
-
-	/**
-	 * Method that determines what object we are clicking on
-	 * @param {Event} e mouse event
-	 * @param {Boolean} skipGroup when true, group is skipped and only objects are traversed through
-	 */
-	distributePositionEvent: function (e,eventname) {
-    for (var i = this._objects.length-1; i>=0 && !e.block_further_processing; i--){
-      this._objects[i].processPositionEvent(e,eventname);
-    }
-	},
 
 };
