@@ -152,9 +152,6 @@
       var ret = extend(this.callSuper('toObject', ['anchorX','anchorY'].concat(propertiesToInclude)), {
         objects: invoke(this._objects, 'toObject', objprops)
       });
-<<<<<<< HEAD
-      return ret;
-=======
 			return ret;
     },
 
@@ -200,7 +197,6 @@
       }
       ctx.restore();
       this.setCoords();
->>>>>>> 0dfb16b3befda618a1c041958dcf8b80d22ec1d7
     },
 
     processPositionEvent : function(e,eventname){
