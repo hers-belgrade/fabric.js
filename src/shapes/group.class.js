@@ -152,7 +152,55 @@
       var ret = extend(this.callSuper('toObject', ['anchorX','anchorY'].concat(propertiesToInclude)), {
         objects: invoke(this._objects, 'toObject', objprops)
       });
+<<<<<<< HEAD
       return ret;
+=======
+			return ret;
+    },
+
+    /**
+     * Renders instance on a given context
+     * @param {CanvasRenderingContext2D} ctx context to render instance on
+     * @param {Boolean} [noTransform] When true, context is not transformed
+     */
+    render1: function(ctx, noTransform) {
+      // do not render if object is not visible
+      if (!this.visible) return;
+
+      ctx.save();
+      this.transform(ctx);
+
+      var groupScaleFactor = Math.max(this.scaleX, this.scaleY);
+
+      this.clipTo && fabric.util.clipContext(this, ctx);
+
+      //The array is now sorted in order of highest first, so start from end.
+      for (var i = 0, len = this._objects.length; i < len; i++) {
+
+        var object = this._objects[i],
+            originalScaleFactor = object.borderScaleFactor,
+            originalHasRotatingPoint = object.hasRotatingPoint;
+
+        // do not render if object is not visible
+        if (!object.visible) continue;
+
+        object.borderScaleFactor = groupScaleFactor;
+        object.hasRotatingPoint = false;
+
+        object.render(ctx);
+
+        object.borderScaleFactor = originalScaleFactor;
+        object.hasRotatingPoint = originalHasRotatingPoint;
+      }
+      this.clipTo && ctx.restore();
+
+      if (!noTransform && this.active) {
+        this.drawBorders(ctx);
+        this.drawControls(ctx);
+      }
+      ctx.restore();
+      this.setCoords();
+>>>>>>> 0dfb16b3befda618a1c041958dcf8b80d22ec1d7
     },
 
     processPositionEvent : function(e,eventname){

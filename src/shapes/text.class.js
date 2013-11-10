@@ -180,6 +180,17 @@
       this.setCoords();
     },
 
+		setOptions: function (options) {
+			var tspans = options.tspans;
+			delete options.tspans;
+			this.callSuper('setOptions', options);
+			if (!tspans) return;
+			this.tspans = [];
+			for (var i in tspans) {
+				this.tspans.push (new fabric.Tspan(tspans[i].text, clone(tspans[i])));
+			}
+		},
+
     /**
      * Renders text object on offscreen canvas, so that it would get dimensions
      * @private
@@ -208,7 +219,7 @@
     },
 		setText: function (t, span) {
 			t = (typeof(t) === 'undefined') ? '' : t+'';
-			if (!this.tspans) return this.set({'text': t});
+			if (!this.tspans) return this.text = t;
 
 			if (this.tspans.length == 0) {
 				this.set('text',t);
@@ -680,7 +691,7 @@
      * @return {Object} Object representation of an instance
      */
     toObject: function(propertiesToInclude) {
-      return extend(this.callSuper('toObject', propertiesToInclude), {
+			var ret = extend(this.callSuper('toObject', propertiesToInclude), {
         text:                 this.text,
         fontSize:             this.fontSize,
         fontWeight:           this.fontWeight,
@@ -694,6 +705,13 @@
         textBackgroundColor:  this.textBackgroundColor,
         useNative:            this.useNative
       });
+			if (this.tspans && this.tspans.length) {
+				ret.tspans = [];
+				for (var i in this.tspans) {
+					ret.tspans.push(this.tspans[i].toObject());
+				}
+			}
+			return ret;
     },
 
     /* _TO_SVG_START_ */
@@ -887,6 +905,10 @@
       if (key === 'fontFamily' && this.path) {
         this.path = this.path.replace(/(.*?)([^\/]*)(\.font\.js)/, '$1' + value + '$3');
       }
+
+			if (key === 'text') {
+				return this.setText(value);
+			}
       this.callSuper('_set', key, value);
 
       if (key in this._dimensionAffectingProps) {
