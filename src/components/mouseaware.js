@@ -8,6 +8,13 @@
       svgelem.wantsMouse=true;
       svgelem.invokeOnCanvas('addToMouseListeners',svgelem);
     }
+    svgelem.enable = function(){
+      this.enabled=true;
+    };
+    svgelem.disable = function(){
+      this.enabled=false;
+    }
+    svgelem.enable();
     return svgelem;
   };
 

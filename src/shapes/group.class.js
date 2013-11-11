@@ -199,12 +199,14 @@
       this.setCoords();
     },
 
+    /*
     processPositionEvent : function(e,eventname){
       if(-1===this.callSuper('processPositionEvent',e,eventname)){
         return;
       }
       this.distributePositionEvent(e,eventname);
     },
+    */
 
     _extraTransformations: function(){
       if(this.anchorX || this.anchorY){

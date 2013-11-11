@@ -5,9 +5,15 @@
 
   fabric.Hoverable = function(svgelem,config){
     fabric.MouseAware(svgelem);
-    var overcb=config.overcb,outcb=config.outcb,ctx=config.ctx||svgelem;
-    svgelem.on('object:over',function(){overcb.call(ctx,svgelem);});
-    svgelem.on('object:out',function(){outcb.call(ctx,svgelem);});
+    var ctx=config.ctx||svgelem;
+    function trigerrer(ctx,_cb){
+      var cb = _cb;
+      return cb ? function(){
+        this.enabled&&cb.apply(ctx,arguments);
+      } : function(){};
+    }
+    svgelem.on('object:over',trigerrer(ctx,config.overcb));
+    svgelem.on('object:out',trigerrer(ctx,config.outcb));
     return svgelem;
   };
 

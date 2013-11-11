@@ -6,8 +6,8 @@
   fabric.Clickable = function(svgelem,config){
     fabric.MouseAware(svgelem);
     var downcb=config.downcb,clickcb=config.clickcb,ctx=config.ctx||svgelem;
-    svgelem.on('mouse:down',function(){downcb.call(ctx,svgelem);});
-    svgelem.on('mouse:up',function(){clickcb.call(ctx,svgelem);});
+    svgelem.on('mouse:down',function(e){this.enabled&&downcb&&downcb.call(ctx,e);});
+    svgelem.on('mouse:up',function(e){this.enabled&&clickcb&&clickcb.call(ctx,e);});
     return svgelem;
   };
 
