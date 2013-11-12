@@ -224,8 +224,7 @@ var filesToInclude = [
   ifSpecifiedInclude('components', 'src/components/mouseaware.js'),
   ifSpecifiedInclude('components', 'src/components/hoverable.js'),
   ifSpecifiedInclude('components', 'src/components/clickable.js'),
-  ifSpecifiedInclude('components', 'src/components/textbutton.js'),
-  ifSpecifiedInclude('components', 'src/components/resourcebutton.js'),
+  ifSpecifiedInclude('components', 'src/components/buttons.js'),
   ifSpecifiedInclude('components', 'src/components/draggable.js'),
   ifSpecifiedInclude('components', 'src/components/databound.js'),
 

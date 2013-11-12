@@ -26,5 +26,11 @@
     return svgelem;
   };
 
+  fabric.Slider = function(svgelem,config){
+    var area = config&&config.area ? svgelem.getObjectById(config.area) : svgelem;
+    var handle = fabric.ResourceButton(svgelem.getObjectById(config.handle),{
+    });
+  };
+
 })(typeof exports !== 'undefined' ? exports : this);
 
