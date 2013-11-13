@@ -551,6 +551,11 @@
      * @chainable
      */
     renderAll: function (allOnTop) {
+      if(this.rendering){
+        return;
+      }
+      this.rendering = true;
+      console.log('render starts');
 			var _render_start = (new Date()).getTime();
 
       var canvasToDrawOn = this.contextContainer;
@@ -605,8 +610,9 @@
       }
 
       this.fire('after:render');
-			//console.log('Render done after ', (((new Date()).getTime()) - _render_start));
+			console.log('canvas rendered in', (((new Date()).getTime()) - _render_start));
 
+      delete this.rendering;
       return this;
     },
 

@@ -155,50 +155,6 @@
 			return ret;
     },
 
-    /**
-     * Renders instance on a given context
-     * @param {CanvasRenderingContext2D} ctx context to render instance on
-     * @param {Boolean} [noTransform] When true, context is not transformed
-     */
-    render1: function(ctx, noTransform) {
-      // do not render if object is not visible
-      if (!this.visible) return;
-
-      ctx.save();
-      this.transform(ctx);
-
-      var groupScaleFactor = Math.max(this.scaleX, this.scaleY);
-
-      this.clipTo && fabric.util.clipContext(this, ctx);
-
-      //The array is now sorted in order of highest first, so start from end.
-      for (var i = 0, len = this._objects.length; i < len; i++) {
-
-        var object = this._objects[i],
-            originalScaleFactor = object.borderScaleFactor,
-            originalHasRotatingPoint = object.hasRotatingPoint;
-
-        // do not render if object is not visible
-        if (!object.visible) continue;
-
-        object.borderScaleFactor = groupScaleFactor;
-        object.hasRotatingPoint = false;
-
-        object.render(ctx);
-
-        object.borderScaleFactor = originalScaleFactor;
-        object.hasRotatingPoint = originalHasRotatingPoint;
-      }
-      this.clipTo && ctx.restore();
-
-      if (!noTransform && this.active) {
-        this.drawBorders(ctx);
-        this.drawControls(ctx);
-      }
-      ctx.restore();
-      this.setCoords();
-    },
-
     /*
     processPositionEvent : function(e,eventname){
       if(-1===this.callSuper('processPositionEvent',e,eventname)){
@@ -221,8 +177,8 @@
     },
 
     _renderContent: function(ctx,topctx){
-      fabric.util.setTextFillAndStroke(ctx, this);
-      fabric.util.setFontDeclaration(ctx, this);
+      //fabric.util.setTextFillAndStroke(ctx, this);
+      //fabric.util.setFontDeclaration(ctx, this);
       ctx.translate(-this.anchorX||0,-this.anchorY||0);
       for (var i = 0, len = this._objects.length; i < len; i++) {
         var object = this._objects[i];
@@ -233,6 +189,7 @@
 
     _render: function(ctx, topctx){
       if(this._clipper){
+        console.log('cacheing');
         if(!this._cachedImage){
           var canvas = fabric.util.createCanvasElement();
           var _ctx = canvas.getContext('2d');

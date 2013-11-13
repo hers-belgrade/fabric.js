@@ -324,6 +324,16 @@
 			return fabric.util.pointInSpace(fabric.util.matrixInverse(this._currentGlobalTransform),globalpoint);
 		},
 
+		localToGlobal : function(localpoint){
+			return fabric.util.pointInSpace(this._currentGlobalTransform,localpoint);
+		},
+
+    globalScale : function(){
+      var zerozero=this.globalToLocal(new fabric.Point(0,0));
+      var oneone=this.globalToLocal(new fabric.Point(1,1));
+      return {x:oneone.x-zerozero.x,y:oneone.y-zerozero.y};
+    },
+
     containsGlobalPoint : function(globalpoint){
       var lp = globalToLocal(globalToLocal);
       return lp.x>0 && lp.x<this.width && lp.y>0 && lp.y<this.height;

@@ -844,6 +844,8 @@
       if (!this.visible) return;
       if (this.opacity===0) return;
       if (this.display==='none') return;
+			var _render_start = (new Date()).getTime();
+      console.log(this.type,this.id,'starts render');
 
       ctx.save();
 
@@ -860,7 +862,10 @@
       this._paint(ctx);
       this._removeShadow(ctx);
 
+      var utstart = (new Date()).getTime();
 			this.untransform(ctx,topctx);
+      console.log('\t\t','untransform done in',(((new Date()).getTime()) - utstart));
+			console.log('\t',this.type,this.id,'rendered in', (((new Date()).getTime()) - _render_start));
     },
 
     accountForGradientTransform: function(p1,p2){},
