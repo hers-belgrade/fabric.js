@@ -9,7 +9,9 @@
     var originalparams={fill:svgelem.fill,stroke:svgelem.stroke};
     var reset = function(){this.set(originalparams);ra()};
     var hoverparams = config.hovered;
-    var sethover = function(){this.set(hoverparams);ra()};
+    var sethover = function(){
+      this.set(hoverparams);
+      ra()};
     fabric.Hoverable(svgelem,{overcb:sethover,outcb:reset});
     var pressedparams = config.pressed;
     var setdown = function(){this.set(pressedparams);ra()};

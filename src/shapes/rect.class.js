@@ -109,7 +109,6 @@
       ctx.lineTo(x,y+ry);
       isRounded && ctx.quadraticCurveTo(x,y,x+rx,y,x+rx,y);
       ctx.closePath();
-      console.log(this.type,this.id,'dumped content');
     },
 
     _paint: function(ctx){

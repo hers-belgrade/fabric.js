@@ -184,26 +184,22 @@
         var object = this._objects[i];
         object.render(ctx, topctx);
       }
-      this._calcBounds();
     },
 
     _render: function(ctx, topctx){
-      if(this._clipper){
-        console.log('cacheing');
-        if(!this._cachedImage){
-          var canvas = fabric.util.createCanvasElement();
-          var _ctx = canvas.getContext('2d');
-          _ctx.width = this._clipper.width;
-          _ctx.height = this._clipper.height;
-          _ctx._currentTransform = [1,0,0,1,0,0];
-          this._renderContent(_ctx);
-          this._cachedImage = fabric.util.createImage();
-          this._cachedImage.src = canvas.toDataURL();
-        }
-        ctx.drawImage(this._cachedImage,0,0,this._cachedImage.width,this._cachedImage.height);
-      }else{
-        this._renderContent(ctx,topctx);
+      //this._renderContent(ctx,topctx);
+      //return;
+      if(!this._cachedImage){
+        var canvas = fabric.util.createCanvasElement();
+        canvas.width = this.width;
+        canvas.height = this.height;
+        var _ctx = canvas.getContext('2d');
+        _ctx._currentTransform = [1,0,0,1,0,0];
+        this._renderContent(_ctx);
+        this._cachedImage = canvas;//fabric.util.createImage();
+        //this._cachedImage.src = canvas.toDataURL();
       }
+      ctx.drawImage(this._cachedImage,0,0);
     },
 
     /**
