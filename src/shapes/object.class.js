@@ -555,6 +555,7 @@
         opacity:            toFixed(this.opacity, NUM_FRACTION_DIGITS),
         shadow:             (this.shadow && this.shadow.toObject) ? this.shadow.toObject() : this.shadow,
         visible:            this.visible,
+        display:            this.display,
         clipTo:             this.clipTo && String(this.clipTo),
         transformMatrix:    this.transformMatrix
       };

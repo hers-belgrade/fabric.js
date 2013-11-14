@@ -70,10 +70,8 @@
       this.randomID = Math.floor(Math.random()*5000000);
       options = options || { };
       this.callSuper('initialize', options);
-      if(options.usedobj){
-        this.setUsedObj(options.usedobj);
-        delete this.usedobj;
-        delete options.usedobj;
+      if(this.usedObj){
+        this.setUsedObj(this.usedObj.clone());
       }
     },
     getElement: function () {
@@ -86,18 +84,10 @@
     setUsedObj: function(object) {
       object.group = this;
       this.usedObj = object;
-      if(this.distributeClone){
-        for(var i in this.distributeClone){
-          this.distributeClone[i](object);
-        }
-      }
-      delete this.distributeClone;
     },
     toObject: function (propertiesToInclude) {
       var ret = this.callSuper('toObject', propertiesToInclude);
-      if(this.usedObj){
-        ret.usedobj = this.usedObj.clone();
-      }
+      ret.masteruse = this;
       return ret;
     },
     toSVG : function () {
@@ -106,28 +96,26 @@
     toString: function () {
       throw "toString not implemented";
     },
-    clone: function (propertiesToInclude) {
-      var ret = new fabric.Use(this.toObject());
-      if(!this.usedObj){
-        if(!this.distributeClone){
-          this.distributeClone = [];
+    getUsedObj: function() {
+      var uo = this.usedObj;
+      if(!uo){
+        if(this.masteruse){
+          uo = this.masteruse.getUsedObj();
+          if(uo){
+            this.setUsedObj(uo.clone());
+            delete this.masteruse;
+          }
         }
-        this.distributeClone.push(function(obj){
-          ret.setUsedObj(obj);
-        });
       }
-      return ret;
-    },
-
-    replaceUsedObject: function (obj) {
-      this.setUsedObj(obj);
+      return this.usedObj;
     },
 
     _render: function (ctx,topctx) {
-      if(this.usedObj){
-        this.usedObj.render(ctx,topctx);
+      var uo = this.getUsedObj();
+      if(uo){
+        uo.render(ctx,topctx);
       }else{
-        console.log('used object missing ...', this.id, 'should be '+this['xlink:href'], this.randomID);
+        console.log(this.id,'has no usedObj',this);
       }
     }
   });
@@ -139,32 +127,6 @@
   };
   fabric.Use.fromObject = function (object) {
     return new fabric.Use(object);
-    var extraoptions = {};
-    if(object.usedobjObj && object.usedobjFromObj){
-      extraoptions.usedobjObj=object.usedobjObj;
-      extraoptions.usedobjFromObj = object.usedobjFromObj;
-      extraoptions.usedobjType = object.usedobjType;
-      delete object.usedobjObj;
-      delete object.usedobjFromObj;
-      delete object.usedobjType;
-    }else if(object.usedObjHook){
-      extraoptions.usedObjHook = object.usedObjHook;
-      delete object.usedObjHook;
-    }
-    var inst = new fabric.Use(object);
-    if(extraoptions.usedobjObj && extraoptions.usedobjFromObj){
-      //console.log(object);
-      extraoptions.usedobjFromObj(extraoptions.usedobjObj,function(usedobjinst){
-        inst.setUsedObj(usedobjinst);
-        callback(inst);
-      });
-    }else if(extraoptions.usedObjHook){
-      object.takeObj = function(usedobj){
-        delete object.takeObj;
-        inst.setUsedObj(usedobj);
-      };
-      callback(inst);
-    }
   };
   fabric.Use.async = true;
 })(typeof exports !== 'undefined' ? exports : this);

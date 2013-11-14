@@ -15,7 +15,7 @@
       multiplyTransformMatrices = fabric.util.multiplyTransformMatrices;
 
   fabric.SHARED_ATTRIBUTES = [
-		"id",
+    "id",
     "inkscape:static",
     "transform",
     "fill", "fill-opacity", "fill-rule",
@@ -24,11 +24,11 @@
   ];
 
 
-	var fontAttributes = 'font-family font-style font-weight font-size text-decoration text-align'.split(' ');
-	var fillAttributes = 'fill fill-opacity fill-rule'.split(' ');
+  var fontAttributes = 'font-family font-style font-weight font-size text-decoration text-align'.split(' ');
+  var fillAttributes = 'fill fill-opacity fill-rule'.split(' ');
 
   var attributesMap = {
-		'id':								'id',
+    'id':               'id',
     'inkscape:static':  'performCache',
     'inkscape:mouse':   'wantsMouse',
     'fill-opacity':     'fillOpacity',
@@ -51,7 +51,7 @@
     'y':                'top',
     'transform':        'transformMatrix',
     'gradientTransform':'gradientTransformMatrix',
-		'text-align':				'textAlign',
+    'text-align':       'textAlign',
   };
 
   var colorAttributes = {
@@ -70,11 +70,11 @@
   function normalizeValue(attr, value/*, parentAttributes*/) {
     var isArray;
 
-		/*
+    /*
     if ((attr === 'fill' || attr === 'stroke') && value === 'none') {
       value = '';
     }
-		
+    
     else*/ if (attr === 'fillRule') {
       value = (value === 'evenodd') ? 'destination-over' : value;
     }
@@ -82,8 +82,8 @@
       value = value.replace(/,/g, ' ').split(/\s+/);
     }
     else if (attr === 'transformMatrix' || attr === 'gradientTransformMatrix') {
-			value = fabric.parseTransformAttribute(value);
-			/*
+      value = fabric.parseTransformAttribute(value);
+      /*
       if (parentAttributes && parentAttributes.transformMatrix) {
         value = multiplyTransformMatrices(
           parentAttributes.transformMatrix, fabric.parseTransformAttribute(value));
@@ -91,7 +91,7 @@
       else {
         value = fabric.parseTransformAttribute(value);
       }
-			*/
+      */
     }
 
     isArray = Object.prototype.toString.call(value) === '[object Array]';
@@ -140,11 +140,11 @@
         parentAttributes = { };
 
     // if there's a parent container (`g` node), don't parse its attributes recursively upwards
-		/*
+    /*
     if (element.parentNode && /^g$/i.test(element.parentNode.nodeName)) {
       parentAttributes = fabric.parseAttributes(element.parentNode, attributes);
     }
-		*/
+    */
 
     var ownAttributes = attributes.reduce(function(memo, attr) {
       value = element.getAttribute(attr);
@@ -685,18 +685,18 @@
   fabric.parseSVGDocumentHierarchical = (function() {
     var genericAttributes = fabric.SHARED_ATTRIBUTES.concat(fontAttributes).concat(fillAttributes);
     function processGroup(map,elements,g,options,cb){
-			//console.log('PROCESSING GROUP ', g);
+      //console.log('PROCESSING GROUP ', g);
       var processElement = (function(_cn,_cb){
         var childNodes = _cn, gmap = {}, gelements = [], cb = _cb;
         var worker = function(i){
           var gc = childNodes[i];
           if(!gc){
 
-						//aparently, we propagate style options all the way down to element through group... so copy from parent and override with local data if any ...
+            //aparently, we propagate style options all the way down to element through group... so copy from parent and override with local data if any ...
 
             var ga = fabric.parseAttributes(g,genericAttributes);
-						ga.left = 0;
-						ga.top = 0;
+            ga.left = 0;
+            ga.top = 0;
             ga.width = ga.width || options.width;
             ga.height = ga.height || options.height;
 
@@ -811,25 +811,27 @@
       processGroup(hierarchy,elements,doc,options,function(){
         fabric.documentParsingTime = new Date() - startTime;
         if(callback) {
-					var anchor = elements[0].getObjectById('anchor');
+          /*
+          var anchor = elements[0].getObjectById('anchor');
           if(anchor&&anchor.type==='rect'){
             elements[0].anchorX = anchor.left+(anchor.width / 2);
             elements[0].anchorY = anchor.top+(anchor.height / 2);
             anchor.set({opacity:0});
           }
-					elements[0].forEachObjectRecursive(function(obj,index,objects,patharray){
-						if(obj.type==='use'){
-							var objlink = obj['xlink:href'];
-							if(objlink[0]==='#'){
-								objlink = objlink.slice(1);
-							}
-							var objtouse = this.getObjectById(objlink);
-							//console.log('resolving',objlink,objtouse ? 'successfully' : 'unsuccefully','to',obj.randomID, objtouse.type);
-							if(objtouse){
-								obj.setUsedObj(objtouse.clone());
-							}
-						}
-					},elements[0]);
+          */
+          elements[0].forEachObjectRecursive(function(obj,index,objects,patharray){
+            if(obj.type==='use'){
+              var objlink = obj['xlink:href'];
+              if(objlink[0]==='#'){
+                objlink = objlink.slice(1);
+              }
+              var objtouse = this.getObjectById(objlink);
+              //console.log('resolving',objlink,objtouse ? 'successfully' : 'unsuccessfully','to',obj.id,obj.randomID, objtouse.type);
+              if(objtouse){
+                obj.setUsedObj(objtouse.clone());
+              }
+            }
+          },elements[0]);
           console.log('Parsed in',fabric.documentParsingTime);
           callback(elements[0], options);
         }
