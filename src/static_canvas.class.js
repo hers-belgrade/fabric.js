@@ -570,6 +570,8 @@
 
       this.fire('before:render');
 
+      canvasToDrawOn.save();
+      //canvasToDrawOn.scale(2,2);
       if (this.clipTo) {
         fabric.util.clipContext(this, canvasToDrawOn);
       }
@@ -608,6 +610,7 @@
       if (this.controlsAboveOverlay && this.interactive) {
         this.drawControls(canvasToDrawOn);
       }
+      canvasToDrawOn.restore();
 
       this.fire('after:render');
 			console.log('canvas rendered in', (((new Date()).getTime()) - _render_start));

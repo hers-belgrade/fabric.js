@@ -337,7 +337,7 @@
 			this.font_params = fabric.util.setFontDeclaration(ctx, this);
     },
 		_getFontSize : function () {
-			return (this.font_params) ? this.font_params.fontSize : 0;
+			return (this.font_params) ? this.font_params.fontSize : 12;
 		},
 
     /**

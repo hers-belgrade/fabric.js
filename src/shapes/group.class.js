@@ -148,7 +148,8 @@
      * @return {Object} object representation of an instance
      */
     toObject: function(propertiesToInclude) {
-      var objprops = propertiesToInclude ? propertiesToInclude.concat(['performCache']) : ['performCache'];
+      var myprops = ['_clipper','_cachedImage'];
+      var objprops = propertiesToInclude ? propertiesToInclude.concat(myprops) : myprops;
       var ret = extend(this.callSuper('toObject', ['anchorX','anchorY'].concat(propertiesToInclude)), {
         objects: invoke(this._objects, 'toObject', objprops)
       });
@@ -179,7 +180,7 @@
     _renderContent: function(ctx,topctx){
       //fabric.util.setTextFillAndStroke(ctx, this);
       //fabric.util.setFontDeclaration(ctx, this);
-      ctx.translate(-this.anchorX||0,-this.anchorY||0);
+      //ctx.translate(-this.anchorX||0,-this.anchorY||0);
       for (var i = 0, len = this._objects.length; i < len; i++) {
         var object = this._objects[i];
         object.render(ctx, topctx);
@@ -187,19 +188,22 @@
     },
 
     _render: function(ctx, topctx){
-      //this._renderContent(ctx,topctx);
-      //return;
-      if(!this._cachedImage){
-        var canvas = fabric.util.createCanvasElement();
-        canvas.width = this.width;
-        canvas.height = this.height;
-        var _ctx = canvas.getContext('2d');
-        _ctx._currentTransform = [1,0,0,1,0,0];
-        this._renderContent(_ctx);
-        this._cachedImage = canvas;//fabric.util.createImage();
-        //this._cachedImage.src = canvas.toDataURL();
+      if(this._clipper){
+        if(!this._cachedImage){
+          console.log('clipper',this._clipper.id);
+          var canvas = fabric.util.createCanvasElement();
+          canvas.width = this.width;
+          canvas.height = this.height;
+          var _ctx = canvas.getContext('2d');
+          _ctx._currentTransform = [1,0,0,1,0,0];
+          this._renderContent(_ctx);
+          this._cachedImage = canvas;//fabric.util.createImage();
+          //this._cachedImage.src = canvas.toDataURL();
+        }
+        ctx.drawImage(this._cachedImage,0,0);
+      }else{
+        this._renderContent(ctx,topctx);
       }
-      ctx.drawImage(this._cachedImage,0,0);
     },
 
     /**
