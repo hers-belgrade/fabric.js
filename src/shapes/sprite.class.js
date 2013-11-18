@@ -26,12 +26,13 @@
       this.callSuper('initialize',element,options);
     },
     _render : function(ctx){
+      var ms = fabric.masterScale;
       ctx.drawImage(
         this._element,
-        this.x,this.y,
-        this.width,
-        this.height,
-        0,0,this.width,this.height
+        this.x*ms,this.y*ms,
+        this.width*ms,
+        this.height*ms,
+        this.x,this.y,this.width,this.height
         );
     },
     /**

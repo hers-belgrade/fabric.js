@@ -33,6 +33,14 @@
       var p = getPointer(e,cnvasel);
       p.x = p.x - cnvas._offset.left;
       p.y = p.y - cnvas._offset.top;
+      if(fabric.masterScale){
+        p.x/=fabric.masterScale;
+        p.y/=fabric.masterScale;
+      }
+      if(fabric.backingScale!=1){
+        p.x*=fabric.backingScale;
+        p.y*=fabric.backingScale;
+      }
       cnvas.distributePositionEvent(p,evntalias);
     };
     addListener(cnvasel, evntname, evnthandler);
@@ -150,7 +158,17 @@
      * @private
      */
     _onResize: function () {
+      if(this.autoresize){
+        this._applyWrapperStyle(this.wrapperEl);
+        this._applyCanvasStyle(this.lowerCanvasEl);
+        if(this.upperCanvasEl){
+          this._applyCanvasStyle(this.upperCanvasEl);
+        }
+        this._computeMasterScale();
+      }
       this.calcOffset();
+      fabric.staticLayerManager.refresh();
+      this.renderAll();
     },
 
     /**
@@ -198,4 +216,12 @@
       return true;
     }
   });
+
+  fabric.backingScale = 1;
+  if ('devicePixelRatio' in window) {
+    if (window.devicePixelRatio != 1) {
+      fabric.backingScale = window.devicePixelRatio;
+    }
+  }
+  console.log(fabric.backingScale);
 })();

@@ -674,6 +674,64 @@
     };
   })();
 
+  function processGroup(map,elements,g,options,cb){
+    var genericAttributes = fabric.SHARED_ATTRIBUTES.concat(fontAttributes).concat(fillAttributes);
+    //console.log('PROCESSING GROUP ', g);
+    var processElement = (function(_cn,_cb){
+      var childNodes = _cn, gmap = {}, gelements = [], cb = _cb;
+      var worker = function(i){
+        var gc = childNodes[i];
+        if(!gc){
+
+          //aparently, we propagate style options all the way down to element through group... so copy from parent and override with local data if any ...
+
+          var ga = fabric.parseAttributes(g,genericAttributes);
+          ga.left = 0;
+          ga.top = 0;
+          ga.width = ga.width || options.width;
+          ga.height = ga.height || options.height;
+
+          var group = (g.id==='static') ? new fabric.StaticLayer(gelements,ga) : new fabric.Group(gelements,ga);
+          for(var i in gmap){
+            group[i] = gmap[i];
+          }
+          elements.push(group);
+          if(g.id){
+            map[g.id] = group;
+          }
+          cb(g);
+          return;
+        }
+        var next = function(){worker(i+1);};
+        if(gc.tagName){
+          if(gc.tagName!=='g'){
+           if(/^(path|circle|polygon|polyline|ellipse|rect|line|image|text|use)$/.test(gc.tagName)){
+            fabric.parseElements([gc],(function(_gm,_ge,_nxt){
+              var gmap = _gm,gelements=_ge,next=_nxt;
+              return function(instances){
+                var inst = instances[0];
+                if(inst.id){
+                  gmap[inst.id] = inst;
+                }
+                gelements.push(inst);
+                next();
+              };
+            })(gmap,gelements,next),clone(options));
+           }else{
+             next();
+           }
+          }else{
+            processGroup(gmap,gelements,gc,options,next);
+          }
+        }else{
+          next();
+        }
+      };
+      return worker;
+    })(g.childNodes,cb);
+    processElement(0);
+  };
+
   /**
    * Parses an SVG document, converts it to a object with fabric.* objects mapped to their corresponding id's within and passes it to a callback
    * @static
@@ -683,63 +741,6 @@
    * @param {Function} callback Callback to call when parsing is finished; It's being passed an array of elements (parsed from a document).
    */
   fabric.parseSVGDocumentHierarchical = (function() {
-    var genericAttributes = fabric.SHARED_ATTRIBUTES.concat(fontAttributes).concat(fillAttributes);
-    function processGroup(map,elements,g,options,cb){
-      //console.log('PROCESSING GROUP ', g);
-      var processElement = (function(_cn,_cb){
-        var childNodes = _cn, gmap = {}, gelements = [], cb = _cb;
-        var worker = function(i){
-          var gc = childNodes[i];
-          if(!gc){
-
-            //aparently, we propagate style options all the way down to element through group... so copy from parent and override with local data if any ...
-
-            var ga = fabric.parseAttributes(g,genericAttributes);
-            ga.left = 0;
-            ga.top = 0;
-            ga.width = ga.width || options.width;
-            ga.height = ga.height || options.height;
-
-            var group = new fabric.Group(gelements,ga);
-            for(var i in gmap){
-              group[i] = gmap[i];
-            }
-            elements.push(group);
-            if(g.id){
-              map[g.id] = group;
-            }
-            cb(g);
-            return;
-          }
-          var next = function(){worker(i+1);};
-          if(gc.tagName){
-            if(gc.tagName!=='g'){
-             if(/^(path|circle|polygon|polyline|ellipse|rect|line|image|text|use)$/.test(gc.tagName)){
-              fabric.parseElements([gc],(function(_gm,_ge,_nxt){
-                var gmap = _gm,gelements=_ge,next=_nxt;
-                return function(instances){
-                  var inst = instances[0];
-                  if(inst.id){
-                    gmap[inst.id] = inst;
-                  }
-                  gelements.push(inst);
-                  next();
-                };
-              })(gmap,gelements,next),clone(options));
-             }else{
-               next();
-             }
-            }else{
-              processGroup(gmap,gelements,gc,options,next);
-            }
-          }else{
-            next();
-          }
-        };
-        return worker;
-      })(g.childNodes,cb);
-      processElement(0);
-    };
 
     // http://www.w3.org/TR/SVG/coords.html#ViewBoxAttribute
     // \d doesn't quite cut it (as we need to match an actual float number)
@@ -819,7 +820,8 @@
             anchor.set({opacity:0});
           }
           */
-          elements[0].forEachObjectRecursive(function(obj,index,objects,patharray){
+          var svg = elements[0];
+          svg.forEachObjectRecursive(function(obj,index,objects,patharray){
             if(obj.type==='use'){
               var objlink = obj['xlink:href'];
               if(objlink[0]==='#'){
@@ -831,9 +833,9 @@
                 obj.setUsedObj(objtouse.clone());
               }
             }
-          },elements[0]);
+          },svg);
           console.log('Parsed in',fabric.documentParsingTime);
-          callback(elements[0], options);
+          callback(svg, options);
         }
       });
 

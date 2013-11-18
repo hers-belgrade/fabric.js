@@ -53,7 +53,6 @@
       this._objects = objects || [];
       for (var i = this._objects.length; i--; ) {
         var o = this._objects[i];
-        this._checkObjectAdded(o);
         if(o.id){
           this[o.id] = o;
         }
@@ -125,7 +124,6 @@
      * @private
      */
     _onObjectAdded: function(object) {
-      this._checkObjectAdded(object);
       object.group = this;
       if(object.id){
         this[object.id] = object;
@@ -148,10 +146,8 @@
      * @return {Object} object representation of an instance
      */
     toObject: function(propertiesToInclude) {
-      var myprops = ['_clipper','_cachedImage'];
-      var objprops = propertiesToInclude ? propertiesToInclude.concat(myprops) : myprops;
       var ret = extend(this.callSuper('toObject', ['anchorX','anchorY'].concat(propertiesToInclude)), {
-        objects: invoke(this._objects, 'toObject', objprops)
+        objects: invoke(this._objects, 'toObject', propertiesToInclude)
       });
 			return ret;
     },
@@ -168,12 +164,6 @@
     _extraTransformations: function(){
       if(this.anchorX || this.anchorY){
         return [1,0,0,1,-this.anchorX,-this.anchorY];
-      }
-    },
-
-    _checkObjectAdded: function(obj){
-      if(obj.performCache==='true'){
-        this._clipper = obj;
       }
     },
 

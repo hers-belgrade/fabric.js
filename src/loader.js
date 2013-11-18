@@ -37,6 +37,21 @@
     fabric.util.request(fabric.workingDirectory+'/'+spritename+'.sprites',{onComplete:och});
   };
 
+  function _loadSVG(resourcename,loaded){
+    return fabric.loadSVGHierarchicalFromURL(resourcename, function(svg){
+      if(!fabric.masterSize){
+        fabric.masterSize = {width:svg.width,height:svg.height};
+        if(fabric.activeCanvasInstance){
+          fabric.activeCanvasInstance._computeMasterScale();
+        }
+      }
+      if(svg.static){
+        svg.static.setURL(resourcename);
+      }
+      loaded(svg);
+    });
+  };
+
   /**
    * @private
    */
@@ -76,7 +91,7 @@
           case 'sprites':
             return _loadSprites(picname,resourceloaded);
           case 'svg':
-            return fabric.loadSVGHierarchicalFromURL(rn, resourceloaded);
+            return _loadSVG(rn,resourceloaded);
           default:
             return _lf(index+1);
         }

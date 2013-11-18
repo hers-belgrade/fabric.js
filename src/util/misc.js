@@ -288,15 +288,6 @@
     ctx.restore();
   }
 
-  function backingScale(context) {
-    if ('devicePixelRatio' in window) {
-      if (window.devicePixelRatio > 1) {
-        return window.devicePixelRatio;
-      }
-    }
-    return 1;
-  }
-
   /**
    * Creates canvas element and initializes it via excanvas if necessary
    * @static
@@ -306,17 +297,10 @@
    */
   function createCanvasElement(canvasEl) {
     canvasEl || (canvasEl = fabric.document.createElement('canvas'));
+    return canvasEl;
     if (!canvasEl.getContext && typeof G_vmlCanvasManager !== 'undefined') {
       G_vmlCanvasManager.initElement(canvasEl);
     }
-    //var bs = backingScale(canvasEl);
-    //if(bs<1){
-      //canvasEl.style.width = canvasEl.width;
-      //canvasEl.style.height = canvasEl.height;
-      //canvasEl.width = canvasEl.width*bs;
-      //canvasEl.height = canvasEl.height*bs;
-    //}
-    //canvasEl.ratio = bs;
     return canvasEl;
   }
 

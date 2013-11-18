@@ -108,7 +108,8 @@
         type: this.type,
         coords: this.coords,
         gradientUnits: this.gradientUnits,
-        colorStops: this.colorStops
+        colorStops: this.colorStops,
+        transformMatrix: this.transformMatrix
       };
     },
 

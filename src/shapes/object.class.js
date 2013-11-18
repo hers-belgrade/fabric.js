@@ -357,23 +357,13 @@
 
     borderRectColor:          '#000000',
 
-    /**
-     * List of properties to consider when checking if state
-     * of an object is changed (fabric.Object#hasStateChanged)
-     * as well as for history (undo/redo) purposes
-     * @type Array
-     */
-    stateProperties:  (
-      'top left width height scaleX scaleY flipX flipY originX originY transformMatrix ' +
-      'stroke strokeWidth strokeDashArray strokeLineCap strokeLineJoin strokeMiterLimit ' +
-      'angle opacity fill fillRule overlayFill shadow clipTo visible'
-    ).split(' '),
 
     /**
      * Constructor
      * @param {Object} [options] Options object
      */
     initialize: function(options) {
+      this._cache = {};
       if (options) {
         this.setOptions(options);
       }
@@ -411,6 +401,18 @@
       if (typeof functionBody !== 'undefined') {
         this.clipTo = new Function('ctx', functionBody);
       }
+    },
+
+    /**
+     * @private
+     * returns the top svg element - root of the hierarchy
+     */
+    _svgElement: function() {
+      var ret = this;
+      while(ret.group){
+        ret = ret.group;
+      }
+      return ret;
     },
 
     invokeOnCanvas: function(method){
@@ -540,9 +542,9 @@
         top:                toFixed(this.top, NUM_FRACTION_DIGITS),
         width:              toFixed(this.width, NUM_FRACTION_DIGITS),
         height:             toFixed(this.height, NUM_FRACTION_DIGITS),
-        fill:               (this.fill && this.fill.toObject) ? this.fill.toObject() : this.fill,
+        fill:               this.fill,//(this.fill && this.fill.toObject) ? this.fill.toObject() : this.fill,
         overlayFill:        this.overlayFill,
-        stroke:             (this.stroke && this.stroke.toObject) ? this.stroke.toObject() : this.stroke,
+        stroke:             this.stroke,//(this.stroke && this.stroke.toObject) ? this.stroke.toObject() : this.stroke,
         strokeWidth:        toFixed(this.strokeWidth, NUM_FRACTION_DIGITS),
         strokeDashArray:    this.strokeDashArray,
         strokeLineCap:      this.strokeLineCap,
@@ -557,7 +559,8 @@
         visible:            this.visible,
         display:            this.display,
         clipTo:             this.clipTo && String(this.clipTo),
-        transformMatrix:    this.transformMatrix
+        transformMatrix:    this.transformMatrix,
+        _cache:             this._cache
       };
 
       if (!this.includeDefaultValues) {
@@ -673,7 +676,7 @@
      * @param {Object} object
      */
     _removeDefaultValues: function(object) {
-      this.stateProperties.forEach(function(prop) {
+      fabric.Object.stateProperties.forEach(function(prop) {
         if (object[prop] === this.constructor.prototype[prop]) {
           delete object[prop];
         }
@@ -769,9 +772,6 @@
 
       if(this[key]!==value){
         this[key] = value;
-        if(this.group){
-          delete this.group._cachedImage;
-        }
         if(key in {top:1,left:1}){
           this._cacheLocalTransformMatrix();
         }
@@ -847,9 +847,16 @@
     render: function(ctx, topctx) {
       // do not render if width/height are zeros or object is not visible
       //if (this.width === 0 || this.height === 0 || !this.visible) return;
+      if(!this._cache){
+        console.log(this.type,'no cache');
+      }
       if (!this.visible) return;
       if (this.opacity===0) return;
       if (this.display==='none') return;
+      if(this._cache.content){
+        this._cache.content.render(ctx);
+        return;
+      }
 			//var _render_start = (new Date()).getTime();
       //console.log(this.type,this.id,'starts render');
 
@@ -1245,6 +1252,18 @@
 			this.fire ('object:hidden');
 		}
   });
+  /**
+   * List of properties to consider when checking if state
+   * of an object is changed (fabric.Object#hasStateChanged)
+   * as well as for history (undo/redo) purposes
+   * @type Array
+   */
+  fabric.Object.prototype.stateProperties =  (
+      'top left width height scaleX scaleY flipX flipY originX originY transformMatrix ' +
+      'stroke strokeWidth strokeDashArray strokeLineCap strokeLineJoin strokeMiterLimit ' +
+      'angle opacity fill fillRule overlayFill shadow clipTo visible'
+    ).split(' ');
+
 
   fabric.util.createAccessors(fabric.Object);
 

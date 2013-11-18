@@ -170,11 +170,10 @@
      * @return {fabric.Text} thisArg
      */
     initialize: function(text, options) {
-      options = options || { };
+      this.callSuper('initialize',options);
 
       this.text = text;
       this.__skipDimension = true;
-      this.setOptions(options);
       this.__skipDimension = false;
       this._initDimensions();
       this.setCoords();

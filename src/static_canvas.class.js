@@ -34,6 +34,7 @@
 
       this._initStatic(el, options);
       fabric.StaticCanvas.activeInstance = this;
+      fabric.activeCanvasInstance = this;
     },
 
     /**
@@ -141,6 +142,23 @@
       /* NOOP */
     },
 
+    _computeMasterScale: function () {
+      var ms = fabric.masterSize;
+      var lce = this.lowerCanvasEl;
+      if(ms&&
+        (ms.width!==lce.width||
+         ms.height!==lce.height)
+        ){
+        var hscale = lce.width/ms.width;
+        var vscale = lce.height/ms.height;
+        var scale = Math.min(hscale,vscale);
+        fabric.masterScale = scale;
+      }else{
+        fabric.masterScale = 1;
+      }
+      console.log('on size',fabric.masterSize,'scale is',fabric.masterScale);
+    },
+
     /**
      * @private
      * @param {HTMLElement | String} el &lt;canvas> element to initialize instance on
@@ -151,6 +169,8 @@
       this._mouseListeners = [];
 
       this._createLowerCanvas(el);
+      this._computeMasterScale();
+      fabric.staticLayerManager.monitor(this.lowerCanvasEl);
       this._initOptions(options);
 
       if (options.overlayImage) {
@@ -162,7 +182,6 @@
       if (options.backgroundColor) {
         this.setBackgroundColor(options.backgroundColor, this.renderAll.bind(this));
       }
-      this.calcOffset();
     },
 
     /**
@@ -173,6 +192,7 @@
      */
     calcOffset: function () {
       this._offset = getElementOffset(this.lowerCanvasEl);
+      console.log('offset calculated',this._offset);
       return this;
     },
 
@@ -286,10 +306,12 @@
       this.width = parseInt(this.lowerCanvasEl.width, 10) || 0;
       this.height = parseInt(this.lowerCanvasEl.height, 10) || 0;
 
+      /*
       if (!this.lowerCanvasEl.style) return;
 
-      this.lowerCanvasEl.style.width = this.width + 'px';
-      this.lowerCanvasEl.style.height = this.height + 'px';
+      this.lowerCanvasEl.style.width = this.width/fabric.backingScale + 'px';
+      this.lowerCanvasEl.style.height = this.height/fabric.backingScale + 'px';
+      */
     },
 
     /**
@@ -306,6 +328,7 @@
       if (this.interactive) {
         this._applyCanvasStyle(this.lowerCanvasEl);
       }
+      this.calcOffset();
 
       this.contextContainer = this.lowerCanvasEl.getContext('2d');
     },
@@ -374,10 +397,6 @@
       if (this.upperCanvasEl) {
         this.upperCanvasEl[prop] = value;
         this.upperCanvasEl.style[prop] = value + 'px';
-      }
-
-      if (this.cacheCanvasEl) {
-        this.cacheCanvasEl[prop] = value;
       }
 
       if (this.wrapperEl) {
@@ -472,6 +491,9 @@
      * @private
      */
     _onObjectAdded: function(obj) {
+      if(obj.id === 'static'){//and check all static's children too
+        return;
+      }
       this.addToMouseListeners(obj);
       if(obj._objects){
         obj.forEachObjectRecursive(this.addToMouseListeners,this);
@@ -554,34 +576,36 @@
       if(this.rendering){
         return;
       }
+      this.calcOffset();
       this.rendering = true;
       console.log('render starts');
 			var _render_start = (new Date()).getTime();
 
-      var canvasToDrawOn = this.contextContainer;
+      var ctxToDrawOn = this.contextContainer;
 
       if (this.contextTop && this.selection) {
         this.clearContext(this.contextTop);
       }
 
       if (!allOnTop) {
-        this.clearContext(canvasToDrawOn);
+        this.clearContext(ctxToDrawOn);
       }
 
       this.fire('before:render');
 
-      canvasToDrawOn.save();
-      //canvasToDrawOn.scale(2,2);
+      this._computeMasterScale();
+      ctxToDrawOn.save();
+      ctxToDrawOn.scale(fabric.masterScale,fabric.masterScale);
       if (this.clipTo) {
-        fabric.util.clipContext(this, canvasToDrawOn);
+        fabric.util.clipContext(this, ctxToDrawOn);
       }
 
       if (this.backgroundColor) {
-        canvasToDrawOn.fillStyle = this.backgroundColor.toLive
-          ? this.backgroundColor.toLive(canvasToDrawOn)
+        ctxToDrawOn.fillStyle = this.backgroundColor.toLive
+          ? this.backgroundColor.toLive(ctxToDrawOn)
           : this.backgroundColor;
 
-        canvasToDrawOn.fillRect(
+        ctxToDrawOn.fillRect(
           this.backgroundColor.offsetX || 0,
           this.backgroundColor.offsetY || 0,
           this.width,
@@ -589,28 +613,28 @@
       }
 
       if (typeof this.backgroundImage === 'object') {
-        this._drawBackroundImage(canvasToDrawOn);
+        this._drawBackroundImage(ctxToDrawOn);
       }
 
-      canvasToDrawOn._currentTransform = [1,0,0,1,0,0];
+      ctxToDrawOn._currentTransform = [1,0,0,1,0,0];
       var debugctx = this.debug ? this.contextTop : null;
       for (var i = 0, length = this._objects.length; i < length; ++i) {
         var object = this._objects[i];
-        object.render(canvasToDrawOn,debugctx);
+        object.render(ctxToDrawOn,debugctx);
       }
 
       if (this.clipTo) {
-        canvasToDrawOn.restore();
+        ctxToDrawOn.restore();
       }
 
       if (this.overlayImage) {
-        canvasToDrawOn.drawImage(this.overlayImage, this.overlayImageLeft, this.overlayImageTop);
+        ctxToDrawOn.drawImage(this.overlayImage, this.overlayImageLeft, this.overlayImageTop);
       }
 
       if (this.controlsAboveOverlay && this.interactive) {
-        this.drawControls(canvasToDrawOn);
+        this.drawControls(ctxToDrawOn);
       }
-      canvasToDrawOn.restore();
+      ctxToDrawOn.restore();
 
       this.fire('after:render');
 			console.log('canvas rendered in', (((new Date()).getTime()) - _render_start));
@@ -622,17 +646,17 @@
     /**
      * @private
      */
-    _drawBackroundImage: function(canvasToDrawOn) {
-      canvasToDrawOn.save();
-      canvasToDrawOn.globalAlpha = this.backgroundImageOpacity;
+    _drawBackroundImage: function(ctxToDrawOn) {
+      ctxToDrawOn.save();
+      ctxToDrawOn.globalAlpha = this.backgroundImageOpacity;
 
       if (this.backgroundImageStretch) {
-        canvasToDrawOn.drawImage(this.backgroundImage, 0, 0, this.width, this.height);
+        ctxToDrawOn.drawImage(this.backgroundImage, 0, 0, this.width, this.height);
       }
       else {
-        canvasToDrawOn.drawImage(this.backgroundImage, 0, 0);
+        ctxToDrawOn.drawImage(this.backgroundImage, 0, 0);
       }
-      canvasToDrawOn.restore();
+      ctxToDrawOn.restore();
     },
 
     /**

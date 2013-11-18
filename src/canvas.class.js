@@ -25,12 +25,15 @@
      */
     initialize: function(el, options) {
       options || (options = { });
+      for(var i in options){
+        this[i] = options[i];
+      }
 
       this._initStatic(el, options);
       this._initInteractive();
-      this._createCacheCanvas();
 
       fabric.Canvas.activeInstance = this;
+      fabric.activeCanvasInstance = this;
     },
 
     /**
@@ -162,8 +165,6 @@
       this._initEvents();
 
       this.freeDrawingBrush = fabric.PencilBrush && new fabric.PencilBrush(this);
-
-      this.calcOffset();
     },
 
     /**
@@ -313,16 +314,6 @@
 
     /**
      * @private
-     */
-    _createCacheCanvas: function () {
-      this.cacheCanvasEl = this._createCanvasElement();
-      this.cacheCanvasEl.setAttribute('width', this.width);
-      this.cacheCanvasEl.setAttribute('height', this.height);
-      this.contextCache = this.cacheCanvasEl.getContext('2d');
-    },
-
-    /**
-     * @private
      * @param {Number} width
      * @param {Number} height
      */
@@ -330,12 +321,26 @@
       this.wrapperEl = fabric.util.wrapElement(this.lowerCanvasEl, 'div', {
         'class': this.containerClass
       });
-      fabric.util.setStyle(this.wrapperEl, {
-        width: this.getWidth() + 'px',
-        height: this.getHeight() + 'px',
-        position: 'relative'
-      });
-      fabric.util.makeElementUnselectable(this.wrapperEl);
+      this._applyWrapperStyle(this.wrapperEl);
+    },
+
+    _applyWrapperStyle: function(element){
+      if(this.autoresize){
+        fabric.util.setStyle(element, {
+          width: '100%',
+          height: '100%',
+          left:'0px',
+          top:'0px',
+          position: 'absolute'
+        });
+      }else{
+        fabric.util.setStyle(element, {
+          width: (this.getWidth()/fabric.backingScale) + 'px',
+          height: (this.getHeight()/fabric.backingScale) + 'px',
+          position: 'relative'
+        });
+      }
+      fabric.util.makeElementUnselectable(element);
     },
 
     /**
@@ -343,9 +348,9 @@
      * @param {Element} element
      */
     _applyCanvasStyle: function (element) {
-      var width = this.getWidth() || element.width,
-          height = this.getHeight() || element.height;
-
+      var width = this.autoresize ? window.innerWidth : (this.getWidth()/fabric.backingScale || element.width),
+          height = this.autoresize ? window.innerHeight : (this.getHeight()/fabric.backingScale || element.height);
+      console.log('applying canvas style on',element.width,element.height,'target size is',width,height);
       fabric.util.setStyle(element, {
         position: 'absolute',
         width: width + 'px',
@@ -353,9 +358,10 @@
         left: 0,
         top: 0
       });
-      element.width = width;
-      element.height = height;
+      element.width = width*fabric.backingScale;
+      element.height = height*fabric.backingScale;
       fabric.util.makeElementUnselectable(element);
+      console.log('now it is',element.width,element.height,element.style.width,element.style.height);
     },
 
     /**

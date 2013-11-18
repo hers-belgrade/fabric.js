@@ -69,9 +69,7 @@
      * @return {fabric.Path} thisArg
      */
     initialize: function(path, options) {
-      options = options || { };
-
-      this.setOptions(options);
+      this.callSuper('initialize',options);
 
       if (!path) {
         throw new Error('`path` argument is required');
