@@ -330,7 +330,7 @@
      * @param {CanvasRenderingContext2D} ctx Context to render on
      */
     _setTextStyles: function(ctx) {
-			fabric.util.setTextFillAndStroke(ctx, this);
+			//fabric.util.setTextFillAndStroke(ctx, this);
       ctx.textBaseline = 'alphabetic';
       ctx.textAlign = this.textAlign;
 			this.font_params = fabric.util.setFontDeclaration(ctx, this);
@@ -510,7 +510,7 @@
         if (1 & this.strokeDashArray.length) {
           this.strokeDashArray.push.apply(this.strokeDashArray, this.strokeDashArray);
         }
-        supportsLineDash && ctx.setLineDash(this.strokeDashArray);
+        supportsLineDash && this.strokeDashArray!=='none' && ctx.setLineDash(this.strokeDashArray);
       }
 
       ctx.beginPath();

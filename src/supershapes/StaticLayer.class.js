@@ -13,7 +13,7 @@
   };
   StaticLayerManager.prototype.monitor = function(canvas){
     this.canvas = canvas;
-    console.log('monitoring canvas',canvas.width,'x',canvas.height);
+    //console.log('monitoring canvas',canvas.width,'x',canvas.height);
     for(var i in this.collection){
       this.collection[i].monitor(canvas);
     }
@@ -48,11 +48,11 @@
       this.canvas = offel;
       offel.width = this.mastercanvas.width;
       offel.height = this.mastercanvas.height;
-      console.log(this.id,'created a canvas for self',offel.width,offel.height);
+      //console.log(this.id,'created a canvas for self',offel.width,offel.height);
       ctx = this.canvas.getContext('2d');
     }
     ctx.save();
-    console.log('statics scaled by',fabric.masterScale);
+    //console.log('statics scaled by',fabric.masterScale);
     ctx.scale(fabric.masterScale,fabric.masterScale);
     ctx._currentTransform = [1,0,0,1,0,0];
     for(var i in this.rectMap){
@@ -60,12 +60,12 @@
     }
     this.originalrender(ctx);
     for(var i in this.rectMap){
-      console.log('rect',i,this.rectMap[i]);
+      //console.log('rect',i,this.rectMap[i]);
       if(this[i]._cache.content){
-        console.log('old sprite',this[i]._cache.content);
+        //console.log('old sprite',this[i]._cache.content);
       }
       this[i]._cache.content = new fabric.Sprite(this.canvas,this.rectMap[i]);
-      console.log('new sprite',this[i]._cache.content);
+      //console.log('new sprite',this[i]._cache.content);
     }
     ctx.restore();
   };

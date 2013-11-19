@@ -95,10 +95,9 @@
           w = this.width,
           h = this.height;
 
-      ctx.beginPath();
-
       var isRounded = rx !== 0 || ry !== 0;
 
+      ctx.beginPath();
       ctx.moveTo(x+rx, y);
       ctx.lineTo(x+w-rx, y);
       isRounded && ctx.quadraticCurveTo(x+w, y, x+w, y+ry, x+w, y+ry);

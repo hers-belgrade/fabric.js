@@ -79,7 +79,7 @@
       value = (value === 'evenodd') ? 'destination-over' : value;
     }
     else if (attr === 'strokeDashArray') {
-      value = value.replace(/,/g, ' ').split(/\s+/);
+      value = value!=='none' ? value.replace(/,/g, ' ').split(/\s+/) : value;
     }
     else if (attr === 'transformMatrix' || attr === 'gradientTransformMatrix') {
       value = fabric.parseTransformAttribute(value);
@@ -92,8 +92,10 @@
         value = fabric.parseTransformAttribute(value);
       }
       */
+    }else if (attr === 'stroke' && value === 'none'){
+      value = undefined;
     }
-
+    
     isArray = Object.prototype.toString.call(value) === '[object Array]';
 
     // TODO: need to normalize em, %, pt, etc. to px (!)
@@ -152,7 +154,9 @@
         attr = normalizeAttr(attr);
         value = normalizeValue(attr, value, parentAttributes);
 
-        memo[attr] = value;
+        if(typeof value !=='undefined'){
+          memo[attr] = value;
+        }
       }
       return memo;
     }, { });
@@ -410,7 +414,9 @@
           parseFontDeclaration(value, oStyle);
         }
         else {
-          oStyle[attr] = value;
+          if(typeof value !== 'undefined'){
+            oStyle[attr] = value;
+          }
         }
       });
     }

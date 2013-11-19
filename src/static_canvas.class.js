@@ -156,7 +156,7 @@
       }else{
         fabric.masterScale = 1;
       }
-      console.log('on size',fabric.masterSize,'scale is',fabric.masterScale);
+      //console.log('on size',fabric.masterSize,'scale is',fabric.masterScale);
     },
 
     /**
@@ -192,7 +192,7 @@
      */
     calcOffset: function () {
       this._offset = getElementOffset(this.lowerCanvasEl);
-      console.log('offset calculated',this._offset);
+      //console.log('offset calculated',this._offset);
       return this;
     },
 
@@ -578,7 +578,7 @@
       }
       this.calcOffset();
       this.rendering = true;
-      console.log('render starts');
+      //console.log('render starts');
 			var _render_start = (new Date()).getTime();
 
       var ctxToDrawOn = this.contextContainer;

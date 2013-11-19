@@ -8,7 +8,7 @@
       capitalize = fabric.util.string.capitalize,
       matmult = fabric.util.multiplyTransformMatrices,
       degreesToRadians = fabric.util.degreesToRadians,
-			Matrix = fabric.util.Matrix,
+      Matrix = fabric.util.Matrix,
       supportsLineDash = fabric.StaticCanvas.supports('setLineDash');
 
   if (fabric.Object) {
@@ -180,7 +180,7 @@
      * @type String
      * @default
      */
-    stroke:                   'none',
+    //stroke:                   'none',
 
     /**
      * Width of a stroke used to render this object
@@ -446,12 +446,12 @@
       this._initPattern(options);
       this._initClipping(options);
     },
-		clearAllTransformations : function () {
-			var fields = {'top':0, 'left':0, 'transformMatrix':undefined, 'scaleX' : 1, 'scaleY': 1, 'angle': 0, 'flipX': false, 'flipY': false};
-			for (var i in fields) {
-				this[i] = fields[i];
-			}
-		},
+    clearAllTransformations : function () {
+      var fields = {'top':0, 'left':0, 'transformMatrix':undefined, 'scaleX' : 1, 'scaleY': 1, 'angle': 0, 'flipX': false, 'flipY': false};
+      for (var i in fields) {
+        this[i] = fields[i];
+      }
+    },
 
     /**
      * Transforms context when rendering an object
@@ -462,26 +462,26 @@
       var m = this.transformMatrix;
       this._currentTransform = ctx._currentTransform;
       if (m) {
-				//console.log(this.id, 'matrix', m)
+        //console.log(this.id, 'matrix', m)
         ctx.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
       }else{
-				//console.log(this.id, 'no matrix');
+        //console.log(this.id, 'no matrix');
         m = [1,0,0,1,0,0];
-			}
+      }
 
-			if(this.opacity!==1){
-				this.savedAlpha = ctx.globalAlpha;
-				ctx.globalAlpha = ctx.globalAlpha*this.opacity;
-				//ctx.globalAlpha = 1 - ((1-ctx.globalAlpha)+(1-this.opacity));
-			}
+      if(this.opacity!==1){
+        this.savedAlpha = ctx.globalAlpha;
+        ctx.globalAlpha = ctx.globalAlpha*this.opacity;
+        //ctx.globalAlpha = 1 - ((1-ctx.globalAlpha)+(1-this.opacity));
+      }
 
       var em = this._extraTransformations();
       if(em){
         m = matmult(m,em);
       }
 
-			fabric.util.setStrokeToCanvas(ctx, this);
-			fabric.util.setFillToCanvas(ctx, this);
+      fabric.util.setStrokeToCanvas(ctx, this);
+      fabric.util.setFillToCanvas(ctx, this);
       ctx.save();
 
       if(!this._localTransformationMatrix){
@@ -508,21 +508,21 @@
         tl:{x:tl.x,y:tl.y},tr:{x:br.x,y:tl.y},br:{x:br.x,y:br.y},bl:{x:tl.x,y:br.y},
         ml:{x:tl.x,y:my},mt:{x:mx,y:tl.y},mr:{x:br.x,y:my},mb:{x:mx,y:br.y}
       };
-			this._currentGlobalTransform = ctx._currentTransform;
-			this._currentLocalTransform = m;
+      this._currentGlobalTransform = ctx._currentTransform;
+      this._currentLocalTransform = m;
     },
 
     _extraTransformations : function(ctx){
     },
 
-		untransform: function(ctx,topctx){
+    untransform: function(ctx,topctx){
       ctx._currentTransform = this._currentTransform;
-			if(typeof this.savedAlpha !== 'undefined'){
-				ctx.globalAlpha = this.savedAlpha;
-			}
-			delete this.savedAlpha;
+      if(typeof this.savedAlpha !== 'undefined'){
+        ctx.globalAlpha = this.savedAlpha;
+      }
+      delete this.savedAlpha;
       ctx.restore();
-		},
+    },
 
     /**
      * Returns an object representation of an instance
@@ -847,9 +847,6 @@
     render: function(ctx, topctx) {
       // do not render if width/height are zeros or object is not visible
       //if (this.width === 0 || this.height === 0 || !this.visible) return;
-      if(!this._cache){
-        console.log(this.type,'no cache');
-      }
       if (!this.visible) return;
       if (this.opacity===0) return;
       if (this.display==='none') return;
@@ -857,7 +854,7 @@
         this._cache.content.render(ctx);
         return;
       }
-			//var _render_start = (new Date()).getTime();
+      //var _render_start = (new Date()).getTime();
       //console.log(this.type,this.id,'starts render');
 
       ctx.save();
@@ -868,17 +865,17 @@
       }
 
       //this._setShadow(ctx);
-      this.clipTo && fabric.util.clipContext(this, ctx);
+      //this.clipTo && fabric.util.clipContext(this, ctx);
       this._render(ctx, topctx);
-      this.clipTo && ctx.restore();
+      //this.clipTo && ctx.restore();
       ctx.restore();
       this._paint(ctx);
       this._removeShadow(ctx);
 
       //var utstart = (new Date()).getTime();
-			this.untransform(ctx,topctx);
+      this.untransform(ctx,topctx);
       //console.log('\t\t','untransform done in',(((new Date()).getTime()) - utstart));
-			//console.log('\t',this.type,this.id,'rendered in', (((new Date()).getTime()) - _render_start));
+      //console.log('\t',this.type,this.id,'rendered in', (((new Date()).getTime()) - _render_start));
     },
 
     accountForGradientTransform: function(p1,p2){},
@@ -913,7 +910,8 @@
      * @param {CanvasRenderingContext2D} ctx Context to render on
      */
     _renderFill: function(ctx) {
-			if (!this.fill || '' === this.fill) ctx.fillStyle = this.fill;
+      if(this.fill==='none'){return;}
+      if (!this.fill || '' === this.fill) ctx.fillStyle = this.fill;
       ctx.fill();
       if (this.shadow && !this.shadow.affectStroke) {
         this._removeShadow(ctx);
@@ -926,9 +924,7 @@
      */
     _renderStroke: function(ctx) {
 
-      ctx.save();
-			if (this.stroke) ctx.strokeStyle = this.stroke;
-      if (this.strokeDashArray) {
+      if (this.strokeDashArray && this.strokeDashArray!=='none') {
         // Spec requires the concatenation of two copies the dash list when the number of elements is odd
         if (1 & this.strokeDashArray.length) {
           this.strokeDashArray.push.apply(this.strokeDashArray, this.strokeDashArray);
@@ -944,10 +940,15 @@
         ctx.stroke();
       }
       else {
-        this._stroke ? this._stroke(ctx) : ctx.stroke();
+        if(this._stroke){
+          this._stroke(ctx);
+        }else{
+          if(this.stroke){
+            ctx.stroke();
+          }
+        }
       }
       this._removeShadow(ctx);
-      ctx.restore();
     },
 
     /**
@@ -959,8 +960,8 @@
       if (this.constructor.fromObject) {
         return this.constructor.fromObject(this.toObject(propertiesToInclude));
       }else{
-				new fabric.Object(this.toObject(propertiesToInclude));
-			}
+        new fabric.Object(this.toObject(propertiesToInclude));
+      }
     },
 
     /**
@@ -1233,24 +1234,27 @@
       }
       return this;
     },
-		/**
-		 * Shows an object and fires shown event
+    isVisible: function(){
+      return this.opacity>0 && this.display!=='none' && this.visible;
+    },
+    /**
+     * Shows an object and fires shown event
      * @return {fabric.Object} thisArg
      * @chainable
-		 */
-		show: function () {
-			this.set({'opacity':1, 'display':'inline', 'visible': true});
-			this.fire ('object:shown');
-		},
-		/**
-		 * Hides an object and fires hidden event
+     */
+    show: function () {
+      this.set({'opacity':1, 'display':'inline', 'visible': true});
+      this.fire ('object:shown');
+    },
+    /**
+     * Hides an object and fires hidden event
      * @return {fabric.Object} thisArg
      * @chainable
-		 */
-		hide : function() {
-			this.set({'opacity':0, 'display':'none', 'visible': false});
-			this.fire ('object:hidden');
-		}
+     */
+    hide : function() {
+      this.set({'opacity':0, 'display':'none', 'visible': false});
+      this.fire ('object:hidden');
+    }
   });
   /**
    * List of properties to consider when checking if state

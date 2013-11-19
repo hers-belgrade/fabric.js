@@ -29,23 +29,50 @@
     return svgelem;
   };
 
+  var resourceButtonStateToOuterEventMapping = {
+    pressed:'down'
+  };
+
   fabric.ResourceButton = function(svgelem,config){
-    var enabled = svgelem.getObjectById(svgelem.id+'_enabled');
-    var enabledtarget = config&&config.targets&&config.targets.enabled ? enabled.getObjectById(config.targets.enabled) : enabled;
-    var disabled = svgelem.getObjectById(svgelem.id+'_disabled');
-    var disabledtarget = config&&config.targets&&config.targets.disabled ? disabled.getObjectById(config.targets.disabled) : disabled;
-    var hovered = svgelem.getObjectById(svgelem.id+'_hovered');
-    var hoveredtarget = config&&config.targets&&config.targets.hovered ? hovered.getObjectById(config.targets.hovered) : hovered;
-    var pressed = svgelem.getObjectById(svgelem.id+'_pressed');
-    var pressedtarget = config&&config.targets&&config.targets.pressed ? pressed.getObjectById(config.targets.pressed) : pressed;
+    var renderables= {
+      enabled : svgelem.getObjectById(svgelem.id+'_enabled'),
+      disabled : svgelem.getObjectById(svgelem.id+'_disabled'),
+      hovered : svgelem.getObjectById(svgelem.id+'_hovered'),
+      pressed : svgelem.getObjectById(svgelem.id+'_pressed')
+    };
     function ra(){svgelem.invokeOnCanvas('renderAll');};
-    svgelem.enable = function(){this.enabled=true;enabled.show();disabled.hide();ra();}
-    svgelem.disable = function(){this.enabled=false;disabled.show();enabled.hide();ra();}
-    var clickconfig = {ctx:config.ctx||svgelem,clickcb:config.clickcb,downcb:config.downcb};
-    fabric.Clickable(fabric.Hoverable(enabledtarget,{overcb:function(){enabled.hide();hovered.show();ra();}}),clickconfig);
-    fabric.Clickable(fabric.Hoverable(hoveredtarget,{outcb:function(){hovered.hide();enabled.show();ra();}}),clickconfig);
-    hovered.hide();
-    pressed.hide();
+    function renderState(state){
+      for(var i in renderables){
+        if(i===state){
+          renderables[i].show();
+        }else{
+          renderables[i].hide();
+        }
+      }
+      ra();
+    };
+    function processState(state){
+      if(!svgelem.enabled){return;}
+      renderState(state);
+      var cbname = (resourceButtonStateToOuterEventMapping[state]||state)+'cb';
+      var outercb = config[cbname];
+      outercb && outercb.apply(config.ctx,Array.prototype.slice.call(arguments,1));
+      ra();
+    };
+    function clicked(state){
+      renderState('enabled');
+      config.clickcb.call(config.ctx);
+    };
+    var target = svgelem.getObjectById(svgelem.id+'_hotspot');
+    svgelem.enable = function(){this.enabled=true;renderState('enabled');};
+    svgelem.disable = function(){this.enabled=false;renderState('disabled');};
+    var clickconfig = {ctx:config.ctx||svgelem,clickcb:clicked,downcb:function(e){processState('pressed',e);}};
+    fabric.Clickable(fabric.Hoverable(target,{outcb:function(e){processState('enabled',e);},overcb:function(e){processState('hovered',e);}}),clickconfig);
+    if(config.initialState==='enabled'){
+      svgelem.enable();
+    }else{
+      svgelem.disable();
+    }
     return svgelem;
   };
 

@@ -95,8 +95,7 @@
     };
     area.on('mouse:move',function(e){
       if(svgelem.dragActive){
-        var p = e.e;
-        placeHandle(p);
+        placeHandle(e.e);
         svgelem.invokeOnCanvas('renderAll');
       }
     });
