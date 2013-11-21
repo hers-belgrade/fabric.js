@@ -30,6 +30,7 @@
     evntname = eventname, 
     evntalias = eventalias;
     var evnthandler = function(e){
+      e.preventDefault();
       var p = getPointer(e,cnvasel);
       p.x = p.x - cnvas._offset.left;
       p.y = p.y - cnvas._offset.top;
@@ -41,7 +42,23 @@
         p.x*=fabric.backingScale;
         p.y*=fabric.backingScale;
       }
+      switch(eventalias){
+        case 'mouse:down':
+          p.listeners=[];
+          break;
+        default:
+          p.listeners=cnvas.currentListeners||[];
+          break;
+      }
       cnvas.distributePositionEvent(p,evntalias);
+      switch(eventalias){
+        case 'mouse:up':
+          cnvas.currentListeners=[];
+          break;
+        default:
+          cnvas.currentListeners=p.listeners;
+          break;
+      }
     };
     addListener(cnvasel, evntname, evnthandler);
     cnvas._positionEventDisposers[evntname] = function(){

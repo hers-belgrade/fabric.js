@@ -32,7 +32,7 @@
     var handleconfig = config.handle;
     var handle = svgelem.getObjectById(handleconfig.id);
     var corr;
-    var hoveredhandleelement = handle.getObjectById(handleconfig.targets.hovered);
+    var hoveredhandleelement = handle.getObjectById(handle.id+'_hotspot');
     function downHandler(e){
       var hp = hoveredhandleelement.localToGlobal(new fabric.Point(0,0));
       corr = {x:e.e.x-hp.x,y:e.e.y-hp.y};
@@ -92,6 +92,7 @@
       }
       fx-=minpoint.x;
       handle.set({left:zerohandlepoint.x+handlescale.x*fx});
+      console.log(point.x,zerohandlepoint.x,handlescale.x,zerohandlepoint.x+handlescale.x*fx);
     };
     area.on('mouse:move',function(e){
       if(svgelem.dragActive){

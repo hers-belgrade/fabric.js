@@ -48,7 +48,7 @@
       this.canvas = offel;
       offel.width = this.mastercanvas.width;
       offel.height = this.mastercanvas.height;
-      //console.log(this.id,'created a canvas for self',offel.width,offel.height);
+      console.log(this.id,'created a canvas for self',offel.width,offel.height);
       ctx = this.canvas.getContext('2d');
     }
     ctx.save();
@@ -58,6 +58,7 @@
     for(var i in this.rectMap){
       delete this[i]._cache.content;
     }
+    this.show();
     this.originalrender(ctx);
     for(var i in this.rectMap){
       //console.log('rect',i,this.rectMap[i]);
@@ -74,7 +75,9 @@
     initialize: function(objects,options){
       this.callSuper('initialize',objects,options);
       var ls = this._objects.slice();
+      console.log('sublayers',ls);
       if(ls.length%2){
+        console.log( "Static layer cannot contain an odd number of sub-layers" );
         throw "Static layer cannot contain an odd number of sub-layers";
       }
       var fordeletion = [];
@@ -89,9 +92,24 @@
         for(var j in lm._objects){
           var r = lm._objects[j];
           if(r.type !== 'rect'){
+            console.log( "Only rects allowed on map sub-layer of the static layer. "+j+" is not a rect on sub-layer "+lmn );
             throw "Only rects allowed on map sub-layer of the static layer. "+j+" is not a rect on sub-layer "+lmn;
           }
+          if(!r.id){
+            console.log(r,'??');
+            throw "no id for map rect";
+          }
+          if(r.id.indexOf('_area')!==r.id.length-5){
+            console.log( r.id+" needs to end with _area" );
+            throw r.id+" needs to end with _area";
+          }
           l.rectMap[r.id.substr(0,r.id.length-5)] = {x:r.left,y:r.top,width:r.width,height:r.height};
+        }
+        for(var j in l._objects){
+          var id = l._objects[j].id;
+          if(!l.rectMap[id]){
+            console.log('on',l.id,'static',id,'has no rect');
+          }
         }
         fordeletion.push(this[lmn]);
       }

@@ -12,8 +12,10 @@
   };
 
   fabric.ScalarBound = function(svgelem,config){
+    fabric.DataAware(svgelem);
     setScalar(svgelem);
-    svgelem.listener = config.follower.listenToScalar(svgelem,config.scalarname,{setter:function(val){
+    svgelem.follow(config.follower);
+    svgelem.listenToScalar(config.scalarname,{setter:function(val){
       setScalar(this,val);
     }});
     return svgelem;
@@ -22,10 +24,9 @@
   fabric.CalculatedScalarBound = function(svgelem,config){
     setScalar(svgelem);
     var formula = config.calc;
-    if(svgelem.listener){
-      svgelem.listener.destroy();
-    }
-    svgelem.listener = config.follower.listenToScalar(svgelem,config.scalarname,{setter:function(val){
+    fabric.DataAware(svgelem);
+    svgelem.follow(config.follower);
+    svgelem.listenToScalar(config.scalarname,{setter:function(val){
       setScalar(this,formula(val));
     }});
     return svgelem;
@@ -33,8 +34,10 @@
 
   fabric.MultiScalarBound = function(svgelem,config){
     setScalar(svgelem);
+    fabric.DataAware(svgelem);
+    svgelem.follow(config.follower);
     var formula = config.calc;
-    svgelem.listener = config.follower.listenToMultiScalars(svgelem,config.scalarnames,function(map){
+    svgelem.listenToMultiScalars(config.scalarnames,function(map){
       setScalar(this,formula(map));
     });
     return svgelem;

@@ -228,6 +228,7 @@ var filesToInclude = [
   ifSpecifiedInclude('components', 'src/components/clickable.js'),
   ifSpecifiedInclude('components', 'src/components/buttons.js'),
   ifSpecifiedInclude('components', 'src/components/draggable.js'),
+  ifSpecifiedInclude('components', 'src/components/dataaware.js'),
   ifSpecifiedInclude('components', 'src/components/databound.js'),
 
   ifSpecifiedInclude('node', 'src/node.js'),

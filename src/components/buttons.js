@@ -64,8 +64,8 @@
       config.clickcb.call(config.ctx);
     };
     var target = svgelem.getObjectById(svgelem.id+'_hotspot');
-    svgelem.enable = function(){this.enabled=true;renderState('enabled');};
-    svgelem.disable = function(){this.enabled=false;renderState('disabled');};
+    svgelem.enable = function(){this.enabled=true;renderState('enabled');return svgelem;};
+    svgelem.disable = function(){this.enabled=false;renderState('disabled');return svgelem;};
     var clickconfig = {ctx:config.ctx||svgelem,clickcb:clicked,downcb:function(e){processState('pressed',e);}};
     fabric.Clickable(fabric.Hoverable(target,{outcb:function(e){processState('enabled',e);},overcb:function(e){processState('hovered',e);}}),clickconfig);
     if(config.initialState==='enabled'){
@@ -73,6 +73,18 @@
     }else{
       svgelem.disable();
     }
+    return svgelem;
+  };
+
+  fabric.ResourceCheckbox = function(svgelem,config){
+    ResourceButton(svgelem,config);
+    var checkmark = svgelem.getObjectById(svgelem.id+'_checkmark');
+    svgelem.check = function(){
+      checkmark.show();
+    };
+    svgelem.uncheck = function(){
+      checkmark.hide();
+    };
     return svgelem;
   };
 

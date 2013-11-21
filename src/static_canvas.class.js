@@ -437,8 +437,15 @@
         this._objects[i].processPositionEvent(e,eventname);
       }
       */
-      for(var i =this._mouseListeners.length-1; i>=0; i--){
-        this._mouseListeners[i].processPositionEvent(e,eventname);
+      if(this.currentListeners&&this.currentListeners.length){
+        for(var i =this.currentListeners.length-1; i>=0; i--){
+          console.log(this.currentListeners[i].id);
+          this.currentListeners[i].fire(eventname,{e:e});
+        }
+      }else{
+        for(var i =this._mouseListeners.length-1; i>=0; i--){
+          this._mouseListeners[i].processPositionEvent(e,eventname);
+        }
       }
     },
 
@@ -573,9 +580,17 @@
      * @chainable
      */
     renderAll: function (allOnTop) {
+      var t = this;
+      setTimeout(function(){t._realRenderAll();},0);
+    },
+    _realRenderAll: function (allOnTop) {
       if(this.rendering){
+        if(!this.retryTimeout){
+          this.retryTimeout = setTimeout(function(){t._realRenderAll(allOnTop);},1);
+        }
         return;
       }
+      delete this.retryTimeout;
       this.calcOffset();
       this.rendering = true;
       //console.log('render starts');
@@ -637,7 +652,7 @@
       ctxToDrawOn.restore();
 
       this.fire('after:render');
-			console.log('canvas rendered in', (((new Date()).getTime()) - _render_start));
+			//console.log('canvas rendered in', (((new Date()).getTime()) - _render_start));
 
       delete this.rendering;
       return this;
