@@ -94,6 +94,8 @@
       */
     }else if (attr === 'stroke' && value === 'none'){
       value = undefined;
+    }else if (attr === 'xlink:href'){
+      return value;
     }
     
     isArray = Object.prototype.toString.call(value) === '[object Array]';
