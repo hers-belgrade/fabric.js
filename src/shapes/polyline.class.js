@@ -155,11 +155,13 @@
     minX = minX < 0 ? minX : 0;
     minY = minX < 0 ? minY : 0;
 
+    /*
     for (var i = 0, len = points.length; i < len; i++) {
       // normalize coordinates, according to containing box (dimensions of which are passed via `options`)
       points[i].x -= (options.width / 2 + minX) || 0;
       points[i].y -= (options.height / 2 + minY) || 0;
     }
+    */
 
     return new fabric.Polyline(points, fabric.util.object.extend(parsedAttributes, options), true);
   };
