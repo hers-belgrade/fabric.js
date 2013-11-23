@@ -869,18 +869,24 @@
       this._render(ctx, topctx);
       //this.clipTo && ctx.restore();
       ctx.restore();
-      this._paint(ctx);
+      if(!ctx.suppressPaint){
+        this._paint(ctx);
+      }
       this._removeShadow(ctx);
 
       //var utstart = (new Date()).getTime();
       this.untransform(ctx,topctx);
       //console.log('\t\t','untransform done in',(((new Date()).getTime()) - utstart));
       //console.log('\t',this.type,this.id,'rendered in', (((new Date()).getTime()) - _render_start));
+      this.finalizeRender(ctx);
     },
 
     accountForGradientTransform: function(p1,p2){},
 
     _paint : function(ctx){
+    },
+
+    finalizeRender: function(ctx){
     },
 
     /**

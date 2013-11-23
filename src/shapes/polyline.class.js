@@ -89,14 +89,14 @@
       var point;
       ctx.beginPath();
       ctx.moveTo(this.points[0].x, this.points[0].y);
-      for (var i = 0, len = this.points.length; i < len; i++) {
+      for (var i = 1, len = this.points.length; i < len; i++) {
         point = this.points[i];
         ctx.lineTo(point.x, point.y);
       }
     },
 
     _paint: function(ctx){
-      this._renderFill(ctx);
+      //this._renderFill(ctx);
       this._renderStroke(ctx);
     },
 

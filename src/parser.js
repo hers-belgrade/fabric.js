@@ -690,16 +690,35 @@
       var worker = function(i){
         var gc = childNodes[i];
         if(!gc){
-
-          //aparently, we propagate style options all the way down to element through group... so copy from parent and override with local data if any ...
-
           var ga = fabric.parseAttributes(g,genericAttributes);
           ga.left = 0;
           ga.top = 0;
           ga.width = ga.width || options.width;
           ga.height = ga.height || options.height;
-
-          var group = (g.id==='static') ? new fabric.StaticLayer(gelements,ga) : new fabric.Group(gelements,ga);
+          var group;
+          if(g.id==='static'){
+            group = new fabric.StaticLayer(gelements,ga);
+          }else{
+            switch(g.tagName){
+              case 'defs':
+                group = new fabric.Defs(gelements,ga);
+                break;
+              case 'clipPath':
+                group = new fabric.ClipPath(gelements,ga);
+                break;
+              case 'g':
+              case 'svg':
+                group = new fabric.Group(gelements,ga);
+                break;
+              default:
+                console.log('what is this?',g);
+                break;
+            }
+          }
+          if(!group){
+            cb(g);
+            return;
+          }
           for(var i in gmap){
             group[i] = gmap[i];
           }
@@ -726,7 +745,19 @@
               };
             })(gmap,gelements,next),clone(options));
            }else{
-             next();
+             switch(gc.tagName){
+               case 'defs':
+                 console.log('defs',gc);
+                 processGroup(gmap,gelements,gc,options,next);
+                 break;
+               case 'clipPath':
+                 console.log('clipPath',gc);
+                 processGroup(gmap,gelements,gc,options,next);
+                 break;
+               default:
+                 next();
+                 break;
+             }
            }
           }else{
             processGroup(gmap,gelements,gc,options,next);

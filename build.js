@@ -197,6 +197,8 @@ var filesToInclude = [
   'src/shapes/path.class.js',
   'src/shapes/path_group.class.js',
   'src/shapes/group.class.js',
+  'src/shapes/defs.class.js',
+  'src/shapes/clippath.class.js',
   'src/shapes/image.class.js',
   'src/shapes/sprite.class.js',
 	'src/shapes/use.class.js',
