@@ -168,6 +168,7 @@
     _initStatic: function(el, options) {
       this._objects = [];
       this._mouseListeners = [];
+      this.animationTickers = [];
 
       this._createLowerCanvas(el);
       this._computeMasterScale();
@@ -588,6 +589,9 @@
       return this;
     },
 
+    addToAnimations: function(animtick){
+      this.animationTickers.push(animtick);
+    },
     /**
      * Renders both the top canvas and the secondary container canvas.
      * @param allOnTop {Boolean} optional Whether we want to force all images to be rendered on the top canvas
@@ -598,6 +602,24 @@
       this.dirty = true;
     },
     _realRenderAll: function (allOnTop) {
+      var fordeletion = [];
+      for(var i in this.animationTickers){
+        var tr = this.animationTickers[i]();
+        if(tr){
+          fordeletion.push(i);
+        }else{
+          this.dirty = true;
+        }
+      }
+      if(fordeletion.length){
+        var ts = [];
+        for(var i in this.animationTickers){
+          if(fordeletion.indexOf(i)<0){
+            ts.push(this.animationTickers[i]);
+          }
+        }
+        this.animationTickers = ts;
+      }
       if(!this.dirty){
         this.goRender();
         return;

@@ -1248,18 +1248,34 @@
      * @return {fabric.Object} thisArg
      * @chainable
      */
-    show: function () {
-      this.set({'opacity':1, 'display':'inline', 'visible': true});
-      this.fire ('object:shown');
+    show: function (options) {
+      if(typeof options !== 'object'){
+        this.set({'opacity':1, 'display':'inline', 'visible': true});
+        this.fire ('object:shown');
+        return;
+      }
+      this.set({opacity:0, display:'inline', visible:true});
+      var oc = options.onComplete;
+      this.animate({opacity:1},{onComplete:function(){
+        oc&&oc();
+      }});
     },
     /**
      * Hides an object and fires hidden event
      * @return {fabric.Object} thisArg
      * @chainable
      */
-    hide : function() {
-      this.set({'opacity':0, 'display':'none', 'visible': false});
-      this.fire ('object:hidden');
+    hide : function(options) {
+      if(typeof options !== 'object'){
+        this.set({'opacity':0, 'display':'none', 'visible': false});
+        this.fire ('object:hidden');
+        return;
+      }
+      var oc = options.onComplete;
+      this.animate({opacity:0},{onComplete:function(){
+        this.hide();
+        oc && oc.call(this);
+      }});
     }
   });
   /**

@@ -88,7 +88,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
         onChange = callbacks.onChange || empty,
         _this = this;
 
-    fabric.util.animate({
+    this.addToAnimations(fabric.util.animate({
       startValue: object.get('opacity'),
       endValue: 0,
       duration: this.FX_DURATION,
@@ -104,7 +104,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
         _this.remove(object);
         onComplete();
       }
-    });
+    }));
 
     return this;
   }
@@ -185,7 +185,8 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
       to = parseFloat(to);
     }
 
-    fabric.util.animate({
+    var t = this;
+    this.invokeOnCanvas('addToAnimations',fabric.util.animate({
       startValue: options.from,
       endValue: to,
       byValue: options.by,
@@ -202,14 +203,14 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
           obj.set(property, value);
         }
         if (skipCallbacks) return;
-        options.onChange && options.onChange();
+        options.onChange && options.onChange.call(t);
       },
       onComplete: function() {
         if (skipCallbacks) return;
 
         obj.setCoords();
-        options.onComplete && options.onComplete();
+        options.onComplete && options.onComplete.call(t);
       }
-    });
+    }));
   }
 });

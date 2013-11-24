@@ -13,8 +13,6 @@
     * @param {Number} [options.duration=500] Duration of change
     */
   function animate(options) {
-
-    return;
     options || (options = { });
 
     var start = +new Date(),
@@ -29,16 +27,15 @@
 
     options.onStart && options.onStart();
 
-    (function tick() {
+    return function tick() {
       time = +new Date();
       var currentTime = time > finish ? duration : (time - start);
       onChange(easing(currentTime, startValue, byValue, duration));
       if (time > finish || abort()) {
         options.onComplete && options.onComplete();
-        return;
+        return true;
       }
-      requestAnimFrame(tick);
-    })();
+    };
   }
 
   var _requestAnimFrame = fabric.window.requestAnimationFrame       ||
