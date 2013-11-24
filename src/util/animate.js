@@ -14,6 +14,7 @@
     */
   function animate(options) {
 
+    return;
     options || (options = { });
 
     var start = +new Date(),

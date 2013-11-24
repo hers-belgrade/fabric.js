@@ -35,6 +35,7 @@
       this._initStatic(el, options);
       fabric.StaticCanvas.activeInstance = this;
       fabric.activeCanvasInstance = this;
+      this.goRender();
     },
 
     /**
@@ -182,6 +183,20 @@
       if (options.backgroundColor) {
         this.setBackgroundColor(options.backgroundColor, this.renderAll.bind(this));
       }
+      var _requestAnimFrame = fabric.window.requestAnimationFrame       ||
+                              fabric.window.webkitRequestAnimationFrame ||
+                              fabric.window.mozRequestAnimationFrame    ||
+                              fabric.window.oRequestAnimationFrame      ||
+                              fabric.window.msRequestAnimationFrame     ||
+                              function(callback) {
+                                fabric.window.setTimeout(callback, 1000 / 60);
+                              };
+      this.goRender = (function(_t){
+        var t = _t;
+        return function(){
+          _requestAnimFrame.call(fabric.window,function(){t._realRenderAll();});
+        }
+      })(this);
     },
 
     /**
@@ -580,17 +595,14 @@
      * @chainable
      */
     renderAll: function (allOnTop) {
-      var t = this;
-      setTimeout(function(){t._realRenderAll();},0);
+      this.dirty = true;
     },
     _realRenderAll: function (allOnTop) {
-      if(this.rendering){
-        if(!this.retryTimeout){
-          this.retryTimeout = setTimeout(function(){t._realRenderAll(allOnTop);},1);
-        }
+      if(!this.dirty){
+        this.goRender();
         return;
       }
-      delete this.retryTimeout;
+      delete this.dirty;
       this.calcOffset();
       this.rendering = true;
       //console.log('render starts');
@@ -655,7 +667,7 @@
 			//console.log('canvas rendered in', (((new Date()).getTime()) - _render_start));
 
       delete this.rendering;
-      return this;
+      this.goRender();
     },
 
     /**

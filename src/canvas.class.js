@@ -34,6 +34,7 @@
 
       fabric.Canvas.activeInstance = this;
       fabric.activeCanvasInstance = this;
+      this.goRender();
     },
 
     /**

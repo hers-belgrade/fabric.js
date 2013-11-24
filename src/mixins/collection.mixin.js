@@ -3,17 +3,22 @@
  */
 fabric.Collection = {
 
+  objectIsValid: function(object){
+    return object;
+  },
+
   /**
    * Adds objects to collection, then renders canvas (if `renderOnAddRemove` is not `false`)
    * Objects should be instances of (or inherit from) fabric.Object
    * @param [...] Zero or more fabric instances
    * @return {Self} thisArg
    */
+
   add: function () {
     if (arguments.length == 0) return this;
     var valid = Array.prototype.filter.call(arguments, function (v) {
-      return v;
-    });
+      return this.objectIsValid(v);
+    },this);
 
     this._objects.push.apply(this._objects, valid);
     for (var i = valid.length; i--; ) {

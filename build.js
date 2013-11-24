@@ -225,6 +225,7 @@ var filesToInclude = [
   ifSpecifiedInclude('cufon', 'src/shapes/text.cufon.js'),
   ifSpecifiedInclude('text', 'src/shapes/tspan.class.js'),
 
+  ifSpecifiedInclude('components', 'src/components/factory.js'),
   ifSpecifiedInclude('components', 'src/components/mouseaware.js'),
   ifSpecifiedInclude('components', 'src/components/hoverable.js'),
   ifSpecifiedInclude('components', 'src/components/clickable.js'),

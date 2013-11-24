@@ -706,6 +706,7 @@
               case 'clipPath':
                 group = new fabric.ClipPath(gelements,ga);
                 break;
+              case 'mask':
               case 'g':
               case 'svg':
                 group = new fabric.Group(gelements,ga);
@@ -747,11 +748,11 @@
            }else{
              switch(gc.tagName){
                case 'defs':
-                 console.log('defs',gc);
+                 //console.log('defs',gc);
                  processGroup(gmap,gelements,gc,options,next);
                  break;
                case 'clipPath':
-                 console.log('clipPath',gc);
+                 //console.log('clipPath',gc);
                  processGroup(gmap,gelements,gc,options,next);
                  break;
                default:

@@ -31,7 +31,13 @@
       if(!this.follower){
         return;
       }
-      setDataAwareListener.call(this,'scalars_'+scalarnames.join('_'),this.follower.listenToMultiScalars(this,scalarnames,listenerpack));
+      setDataAwareListener.call(this,'multiscalars_'+scalarnames.join('_'),this.follower.listenToMultiScalars(this,scalarnames,listenerpack));
+    };
+    svgelem.listenToScalars = function(listenerpack){
+      if(!this.follower){
+        return;
+      }
+      setDataAwareListener.call(this,'scalars',this.follower.listenToScalars(this,listenerpack));
     };
     svgelem.listenToCollections = function(listenerpack){
       if(!this.follower){
