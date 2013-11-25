@@ -101,18 +101,6 @@ fabric.Collection = {
           return feoret;
         }
       }
-      if(obj.usedObj){
-        var cbret = callback.call(context, obj.usedObj);
-        if(cbret){
-          return cbret;
-        }
-        if(obj.usedObj.forEachObjectRecursive){
-          var feoret = obj.usedObj.forEachObjectRecursive(callback,context,patharray.concat([obj]));
-          if(feoret){
-            return feoret;
-          }
-        }
-      }
       var cbret = callback.call(context, obj, i, objects, patharray);
       if(cbret){
         return cbret;

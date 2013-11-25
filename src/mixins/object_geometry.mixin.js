@@ -105,6 +105,7 @@
           if(!this.foundContaining){
             this.foundContaining=true;
             this.fire('object:over',{e:point});
+            //console.log(this.oCoords.tl.x,this.oCoords.tl.y,this.oCoords.br.x,this.oCoords.br.y,'contains');
           }
         }else{
           if(this.foundContaining){

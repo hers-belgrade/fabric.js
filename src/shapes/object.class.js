@@ -415,7 +415,7 @@
       return ret;
     },
 
-    invokeOnCanvas: function(method){
+    getCanvas: function(){
       var canvas = this.canvas;
       if(!canvas){
         var group = this.group;
@@ -424,6 +424,11 @@
           group = group.group;
         }
       }
+      return canvas;
+    },
+
+    invokeOnCanvas: function(method){
+      var canvas = this.getCanvas();
       if(canvas){
         var m = canvas[method];
         if(typeof m === 'function'){
@@ -452,6 +457,11 @@
       for (var i in fields) {
         this[i] = fields[i];
       }
+    },
+
+    attachToCurve: function(curve,curvepercentage){
+      this.attachedToCurve=curve;
+      this.set({curvePercentage:curvepercentage||0});
     },
 
     /**
@@ -718,8 +728,7 @@
       else {
         if (typeof value === 'function' && key !== 'clipTo') {
           this._set(key, value(this.get(key)));
-        }
-        else {
+        }else{
           this._set(key, value);
         }
       }
@@ -766,6 +775,9 @@
       }
       else if (key === 'width' || key === 'height') {
         this.minScaleLimit = toFixed(Math.min(0.1, 1/Math.max(this.width, this.height)), 2);
+      }
+      else if(key==='curvePercentage'){
+        this.attachedToCurve.setObjectToPointAtRelativeLength(this,value);
       }
       else if (key === 'shadow' && value && !(value instanceof fabric.Shadow)) {
         value = new fabric.Shadow(value);

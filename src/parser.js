@@ -875,7 +875,7 @@
             }
           },svg);
           console.log('Parsed in',fabric.documentParsingTime);
-          callback(svg, options);
+          setTimeout(function(){callback(svg, options);},0);
         }
       });
 

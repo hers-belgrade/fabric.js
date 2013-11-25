@@ -1,6 +1,13 @@
 (function() {
 
   /**
+   * Linear easing
+   * @memberOf fabric.util.ease
+   */
+  function easeLinear(t, b, c, d) {
+    return b+t/d*c;
+  }
+  /**
    * Quadratic easing in
    * @memberOf fabric.util.ease
    */
@@ -296,6 +303,7 @@
    * @namespace fabric.util.ease
    */
   fabric.util.ease = {
+    easeLinear: easeLinear,
     easeInQuad: easeInQuad,
     easeOutQuad: easeOutQuad,
     easeInOutQuad: easeInOutQuad,

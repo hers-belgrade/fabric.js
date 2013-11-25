@@ -15,7 +15,9 @@
     fabric.Hoverable(svgelem,{overcb:sethover,outcb:reset});
     var pressedparams = config.pressed;
     var setdown = function(){this.set(pressedparams);ra()};
-    var clickcb = function(){reset.call(this);config.clickcb.call(this);};
+    var clickcb = function(){
+      reset.call(this);
+      config.clickcb.call(this);};
     fabric.Clickable(svgelem,{downcb:setdown,clickcb:clickcb});
     return svgelem;
   };
@@ -60,6 +62,7 @@
       ra();
     };
     function clicked(state){
+      if(!svgelem.enabled){return;}
       renderState('enabled');
       config.clickcb.call(config.ctx);
     };

@@ -77,7 +77,7 @@
         while(currx<=maxpoint.x){
           currx+=stepsize;
           tempdist=Math.abs(fx-currx);
-          if(tempdist>dist){
+          if(tempdist>=dist){
             currx-=stepsize;
             break;
           }
@@ -115,6 +115,13 @@
         svgelem.invokeOnCanvas('renderAll');
       }
       this.sliderSetup = obj;
+    };
+    svgelem.placeHandleFromValue = function(val){
+      if(!this.sliderSetup){return;}
+      initScales();
+      corr={x:0,y:0};
+      var sc = ~~((val-this.sliderSetup.min)/this.sliderSetup.step);
+      placeHandle(new fabric.Point(minpoint.x+sc*stepsize,minpoint.y));
     };
     return svgelem;
   };

@@ -248,6 +248,13 @@
       return [1,0,0,1,tx,ty];
     },
 
+    transform: function(ctx){
+      var textLines = this.text.split(/\r?\n/);
+      this.width = this._getTextWidth(ctx, textLines);
+      this.height = this._getTextHeight(ctx, textLines);
+      this.callSuper('transform',ctx);
+    },
+
     /**
      * @private
      * @param {CanvasRenderingContext2D} ctx Context to render on

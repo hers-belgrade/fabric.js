@@ -109,6 +109,13 @@
       }
       return this.usedObj;
     },
+    forEachObjectRecursive: function(cb,ctx){
+      var uo = this.getUsedObj();
+      if(uo){
+        cb.call(ctx,uo);
+        uo.forEachObjectRecursive && uo.forEachObjectRecursive(cb,ctx,[uo]);
+      }
+    },
 
     _render: function (ctx,topctx) {
       var uo = this.getUsedObj();

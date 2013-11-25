@@ -455,7 +455,6 @@
       */
       if(this.currentListeners&&this.currentListeners.length){
         for(var i =this.currentListeners.length-1; i>=0; i--){
-          console.log(this.currentListeners[i].id);
           this.currentListeners[i].fire(eventname,{e:e});
         }
       }else{

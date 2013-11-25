@@ -124,6 +124,11 @@
      * @private
      */
     _onObjectAdded: function(object) {
+      var canvas = this.getCanvas();
+      if(canvas){
+        canvas.addToMouseListeners(object);
+        typeof object.forEachObjectRecursive === 'function' && object.forEachObjectRecursive(canvas.addToMouseListeners,canvas);
+      }
       object.group = this;
       if(object.id){
         this[object.id] = object;
