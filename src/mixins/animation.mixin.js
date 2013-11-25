@@ -32,7 +32,6 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
         onChange();
       },
       onComplete: function() {
-        object.setCoords();
         onComplete();
       }
     });
@@ -65,7 +64,6 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
         onChange();
       },
       onComplete: function() {
-        object.setCoords();
         onComplete();
       }
     });
@@ -170,9 +168,22 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
       propPair = property.split('.');
     }
 
-    var currentValue = propPair
+    var getValue = function(){
+      return propPair
       ? this.get(propPair[0])[propPair[1]]
       : this.get(property);
+    };
+
+    var setValue = function(value){
+      if (propPair) {
+        this[propPair[0]][propPair[1]] = value;
+      }
+      else {
+        this.set(property, value);
+      }
+    };
+
+    var currentValue = getValue.call(this);
 
     if (!('from' in options)) {
       options.from = currentValue;
@@ -185,32 +196,31 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
       to = parseFloat(to);
     }
 
-    var t = this;
-    this.invokeOnCanvas('addToAnimations',fabric.util.animate({
+    if(!this.invokeOnCanvas('addToAnimations',fabric.util.animate({
       startValue: options.from,
       endValue: to,
       byValue: options.by,
       easing: options.easing,
       duration: options.duration,
-      abort: options.abort && function() {
-        return options.abort.call(obj);
+      abort: function(){
+        if(getValue.call(obj)!==currentValue){
+          return true;
+        }
+        options.abort && options.abort.call(obj);
       },
       onChange: function(value) {
-        if (propPair) {
-          obj[propPair[0]][propPair[1]] = value;
-        }
-        else {
-          obj.set(property, value);
-        }
+        setValue.call(obj,value);
+        currentValue=getValue.call(obj);
         if (skipCallbacks) return;
-        options.onChange && options.onChange.call(t);
+        options.onChange && options.onChange.call(obj);
       },
       onComplete: function() {
         if (skipCallbacks) return;
 
-        obj.setCoords();
-        options.onComplete && options.onComplete.call(t);
+        options.onComplete && options.onComplete.call(obj);
       }
-    }));
+    }))){
+      setValue.call(this,to);
+    }
   }
 });

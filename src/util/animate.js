@@ -21,8 +21,8 @@
       onChange = options.onChange || function() { },
       abort = options.abort || function() { return false; },
       easing = options.easing || function(t, b, c, d) {return -c * Math.cos(t/d * (Math.PI/2)) + c + b;},
-      startValue = 'startValue' in options ? options.startValue : 0,
-      endValue = 'endValue' in options ? options.endValue : 100,
+      startValue = parseFloat('startValue' in options ? options.startValue : 0),
+      endValue = parseFloat('endValue' in options ? options.endValue : 100),
       byValue = options.byValue || endValue - startValue;
 
     options.onStart && options.onStart();
@@ -30,8 +30,11 @@
     return function tick() {
       time = +new Date();
       var currentTime = time > finish ? duration : (time - start);
+      if (abort()) {
+        return true;
+      }
       onChange(easing(currentTime, startValue, byValue, duration));
-      if (time > finish || abort()) {
+      if (time > finish) {
         options.onComplete && options.onComplete();
         return true;
       }
