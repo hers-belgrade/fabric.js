@@ -70,7 +70,7 @@
     }
     var listenersForEvent = this.__eventListeners[eventName];
     if (!listenersForEvent) return;
-    for (var i = 0, len = listenersForEvent.length; i < len; i++) {
+    for (var i = 0 ; i < listenersForEvent.length; i++) {
       // avoiding try/catch for perf. reasons
       listenersForEvent[i].call(this, options || { });
     }

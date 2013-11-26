@@ -80,14 +80,23 @@
   };
 
   fabric.ResourceCheckbox = function(svgelem,config){
-    ResourceButton(svgelem,config);
     var checkmark = svgelem.getObjectById(svgelem.id+'_checkmark');
+    svgelem.checked = config.checked||false;
     svgelem.check = function(){
+      svgelem.checked=true;
       checkmark.show();
     };
     svgelem.uncheck = function(){
+      svgelem.checked=false;
       checkmark.hide();
     };
+    function cbclickcb(){
+      svgelem.checked ? svgelem.uncheck() : svgelem.check();
+      clickcb && clickcb.call(svgelem);
+    };
+    var clickcb = config.clickcb;
+    config.clickcb=cbclickcb;
+    fabric.ResourceButton(svgelem,config);
     return svgelem;
   };
 

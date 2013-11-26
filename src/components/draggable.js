@@ -18,7 +18,7 @@
     area.on('mouse:move',function(e){
       if(svgelem.dragActive){
         var p = e.e;
-        target.set({left:target.left + (p.x-svgelem.dragPosition.x)});
+        target.set({left:target.left + (p.x-svgelem.dragPosition.x),top:target.top + (p.y-svgelem.dragPosition.y)});
         svgelem.dragPosition=p;
         svgelem.invokeOnCanvas('renderAll');
       }
