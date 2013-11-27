@@ -172,40 +172,19 @@
     initialize: function(text, options) {
       this.callSuper('initialize',options);
 
-      this.text = text;
-      this.__skipDimension = true;
-      this.__skipDimension = false;
-      this._initDimensions();
+      this.set({text:text});
       this.setCoords();
     },
 
-		setOptions: function (options) {
-			var tspans = options.tspans;
-			delete options.tspans;
-			this.callSuper('setOptions', options);
-			if (!tspans) return;
-			this.tspans = [];
-			for (var i in tspans) {
-				this.tspans.push (new fabric.Tspan(tspans[i].text, clone(tspans[i])));
-			}
-		},
-
-    /**
-     * Renders text object on offscreen canvas, so that it would get dimensions
-     * @private
-     */
-    _initDimensions: function() {
-      /*
-      if (this.__skipDimension) return;
-      var canvasEl = fabric.util.createCanvasElement();
-      var ctx = canvasEl.getContext('2d');
-      ctx._currentTransform = [1,0,0,1,0,0];
-      this._render(ctx);
-      */
-      var canvasEl = fabric.util.createCanvasElement();
-      var ctx = canvasEl.getContext('2d');
-      var metrics = ctx.measureText(this.text);
-      this.width = metrics.width;
+    setOptions: function (options) {
+      var tspans = options.tspans;
+      delete options.tspans;
+      this.callSuper('setOptions', options);
+      if (!tspans) return;
+      this.tspans = [];
+      for (var i in tspans) {
+        this.tspans.push (new fabric.Tspan(tspans[i].text, clone(tspans[i])));
+      }
     },
 
     /**
@@ -216,24 +195,46 @@
       return '#<fabric.Text (' + this.complexity() +
         '): { "text": "' + this.text + '", "fontFamily": "' + this.fontFamily + '" }>';
     },
-		setText: function (t, span) {
-			t = (typeof(t) === 'undefined') ? '' : t+'';
-			if (!this.tspans) return this.text = t;
 
-			if (this.tspans.length == 0) {
-				this.set('text',t);
-				return;
-			}
+    adaptToText: function (t, span) {
+      t = (typeof(t) === 'undefined') ? this.text+'' : t+'';
+      if (!this.tspans){
+        var canvasEl = fabric.util.createCanvasElement();
+        var ctx = canvasEl.getContext('2d');
+        var metrics = ctx.measureText(t);
+        this.width = metrics.width;
+        var textLines = t.split(/\r?\n/);
+        this._boundaries = [ ];
+        for (var i = 0, len = textLines.length; i < len; i++) {
+          var lineWidth = this._getLineWidth(ctx, textLines[i]);
+          var lineLeftOffset = this._getLineLeftOffset(lineWidth);
+          this._boundaries.push({
+            height: this._getFontSize() * this.lineHeight,
+            width: lineWidth,
+            left: lineLeftOffset
+          });
+        }
+        this.textLines = textLines||[];
+        if(this.text !== t){
+          delete this._cache.localContents;
+        }
+        return;
+      }
 
-			if (this.tspans.length == 1) {
-				this.tspans[0].set('text', t);
-				return;
-			}
+      if (this.tspans.length == 0) {
+        this.set('text',t);
+        return;
+      }
 
-			for (var i in this.tspans) {
-				if (this.tspans[i].id == span) {this.tspans[i].set('text', t);return;}
-			}
-		},
+      if (this.tspans.length == 1) {
+        this.tspans[0].set('text', t);
+        return;
+      }
+
+      for (var i in this.tspans) {
+        if (this.tspans[i].id == span) {this.tspans[i].set('text', t);return;}
+      }
+    },
 
     _extraTransformations: function(){
       var ty = -this.height, tx = 0;
@@ -249,9 +250,10 @@
     },
 
     transform: function(ctx){
-      var textLines = this.text.split(/\r?\n/);
-      this.width = this._getTextWidth(ctx, textLines);
-      this.height = this._getTextHeight(ctx, textLines);
+      this._setTextStyles(ctx);
+      this.width = this._getTextWidth(ctx, this.textLines);
+      this.height = this._getTextHeight(ctx, this.textLines);
+      //console.log('TEXT WIDTH ', this.width, 'TEXT HEIGHT', this.height);
       this.callSuper('transform',ctx);
     },
 
@@ -285,54 +287,23 @@
      * @param {CanvasRenderingContext2D} ctx Context to render on
      */
     _renderViaNative: function(ctx) {
-      if(this._cache.localContents){
-        this._cache.localContents.render(ctx);
+      if(!(this.width&&this.height)){
+        return;
       }
       ctx.save();
-
-      this._setTextStyles(ctx);
-
-      var textLines = this.text.split(/\r?\n/);
-
-      this.width = this._getTextWidth(ctx, textLines);
-      this.height = this._getTextHeight(ctx, textLines);
-			//console.log('TEXT WIDTH ', this.width, 'TEXT HEIGHT', this.height);
-
-      this._renderTextBackground(ctx, textLines);
-
+      this._renderTextBackground(ctx, this.textLines);
       ctx.save();
       this._setShadow(ctx);
-      this._renderTextFill(ctx, textLines);
-      this._renderTextStroke(ctx, textLines);
+      this._renderTextFill(ctx, this.textLines);
+      this._renderTextStroke(ctx, this.textLines);
       this._removeShadow(ctx);
       ctx.restore();
 
-      this._renderTextDecoration(ctx, textLines);
+      this._renderTextDecoration(ctx, this.textLines);
 
-      this._setBoundaries(ctx, textLines);
       this._totalLineHeight = 0;
       ctx.restore();
-    },
-
-    /**
-     * @private
-     * @param {CanvasRenderingContext2D} ctx Context to render on
-     * @param {Array} textLines Array of all text lines
-     */
-    _setBoundaries: function(ctx, textLines) {
-      this._boundaries = [ ];
-
-      for (var i = 0, len = textLines.length; i < len; i++) {
-
-        var lineWidth = this._getLineWidth(ctx, textLines[i]);
-        var lineLeftOffset = this._getLineLeftOffset(lineWidth);
-
-        this._boundaries.push({
-          height: this._getFontSize() * this.lineHeight,
-          width: lineWidth,
-          left: lineLeftOffset
-        });
-      }
+      return;
     },
 
     /**
@@ -340,14 +311,14 @@
      * @param {CanvasRenderingContext2D} ctx Context to render on
      */
     _setTextStyles: function(ctx) {
-			//fabric.util.setTextFillAndStroke(ctx, this);
+      //fabric.util.setTextFillAndStroke(ctx, this);
       ctx.textBaseline = 'alphabetic';
       ctx.textAlign = this.textAlign;
-			this.font_params = fabric.util.setFontDeclaration(ctx, this);
+      this.font_params = fabric.util.setFontDeclaration(ctx, this);
     },
-		_getFontSize : function () {
-			return (this.font_params) ? this.font_params.fontSize : 12;
-		},
+    _getFontSize : function () {
+      return (this.font_params) ? this.font_params.fontSize : 12;
+    },
 
     /**
      * @private
@@ -434,24 +405,24 @@
      * @return {Number} Left offset
      */
     _getLeftOffset: function() {
-			/*
+      /*
       if (fabric.isLikelyNode && (this.originX === 'left' || this.originX === 'center')) {
         return 0;
       }
-			*/
-			return 0;
-			console.log('Text align',this.textAlign,'on width',this.width,'for',this.text);
-			switch(this.textAlign){
-				case 'left':
-					return 0;
-				case 'center':
-					return -this.width/2;
-				case 'right':
-					return -this.width;
-				default:
-					console.log('Text align',this.textAlign,'not supported');
-					return 0;
-			}
+      */
+      return 0;
+      console.log('Text align',this.textAlign,'on width',this.width,'for',this.text);
+      switch(this.textAlign){
+        case 'left':
+          return 0;
+        case 'center':
+          return -this.width/2;
+        case 'right':
+          return -this.width;
+        default:
+          console.log('Text align',this.textAlign,'not supported');
+          return 0;
+      }
     },
 
     /**
@@ -460,7 +431,7 @@
      */
     _getTopOffset: function() {
           return -this.height;
-					return 0;
+          return 0;
       if (fabric.isLikelyNode) {
         if (this.originY === 'center') {
           return -this.height / 2;
@@ -480,10 +451,10 @@
      * @param {Array} textLines Array of all text lines
      */
     _renderTextFill: function(ctx, textLines) {
-			var fill = this.fill;
-			if ('undefined' === typeof(fill)) {
-				fill = ctx.fillStyle;
-			}
+      var fill = this.fill;
+      if ('undefined' === typeof(fill)) {
+        fill = ctx.fillStyle;
+      }
 
       if (!fill && !this.skipFillStrokeCheck) return;
 
@@ -700,7 +671,7 @@
      * @return {Object} Object representation of an instance
      */
     toObject: function(propertiesToInclude) {
-			var ret = extend(this.callSuper('toObject', propertiesToInclude), {
+      var ret = extend(this.callSuper('toObject', propertiesToInclude), {
         text:                 this.text,
         fontSize:             this.fontSize,
         fontWeight:           this.fontWeight,
@@ -714,13 +685,13 @@
         textBackgroundColor:  this.textBackgroundColor,
         useNative:            this.useNative
       });
-			if (this.tspans && this.tspans.length) {
-				ret.tspans = [];
-				for (var i in this.tspans) {
-					ret.tspans.push(this.tspans[i].toObject());
-				}
-			}
-			return ret;
+      if (this.tspans && this.tspans.length) {
+        ret.tspans = [];
+        for (var i in this.tspans) {
+          ret.tspans.push(this.tspans[i].toObject());
+        }
+      }
+      return ret;
     },
 
     /* _TO_SVG_START_ */
@@ -840,7 +811,7 @@
               (i === 0 || this.useNative ? 'y' : 'dy'), '="',
               toFixed(this.useNative ? ((lineTopOffset * i) - this.height / 2) : (lineTopOffset * lineTopOffsetMultiplier), 2) , '" ',
               // doing this on <tspan> elements since setting opacity on containing <text> one doesn't work in Illustrator
-							//TODO: you can not know this without canvas !!!
+              //TODO: you can not know this without canvas !!!
               this._getFillAttributes(this.fill), '>',
               fabric.util.string.escapeXml(textLines[i]),
             '</tspan>'
@@ -915,13 +886,13 @@
         this.path = this.path.replace(/(.*?)([^\/]*)(\.font\.js)/, '$1' + value + '$3');
       }
 
-			if (key === 'text') {
-				return this.setText(value);
-			}
+      if (key === 'text') {
+        this.adaptToText(value);
+      }
       this.callSuper('_set', key, value);
 
       if (key in this._dimensionAffectingProps) {
-        this._initDimensions();
+        this.adaptToText();
         this.setCoords();
       }
     },
@@ -959,12 +930,12 @@
     }
 
     var parsedAttributes = fabric.parseAttributes(element, fabric.Text.ATTRIBUTE_NAMES);
-		//tweak textAlign
-		switch(parsedAttributes.textAlign){
-			case 'end':
-				parsedAttributes.textAlign='right';
-				break;
-		}
+    //tweak textAlign
+    switch(parsedAttributes.textAlign){
+      case 'end':
+        parsedAttributes.textAlign='right';
+        break;
+    }
     options = fabric.util.object.extend((options ? fabric.util.object.clone(options) : { }), parsedAttributes);
 
     var cns = element.childNodes;
@@ -1002,7 +973,7 @@
    * @return {fabric.Text} Instance of fabric.Text
    */
   fabric.Text.fromObject = function(object) {
-		return new fabric.Text(object.text, clone(object));
+    return new fabric.Text(object.text, clone(object));
   };
 
   fabric.util.createAccessors(fabric.Text);

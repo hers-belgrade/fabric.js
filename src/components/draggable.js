@@ -92,7 +92,7 @@
       }
       fx-=minpoint.x;
       handle.set({left:zerohandlepoint.x+handlescale.x*fx});
-      console.log(point.x,zerohandlepoint.x,handlescale.x,zerohandlepoint.x+handlescale.x*fx);
+      //console.log(point.x,zerohandlepoint.x,handlescale.x,zerohandlepoint.x+handlescale.x*fx);
     };
     area.on('mouse:move',function(e){
       if(svgelem.dragActive){

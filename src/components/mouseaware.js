@@ -6,6 +6,7 @@
   fabric.MouseAware = function(svgelem,overcb,outcb){
     if(!svgelem.wantsMouse){
       svgelem.wantsMouse=true;
+      svgelem.invokeOnCanvas('addToMouseListeners',svgelem);
     }
     svgelem.enable = function(){
       this.enabled=true;

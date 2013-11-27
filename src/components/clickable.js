@@ -5,13 +5,40 @@
 
   fabric.Clickable = function(svgelem,config){
     fabric.MouseAware(svgelem);
-    var downcb=config.downcb,clickcb=config.clickcb,ctx=config.ctx||svgelem;
+    var downcb=config.downcb,clickcb=config.clickcb,doubleclickcb=config.doubleclickcb,ctx=config.ctx||svgelem;
+    var mousePressed;
+    var longPressTimeout;
     svgelem.on('mouse:down',function(e){
       if(this.enabled){
-        e.e.listeners.push(svgelem);
-        downcb&&downcb.call(ctx,e);
+        if(!mousePressed){
+          e.e.listeners.push(svgelem);
+          downcb&&downcb.call(ctx,e);
+        }
+        mousePressed=(new Date()).getTime();
+        longPressTimeout = longPressTimeout||setTimeout(function(){
+          var now = (new Date()).getTime();
+          if(mousePressed&&now-mousePressed>1400){
+            mousePressed=null;
+            longPressTimeout=null;
+            mouseReleased=now;
+            doubleclickcb&&doubleclickcb.call(ctx,e);
+          }
+        },1500);
       }});
-    svgelem.on('mouse:up',function(e){this.enabled&&clickcb&&clickcb.call(ctx,e);});
+    var mouseReleased;
+    function clicked(e){
+      mousePressed=null;
+      if(this.enabled){
+        var released = (new Date()).getTime();
+        if(mouseReleased&&released-mouseReleased<300){
+          doubleclickcb&&doubleclickcb.call(ctx,e);
+        }else{
+          clickcb&&clickcb.call(ctx,e);
+        }
+        mouseReleased = released;
+      }
+    }
+    svgelem.on('mouse:up',clicked);
     return svgelem;
   };
 

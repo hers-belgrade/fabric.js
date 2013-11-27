@@ -127,7 +127,7 @@
       var canvas = this.getCanvas();
       if(canvas){
         canvas.addToMouseListeners(object);
-        typeof object.forEachObjectRecursive === 'function' && object.forEachObjectRecursive(canvas.addToMouseListeners,canvas);
+        !object._cache.content && typeof object.forEachObjectRecursive === 'function' && object.forEachObjectRecursive(canvas.addToMouseListeners,canvas);
       }
       object.group = this;
       if(object.id){
@@ -143,7 +143,7 @@
       var canvas = this.getCanvas();
       if(canvas){
         canvas.removeFromMouseListeners(object);
-        typeof object.forEachObjectRecursive === 'function' && object.forEachObjectRecursive(canvas.removeFromMouseListeners,canvas);
+        !object._cache.content && typeof object.forEachObjectRecursive === 'function' && object.forEachObjectRecursive(canvas.removeFromMouseListeners,canvas);
       }
       delete object.group;
       object.set('active', false);

@@ -658,11 +658,9 @@
 
       ctxToDrawOn._currentTransform = [1,0,0,1,0,0];
       var debugctx = this.debug ? this.contextTop : null;
-      for (var i = 0, length = this._objects.length; i < length; ++i) {
-        var object = this._objects[i];
-        object.render(ctxToDrawOn,debugctx);
+      for(var i = 0; i< this._objects.length; i++){
+        this._objects[i].render(ctxToDrawOn,debugctx);
       }
-
       if (this.clipTo) {
         ctxToDrawOn.restore();
       }
@@ -677,7 +675,7 @@
       ctxToDrawOn.restore();
 
       this.fire('after:render');
-			//console.log('canvas rendered in', (((new Date()).getTime()) - _render_start));
+      console.log('canvas rendered in', (((new Date()).getTime()) - _render_start));
 
       delete this.rendering;
       this.goRender();
