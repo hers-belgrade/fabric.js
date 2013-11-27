@@ -318,16 +318,8 @@
       for (var prop in options) {
         this[prop] = options[prop];
       }
-
       this.width = parseInt(this.lowerCanvasEl.width, 10) || 0;
       this.height = parseInt(this.lowerCanvasEl.height, 10) || 0;
-
-      /*
-      if (!this.lowerCanvasEl.style) return;
-
-      this.lowerCanvasEl.style.width = this.width/fabric.backingScale + 'px';
-      this.lowerCanvasEl.style.height = this.height/fabric.backingScale + 'px';
-      */
     },
 
     /**
@@ -428,7 +420,7 @@
     },
 
     addToMouseListeners: function (obj){
-      if(obj.wantsMouse){
+      if(obj.wantsMouse && this._mouseListeners.indexOf(obj)<0){
         this._mouseListeners.push(obj);
       }
     },
@@ -517,7 +509,7 @@
         return;
       }
       this.addToMouseListeners(obj);
-      if(obj._objects){
+      if(obj.forEachObjectRecursive){
         obj.forEachObjectRecursive(this.addToMouseListeners,this);
       }
       this.stateful && obj.setupState();
@@ -532,7 +524,7 @@
      */
     _onObjectRemoved: function(obj) {
       this.removeFromMouseListeners(obj);
-      if(obj._objects){
+      if(obj.forEachObjectRecursive){
         obj.forEachObjectRecursive(this.removeFromMouseListeners,this);
       }
       this.fire('object:removed', { target: obj });

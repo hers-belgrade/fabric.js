@@ -285,6 +285,9 @@
      * @param {CanvasRenderingContext2D} ctx Context to render on
      */
     _renderViaNative: function(ctx) {
+      if(this._cache.localContents){
+        this._cache.localContents.render(ctx);
+      }
       ctx.save();
 
       this._setTextStyles(ctx);

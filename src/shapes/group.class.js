@@ -140,6 +140,11 @@
      * @private
      */
     _onObjectRemoved: function(object) {
+      var canvas = this.getCanvas();
+      if(canvas){
+        canvas.removeFromMouseListeners(object);
+        typeof object.forEachObjectRecursive === 'function' && object.forEachObjectRecursive(canvas.removeFromMouseListeners,canvas);
+      }
       delete object.group;
       object.set('active', false);
       this._calcBounds();
