@@ -109,11 +109,18 @@
       }
       return this.usedObj;
     },
-    forEachObjectRecursive: function(cb,ctx){
+    forEachObjectRecursive: function(cb,ctx,patharray,stats){
+      patharray = patharray || [];
+      stats = stats || {start:(new Date()).getTime(),calls:0,branches:0};
       var uo = this.getUsedObj();
       if(uo){
+        stats.calls++;
+        !uo.nonIteratable && uo.forEachObjectRecursive && uo.forEachObjectRecursive(cb,ctx,[uo],stats);
         cb.call(ctx,uo);
-        uo.forEachObjectRecursive && uo.forEachObjectRecursive(cb,ctx,[uo]);
+      }
+      if(!patharray.length){
+        stats.duration = (new Date()).getTime()-stats.start;
+        console.log(this.id,'feor stats',stats);
       }
     },
 

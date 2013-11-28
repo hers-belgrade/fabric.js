@@ -20,7 +20,8 @@ fabric.Collection = {
       return this.objectIsValid(v);
     },this);
 
-    this._objects.push.apply(this._objects, valid);
+    var objects = this.getObjects();
+    objects.push.apply(objects, valid);
     for (var i = valid.length; i--; ) {
       this._onObjectAdded(valid[i]);
     }
@@ -89,14 +90,17 @@ fabric.Collection = {
     return this;
   },
 
-  forEachObjectRecursive: function(callback, context, patharray) {
+  forEachObjectRecursive: function(callback, context, patharray, stats) {
     patharray = patharray || [];
+    stats = stats || {start:(new Date()).getTime(),calls:0,branches:0};
+    var count = 0;
     var objects = this.getObjects(),
         i = objects.length;
     while (i--) {
+      stats.calls++;
       var obj = objects[i];
-      if(obj.forEachObjectRecursive){
-        var feoret = obj.forEachObjectRecursive(callback,context,patharray.concat([obj]));
+      if(!obj.nonIteratable&&obj.forEachObjectRecursive){
+        var feoret = obj.forEachObjectRecursive(callback,context,patharray.concat([obj]),stats);
         if(feoret){
           return feoret;
         }
@@ -106,7 +110,10 @@ fabric.Collection = {
         return cbret;
       }
     }
-    return;
+    if(!patharray.length){
+      stats.duration = (new Date()).getTime()-stats.start;
+      console.log(this.id,'feor stats',stats);
+    }
   },
 
   getObjectById: function(id){
