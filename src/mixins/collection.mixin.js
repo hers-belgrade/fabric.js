@@ -99,18 +99,18 @@ fabric.Collection = {
     while (i--) {
       stats.calls++;
       var obj = objects[i];
+      var cbret = callback.call(context, obj, i, objects, patharray);
+      if(cbret){
+        return cbret;
+      }
       if(!obj.nonIteratable&&obj.forEachObjectRecursive){
         var feoret = obj.forEachObjectRecursive(callback,context,patharray.concat([obj]),stats);
         if(feoret){
           return feoret;
         }
       }
-      var cbret = callback.call(context, obj, i, objects, patharray);
-      if(cbret){
-        return cbret;
-      }
     }
-    if(!patharray.length){
+    if(false&&!patharray.length){
       stats.duration = (new Date()).getTime()-stats.start;
       console.log(this.id,'feor stats',stats);
     }

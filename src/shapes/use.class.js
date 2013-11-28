@@ -84,6 +84,7 @@
     setUsedObj: function(object) {
       object.group = this;
       this.usedObj = object;
+      delete this['xlink:href'];
     },
     toObject: function (propertiesToInclude) {
       var ret = this.callSuper('toObject', propertiesToInclude);
@@ -118,7 +119,7 @@
         !uo.nonIteratable && uo.forEachObjectRecursive && uo.forEachObjectRecursive(cb,ctx,[uo],stats);
         cb.call(ctx,uo);
       }
-      if(!patharray.length){
+      if(false&&!patharray.length){
         stats.duration = (new Date()).getTime()-stats.start;
         console.log(this.id,'feor stats',stats);
       }

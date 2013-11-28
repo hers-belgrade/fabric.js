@@ -675,7 +675,7 @@
       ctxToDrawOn.restore();
 
       this.fire('after:render');
-      console.log('canvas rendered in', (((new Date()).getTime()) - _render_start));
+      //console.log('canvas rendered in', (((new Date()).getTime()) - _render_start));
 
       delete this.rendering;
       this.goRender();

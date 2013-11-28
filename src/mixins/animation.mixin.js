@@ -29,10 +29,10 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
       onChange: function(value) {
         object.set('left', value);
         _this.renderAll();
-        onChange();
+        onChange.call(this);
       },
       onComplete: function() {
-        onComplete();
+        onComplete.call(this);
       }
     });
 
@@ -61,10 +61,10 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
       onChange: function(value) {
         object.set('top', value);
         _this.renderAll();
-        onChange();
+        onChange.call(this);
       },
       onComplete: function() {
-        onComplete();
+        onComplete.call(this);
       }
     });
 
@@ -96,11 +96,11 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
       onChange: function(value) {
         object.set('opacity', value);
         _this.renderAll();
-        onChange();
+        onChange.call(this);
       },
       onComplete: function () {
         _this.remove(object);
-        onComplete();
+        onComplete.call(this);
       }
     }));
 

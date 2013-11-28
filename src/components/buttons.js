@@ -67,8 +67,8 @@
       config.clickcb.call(config.ctx);
     };
     var target = svgelem.getObjectById(svgelem.id+'_hotspot');
-    svgelem.enable = function(){this.enabled=true;renderState('enabled');return svgelem;};
-    svgelem.disable = function(){this.enabled=false;renderState('disabled');return svgelem;};
+    svgelem.enable = function(){this.enabled=true;renderState('enabled');return this;};
+    svgelem.disable = function(){this.enabled=false;renderState('disabled');return this;};
     var clickconfig = {ctx:config.ctx||svgelem,clickcb:clicked,downcb:function(e){processState('pressed',e);}};
     fabric.Clickable(fabric.Hoverable(target,{outcb:function(e){processState('enabled',e);},overcb:function(e){processState('hovered',e);}}),clickconfig);
     if(config.initialState==='enabled'){

@@ -66,7 +66,7 @@
         //console.log('old sprite',this[i]._cache.content);
       }
       this[i]._cache.content = new fabric.Sprite(this.canvas,this.rectMap[i]);
-      console.log('new sprite for',this[i].id);
+      //console.log('new sprite for',this[i].id);
       //console.log('new sprite',this[i]._cache.content);
     }
     ctx.restore();

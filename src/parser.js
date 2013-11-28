@@ -772,6 +772,26 @@
     processElement(0);
   };
 
+  function linkUses(svgelement){
+    svgelement.forEachObjectRecursive(function(obj,index,objects,patharray){
+      if(obj.type==='use'){
+        var objlink = obj['xlink:href'];
+        if(typeof objlink === 'undefined'){
+          obj.getUsedObj();
+        }else{
+          if(objlink[0]==='#'){
+            objlink = objlink.slice(1);
+          }
+          var objtouse = this.getObjectById(objlink);
+          //console.log('resolving',objlink,objtouse ? 'successfully' : 'unsuccessfully','to',obj.id,obj.randomID, objtouse.type);
+          if(objtouse){
+            obj.setUsedObj(objtouse.clone());
+          }
+        }
+      }
+    },svgelement);
+  };
+
   /**
    * Parses an SVG document, converts it to a object with fabric.* objects mapped to their corresponding id's within and passes it to a callback
    * @static
@@ -850,7 +870,8 @@
       var hierarchy = {};
       var elements = [];
       processGroup(hierarchy,elements,doc,options,function(){
-        fabric.documentParsingTime = new Date() - startTime;
+        var parsedone = new Date();
+        fabric.documentParsingTime = parsedone - startTime;
         if(callback) {
           /*
           var anchor = elements[0].getObjectById('anchor');
@@ -861,20 +882,22 @@
           }
           */
           var svg = elements[0];
-          svg.forEachObjectRecursive(function(obj,index,objects,patharray){
-            if(obj.type==='use'){
-              var objlink = obj['xlink:href'];
-              if(objlink[0]==='#'){
-                objlink = objlink.slice(1);
-              }
-              var objtouse = this.getObjectById(objlink);
-              //console.log('resolving',objlink,objtouse ? 'successfully' : 'unsuccessfully','to',obj.id,obj.randomID, objtouse.type);
-              if(objtouse){
-                obj.setUsedObj(objtouse.clone());
+          var se = svg['static'];
+          if(se){
+            var seos = se.getObjects();
+            for(var i in seos){
+              var seo = seos[i];
+              if(seo.id.substr(-4)!=='_map'){
+                linkUses(seo);
+                seo.forEachObject(function(obj){
+                  obj.nonIteratable=true;
+                });
               }
             }
-          },svg);
-          console.log('Parsed in',fabric.documentParsingTime);
+          }
+          linkUses(svg);
+          fabric.documentTraversingTime = new Date() - parsedone;
+          console.log('Parsed in',fabric.documentParsingTime,'traversed in',fabric.documentTraversingTime);
           setTimeout(function(){callback(svg, options);},0);
         }
       });
