@@ -95,15 +95,15 @@ fabric.Collection = {
         i = objects.length;
     while (i--) {
       var obj = objects[i];
+      var cbret = callback.call(context, obj, i, objects, patharray);
+      if(cbret){
+        return cbret;
+      }
       if(obj.forEachObjectRecursive){
         var feoret = obj.forEachObjectRecursive(callback,context,patharray.concat([obj]));
         if(feoret){
           return feoret;
         }
-      }
-      var cbret = callback.call(context, obj, i, objects, patharray);
-      if(cbret){
-        return cbret;
       }
     }
     return;

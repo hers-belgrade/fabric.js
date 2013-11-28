@@ -10,9 +10,11 @@
     }
     svgelem.enable = function(){
       this.enabled=true;
+      return this;
     };
     svgelem.disable = function(){
       this.enabled=false;
+      return this;
     }
     svgelem.enable();
     return svgelem;

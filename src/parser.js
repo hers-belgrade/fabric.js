@@ -864,13 +864,17 @@
           svg.forEachObjectRecursive(function(obj,index,objects,patharray){
             if(obj.type==='use'){
               var objlink = obj['xlink:href'];
-              if(objlink[0]==='#'){
-                objlink = objlink.slice(1);
-              }
-              var objtouse = this.getObjectById(objlink);
-              //console.log('resolving',objlink,objtouse ? 'successfully' : 'unsuccessfully','to',obj.id,obj.randomID, objtouse.type);
-              if(objtouse){
-                obj.setUsedObj(objtouse.clone());
+              if(typeof objlink === 'undefined'){
+                obj.getUsedObj();
+              }else{
+                if(objlink[0]==='#'){
+                  objlink = objlink.slice(1);
+                }
+                var objtouse = this.getObjectById(objlink);
+                //console.log('resolving',objlink,objtouse ? 'successfully' : 'unsuccessfully','to',obj.id,obj.randomID, objtouse.type);
+                if(objtouse){
+                  obj.setUsedObj(objtouse.clone());
+                }
               }
             }
           },svg);

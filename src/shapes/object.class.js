@@ -1265,13 +1265,14 @@
       if(typeof options !== 'object'){
         this.set({'opacity':1, 'display':'inline', 'visible': true});
         this.fire ('object:shown');
-        return;
+        return this;
       }
       this.set({opacity:0, display:'inline', visible:true});
       var oc = options.onComplete;
       this.animate({opacity:1},{onComplete:function(){
-        oc&&oc();
+        oc&&oc.call(this);
       }});
+      return this;
     },
     /**
      * Hides an object and fires hidden event
@@ -1282,13 +1283,14 @@
       if(typeof options !== 'object'){
         this.set({'opacity':0, 'display':'none', 'visible': false});
         this.fire ('object:hidden');
-        return;
+        return this;
       }
       var oc = options.onComplete;
       this.animate({opacity:0},{onComplete:function(){
         this.hide();
         oc && oc.call(this);
       }});
+      return this;
     }
   });
   /**

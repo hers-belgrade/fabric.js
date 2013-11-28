@@ -84,6 +84,7 @@
     setUsedObj: function(object) {
       object.group = this;
       this.usedObj = object;
+      delete this['xlink:href'];
     },
     toObject: function (propertiesToInclude) {
       var ret = this.callSuper('toObject', propertiesToInclude);
