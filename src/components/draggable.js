@@ -27,12 +27,16 @@
   };
 
   fabric.ResourceSlider = function(svgelem,config){
+    var poscriterion = config.vertical ? function(obj){return obj.y} : function(obj){return obj.x};
+    var sizecriterion = config.vertical ? function(obj){return obj.height} : function(obj){return obj.width};
+    var changecriterion = config.vertical ? function(obj,val){obj.y+=val;} : function(obj,val){obj.x+=val;};
     var changecb = config.changecb;
     var area = config&&config.area ? svgelem.getObjectById(config.area) : svgelem;
     var handleconfig = config.handle;
     var handle = svgelem.getObjectById(handleconfig.id);
     var corr;
     var hoveredhandleelement = handle.getObjectById(handle.id+'_hotspot');
+    var calccorr = config.vertical ? function(){return {x:0,y:hoveredhandleelement.height/handlescale.y*areascale.y/2};} : function(){return {x:hoveredhandleelement.width/handlescale.x*areascale.x/2,y:0};};
     function downHandler(e){
       var hp = hoveredhandleelement.localToGlobal(new fabric.Point(0,0));
       corr = {x:e.e.x-hp.x,y:e.e.y-hp.y};
@@ -54,45 +58,55 @@
         areascale=area.globalScale();
         minpoint = area.localToGlobal(new fabric.Point(0,0));
         maxpoint = area.localToGlobal(new fabric.Point(area.width,area.height));
-        maxpoint.x -= (hoveredhandleelement.width/handlescale.x*areascale.x);
+        changecriterion(maxpoint, -(sizecriterion(hoveredhandleelement)/poscriterion(handlescale)*poscriterion(areascale)));
         if(svgelem.sliderSetup){
-          stepsize=(maxpoint.x-minpoint.x)/(svgelem.sliderSetup.max-svgelem.sliderSetup.min)*svgelem.sliderSetup.step;
+          stepsize=(poscriterion(maxpoint)-poscriterion(minpoint))/(svgelem.sliderSetup.max-svgelem.sliderSetup.min)*svgelem.sliderSetup.step;
         }else{
           stepsize=0;
         }
       }
     }
+    var setHandlePos = config.vertical ? function(val){
+      handle.set({top:val});
+    } : function(val){
+      handle.set({left:val});
+    };
     var lastvalue;
     var placeHandle = function(point){
       initScales();
-      var fx = (point.x-corr.x);
-      if(fx<minpoint.x){
-        fx=minpoint.x;
+      var f = (poscriterion(point)-poscriterion(corr)),minf = poscriterion(minpoint),maxf = poscriterion(maxpoint);
+      if(f<minf){
+        f=minf;
       }
-      if(fx>maxpoint.x){
-        fx=maxpoint.x;
+      if(f>maxf){
+        f=maxf;
       }
       if(stepsize){
-        var currx=minpoint.x,dist=Math.abs(fx-currx),tempdist=dist,currvalue=svgelem.sliderSetup.min;
-        while(currx<=maxpoint.x){
-          currx+=stepsize;
-          tempdist=Math.abs(fx-currx);
+        var curr=minf,dist=Math.abs(f-curr),tempdist=dist,currvalue=svgelem.sliderSetup.min;
+        while(curr<=maxf){
+          curr+=stepsize;
+          tempdist=Math.abs(f-curr);
           if(tempdist>=dist){
-            currx-=stepsize;
+            curr-=stepsize;
             break;
           }
           currvalue+=svgelem.sliderSetup.step;
           dist = tempdist;
         }
-        fx = currx;
+        f = curr;
         if(currvalue!==lastvalue){
           lastvalue=currvalue;
           changecb&&changecb(lastvalue);
         }
       }
-      fx-=minpoint.x;
-      handle.set({left:zerohandlepoint.x+handlescale.x*fx});
+      f-=minf;
+      setHandlePos(poscriterion(zerohandlepoint)+poscriterion(handlescale)*f);
       //console.log(point.x,zerohandlepoint.x,handlescale.x,zerohandlepoint.x+handlescale.x*fx);
+    };
+    var placeHandleAtStep = config.vertical ? function (sc){
+      placeHandle(new fabric.Point(minpoint.x,minpoint.y+sc*stepsize));
+    } : function (sc){
+      placeHandle(new fabric.Point(minpoint.x+sc*stepsize,minpoint.y));
     };
     area.on('mouse:move',function(e){
       if(svgelem.dragActive){
@@ -102,7 +116,7 @@
     });
     fabric.Clickable(area,{clickcb:function(e){
       initScales();
-      corr={x:hoveredhandleelement.width/handlescale.x*areascale.x/2,y:0};
+      corr=calccorr();
       placeHandle(e.e);
       svgelem.invokeOnCanvas('renderAll');
     }});
@@ -121,7 +135,7 @@
       initScales();
       corr={x:0,y:0};
       var sc = ~~((val-this.sliderSetup.min)/this.sliderSetup.step);
-      placeHandle(new fabric.Point(minpoint.x+sc*stepsize,minpoint.y));
+      placeHandleAtStep(sc);
     };
     return svgelem;
   };
