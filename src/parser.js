@@ -773,23 +773,34 @@
   };
 
   function linkUses(svgelement){
-    svgelement.forEachObjectRecursive(function(obj,index,objects,patharray){
+    var uses = {};
+    svgelement.forEachObjectRecursive(function(obj){
       if(obj.type==='use'){
         var objlink = obj['xlink:href'];
-        if(typeof objlink === 'undefined'){
-          obj.getUsedObj();
-        }else{
+        if(typeof objlink !== 'undefined'){
           if(objlink[0]==='#'){
             objlink = objlink.slice(1);
           }
-          var objtouse = this.getObjectById(objlink);
-          //console.log('resolving',objlink,objtouse ? 'successfully' : 'unsuccessfully','to',obj.id,obj.randomID, objtouse.type);
-          if(objtouse){
-            obj.setUsedObj(objtouse.clone());
+          var ua = uses[objlink];
+          if(!ua){
+            ua = [];
+            uses[objlink]=ua;
           }
+          ua.push(obj);
+        }else{
+          console.log(obj.id,'has no xlink:href');
         }
       }
-    },svgelement);
+    });
+    svgelement.forEachObjectRecursive(function(obj){
+      var ua = uses[obj.id];
+      if(ua){
+        for(var i in ua){
+          ua[i].setUsedObj(obj.clone());
+        }
+        delete uses[obj.id];
+      }
+    });
   };
 
   /**
