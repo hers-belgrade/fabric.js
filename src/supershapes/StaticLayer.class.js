@@ -48,7 +48,7 @@
       this.canvas = offel;
       offel.width = this.mastercanvas.width;
       offel.height = this.mastercanvas.height;
-      console.log(this.id,'created a canvas for self',offel.width,offel.height);
+      //console.log(this.id,'created a canvas for self',offel.width,offel.height);
       ctx = this.canvas.getContext('2d');
     }
     ctx.save();

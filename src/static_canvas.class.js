@@ -598,9 +598,8 @@
         var tr = this.animationTickers[i]();
         if(tr){
           fordeletion.push(i);
-        }else{
-          this.dirty = true;
         }
+        this.dirty = true;
       }
       if(fordeletion.length){
         var ts = [];

@@ -351,7 +351,7 @@
     _applyCanvasStyle: function (element) {
       var width = this.autoresize ? window.innerWidth : (this.getWidth()/fabric.backingScale || element.width),
           height = this.autoresize ? window.innerHeight : (this.getHeight()/fabric.backingScale || element.height);
-      console.log('applying canvas style on',element.width,element.height,'target size is',width,height);
+      //console.log('applying canvas style on',element.width,element.height,'target size is',width,height);
       fabric.util.setStyle(element, {
         position: 'absolute',
         width: width + 'px',

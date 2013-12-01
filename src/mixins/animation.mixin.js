@@ -221,6 +221,7 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
       }
     }))){
       setValue.call(this,to);
+      options.onComplete && options.onComplete.call(obj);
     }
   }
 });

@@ -368,29 +368,10 @@
    * @return {Point} The resulting point in matrix's space
    */
   function pointInSpace(matrix, point) {
-    var m = [
-      [matrix[0], matrix[2], matrix[4]],
-      [matrix[1], matrix[3], matrix[5]],
-      [0         , 0         , 1         ]
-    ];
-
-    var p = [
-      point.x,
-      point.y,
-      1
-    ];
-
-    var result = [];
-    for (var r=0; r<3; r++) {
-      result[r] = [];
-      var sum = 0;
-      for (var k=0; k<3; k++) {
-        sum += m[r][k]*p[k];
-      }
-      result[r] = sum;
-    }
-
-    return new fabric.Point(result[0],result[1]);
+    return new fabric.Point(
+      matrix[0]*point.x+matrix[2]*point.y+matrix[4],
+      matrix[1]*point.x+matrix[3]*point.y+matrix[5]
+    );
   }
 
   /**
@@ -402,39 +383,13 @@
    * @return {Array} The product of the two transform matrices
    */
   function multiplyTransformMatrices(matrixA, matrixB) {
-    // Matrix multiply matrixA * matrixB
-    var a = [
-      [matrixA[0], matrixA[2], matrixA[4]],
-      [matrixA[1], matrixA[3], matrixA[5]],
-      [0         , 0         , 1         ]
-    ];
-
-    var b = [
-      [matrixB[0], matrixB[2], matrixB[4]],
-      [matrixB[1], matrixB[3], matrixB[5]],
-      [0         , 0         , 1         ]
-    ];
-
-    var result = [];
-    for (var r=0; r<3; r++) {
-      result[r] = [];
-      for (var c=0; c<3; c++) {
-        var sum = 0;
-        for (var k=0; k<3; k++) {
-          sum += a[r][k]*b[k][c];
-        }
-
-        result[r][c] = sum;
-      }
-    }
-
     return [
-      result[0][0],
-      result[1][0],
-      result[0][1],
-      result[1][1],
-      result[0][2],
-      result[1][2]
+      matrixA[0]*matrixB[0]+matrixA[2]*matrixB[1],
+      matrixA[1]*matrixB[0]+matrixA[3]*matrixB[1],
+      matrixA[0]*matrixB[2]+matrixA[2]*matrixB[3],
+      matrixA[1]*matrixB[2]+matrixA[3]*matrixB[3],
+      matrixA[0]*matrixB[4]+matrixA[2]*matrixB[5]+matrixA[4],
+      matrixA[1]*matrixB[4]+matrixA[3]*matrixB[5]+matrixA[5]
     ];
   }
 
