@@ -440,11 +440,6 @@
      * @param {Boolean} skipGroup when true, group is skipped and only objects are traversed through
      */
     distributePositionEvent: function (e,eventname) {
-      /*
-      for (var i = this._objects.length-1; i>=0 && !e.block_further_processing; i--){
-        this._objects[i].processPositionEvent(e,eventname);
-      }
-      */
       if(this.currentListeners&&this.currentListeners.length){
         for(var i =this.currentListeners.length-1; i>=0; i--){
           this.currentListeners[i].fire(eventname,{e:e});
@@ -674,7 +669,7 @@
       ctxToDrawOn.restore();
 
       this.fire('after:render');
-      //console.log('canvas rendered in', (((new Date()).getTime()) - _render_start));
+      console.log('canvas rendered in', (((new Date()).getTime()) - _render_start));
 
       delete this.rendering;
       this.goRender();

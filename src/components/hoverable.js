@@ -9,7 +9,7 @@
     function trigerrer(ctx,_cb){
       var cb = _cb;
       return cb ? function(){
-        this.enabled&&cb.apply(ctx,arguments);
+        this.isVisible() && this.enabled && cb.apply(ctx,arguments);
       } : function(){};
     }
     svgelem.on('object:over',trigerrer(ctx,config.overcb));

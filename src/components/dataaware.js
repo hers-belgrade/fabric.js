@@ -9,11 +9,12 @@
     this.dataListeners[listeneralias] = listener;
   };
 
-  fabric.DataAware = function(svgelem){
+  fabric.DataAware = function(svgelem,config){
     svgelem.dataListeners = {};
     svgelem.follow = function(follower){
       this.unfollow();
       this.follower = follower;
+      config && config.onFollowing && config.onFollowing.call(svgelem);
     };
     svgelem.do_command = function(command,paramobj,cb){
       if(!this.follower){
@@ -50,6 +51,7 @@
         this.dataListeners[i].destroy();
       }
       this.dataListeners={};
+      config && config.onUnfollowed && config.onUnfollowed.call(svgelem);
     };
     return svgelem;
   };

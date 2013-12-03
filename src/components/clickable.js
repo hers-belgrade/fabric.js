@@ -9,7 +9,7 @@
     var mousePressed;
     var longPressTimeout;
     svgelem.on('mouse:down',function(e){
-      if(this.enabled){
+      if(this.isVisible() && this.enabled){
         if(!mousePressed){
           e.e.listeners.push(svgelem);
           downcb&&downcb.call(ctx,e);
@@ -28,7 +28,7 @@
     var mouseReleased;
     function clicked(e){
       mousePressed=null;
-      if(this.enabled){
+      if(this.isVisible() && this.enabled){
         var released = (new Date()).getTime();
         if(mouseReleased&&released-mouseReleased<300){
           doubleclickcb&&doubleclickcb.call(ctx,e);

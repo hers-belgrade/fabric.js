@@ -521,9 +521,13 @@
       };
       this._currentGlobalTransform = ctx._currentTransform;
       this._currentLocalTransform = m;
+      this.localRotate(ctx);
     },
 
     _extraTransformations : function(ctx){
+    },
+
+    localRotate: function(ctx){
     },
 
     untransform: function(ctx,topctx){
@@ -786,8 +790,11 @@
 
       if(this[key]!==value){
         this[key] = value;
-        if(key in {top:1,left:1}){
+        if(key in {top:1,left:1,scaleX:1,scaleY:1}){
           this._cacheLocalTransformMatrix();
+        }
+        if(key in {angle:1,rotationX:1,rotationY:1}){
+          this.rotate(this.angle||0,this.rotationX||0,this.rotationY||0);
         }
       }
 

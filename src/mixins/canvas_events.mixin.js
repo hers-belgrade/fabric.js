@@ -26,9 +26,16 @@
 
   function canvasPositionEventListener(canvas,eventname,eventalias) {
     var cnvas=canvas, 
-    cnvasel = cnvas.upperCanvasEl, 
+    cnvasel,
     evntname = eventname, 
     evntalias = eventalias;
+    /*
+    if(eventalias==='mouse:up'){
+      cnvasel = fabric.window.document.getElementsByTagName('body')[0];
+    }else{
+      */
+      cnvasel = cnvas.upperCanvasEl; 
+    //}
     var evnthandler = function(e){
       e.preventDefault();
       var p = getPointer(e,cnvasel);
@@ -42,6 +49,7 @@
         p.x*=fabric.backingScale;
         p.y*=fabric.backingScale;
       }
+      console.log(eventalias);
       switch(eventalias){
         case 'mouse:down':
           p.listeners=[];
@@ -50,15 +58,17 @@
           p.listeners=cnvas.currentListeners||[];
           break;
       }
-      cnvas.distributePositionEvent(p,evntalias);
-      switch(eventalias){
-        case 'mouse:up':
-          cnvas.currentListeners=[];
-          break;
-        default:
-          cnvas.currentListeners=p.listeners;
-          break;
-      }
+      setTimeout(function(){
+        cnvas.distributePositionEvent(p,evntalias);
+        switch(eventalias){
+          case 'mouse:up':
+            cnvas.currentListeners=[];
+            break;
+          default:
+            cnvas.currentListeners=p.listeners;
+            break;
+        }
+      },0);
     };
     addListener(cnvasel, evntname, evnthandler);
     cnvas._positionEventDisposers[evntname] = function(){
