@@ -195,7 +195,7 @@
       this.goRender = (function(_t){
         var t = _t;
         return function(){
-          _requestAnimFrame.call(fabric.window,function(){t._realRenderAll();});
+          setTimeout(function(){_requestAnimFrame.call(fabric.window,function(){t._realRenderAll();});},1);
         }
       })(this);
     },

@@ -27,14 +27,16 @@
     setStrokeToCanvas(ctx, settings);
   }
 
+  var fontDeclarationEl;
+
   function setFontDeclaration (ctx, settings) {
-    var el = document.createElement('div');
-    el.style.font = ctx.font;
+    fontDeclarationEl = fontDeclarationEl || document.createElement('div');
+    fontDeclarationEl.style.font = ctx.font;
     var fields = ['fontFamily', 'fontStyle', 'fontVariant', 'fontWeight', 'fontSize'];
     var res = {};
     for (var i in fields) {
       var v = fields[i];
-      res[v] = settings[v] || el.style[v];
+      res[v] = settings[v] || fontDeclarationEl.style[v];
     }
 
     if (res.fontSize && 'string' === typeof(res.fontSize)) {

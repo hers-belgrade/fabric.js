@@ -68,7 +68,7 @@
             cnvas.currentListeners=p.listeners;
             break;
         }
-      },0);
+      },1);
     };
     addListener(cnvasel, evntname, evnthandler);
     cnvas._positionEventDisposers[evntname] = function(){
