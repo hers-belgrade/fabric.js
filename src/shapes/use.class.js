@@ -56,18 +56,11 @@
       }
       return this.usedObj;
     },
-    forEachObjectRecursive: function(cb,ctx,patharray,stats){
-      patharray = patharray || [];
-      stats = stats || {start:(new Date()).getTime(),calls:0,branches:0};
+    forEachObjectRecursive: function(cb){
       var uo = this.getUsedObj();
       if(uo){
-        stats.calls++;
-        !uo.nonIteratable && uo.forEachObjectRecursive && uo.forEachObjectRecursive(cb,ctx,[uo],stats);
-        cb.call(ctx,uo);
-      }
-      if(false&&!patharray.length){
-        stats.duration = (new Date()).getTime()-stats.start;
-        console.log(this.id,'feor stats',stats);
+        !uo.nonIteratable && uo.forEachObjectRecursive && uo.forEachObjectRecursive(cb);
+        cb(uo);
       }
     },
     localRotate: function(ctx){

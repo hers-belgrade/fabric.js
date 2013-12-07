@@ -90,29 +90,22 @@ fabric.Collection = {
     return this;
   },
 
-  forEachObjectRecursive: function(callback, context, patharray, stats) {
-    patharray = patharray || [];
-    stats = stats || {start:(new Date()).getTime(),calls:0,branches:0};
+  forEachObjectRecursive: function(callback) {
     var count = 0;
     var objects = this.getObjects(),
         i = objects.length;
     while (i--) {
-      stats.calls++;
       var obj = objects[i];
-      var cbret = callback.call(context, obj, i, objects, patharray);
+      var cbret = callback(obj);
       if(cbret){
         return cbret;
       }
       if(!obj.nonIteratable&&obj.forEachObjectRecursive){
-        var feoret = obj.forEachObjectRecursive(callback,context,patharray.concat([obj]),stats);
+        var feoret = obj.forEachObjectRecursive(callback);
         if(feoret){
           return feoret;
         }
       }
-    }
-    if(false&&!patharray.length){
-      stats.duration = (new Date()).getTime()-stats.start;
-      console.log(this.id,'feor stats',stats);
     }
   },
 
@@ -122,7 +115,7 @@ fabric.Collection = {
         return obj;
       }
     };
-    return this.forEachObjectRecursive(getidcb,this);
+    return this.forEachObjectRecursive(getidcb);
   },
 
   /**

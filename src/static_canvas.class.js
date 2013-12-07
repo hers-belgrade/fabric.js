@@ -420,12 +420,21 @@
     },
 
     addToMouseListeners: function (obj){
-      if(obj.wantsMouse && this._mouseListeners.indexOf(obj)<0){
+      if(obj.wantsMouse && !obj.addedToCanvasMouseListeners){//this._mouseListeners.indexOf(obj)<0){
         this._mouseListeners.push(obj);
+        obj.addedToCanvasMouseListeners=true;
       }
     },
 
     removeFromMouseListeners: function (obj){
+      if(obj.addedToCanvasMouseListeners){
+        var mii = this._mouseListeners.indexOf(obj);
+        if(mii>=0){
+          delete obj.addedToCanvasMouseListeners;
+          this._mouseListeners.splice(mii,1);
+        }
+      }
+      return;
       if(obj.wantsMouse){
         var mii = this._mouseListeners.indexOf(obj);
         if(mii>=0){
@@ -505,7 +514,7 @@
       }
       this.addToMouseListeners(obj);
       if(obj.forEachObjectRecursive){
-        obj.forEachObjectRecursive(this.addToMouseListeners,this);
+        obj.forEachObjectRecursive((function(_t){var t=_t; return function(obj){t.addToMouseListeners(obj);};})(this));
       }
       this.stateful && obj.setupState();
       obj.setCoords();
@@ -520,7 +529,7 @@
     _onObjectRemoved: function(obj) {
       this.removeFromMouseListeners(obj);
       if(obj.forEachObjectRecursive){
-        obj.forEachObjectRecursive(this.removeFromMouseListeners,this);
+        obj.forEachObjectRecursive((function(_t){var t=_t; return function(obj){t.removeFromMouseListeners(obj);};})(this));
       }
       this.fire('object:removed', { target: obj });
       obj.fire('removed');
