@@ -12,6 +12,17 @@
     var doConstrain;
     if(config && config.constrainto){
       doConstrain = function(){
+        if(area.oCoords && target.oCoords){
+          var coc = config.constrainto.oCoords, toc = target.oCoords;
+          if(coc.br.y>toc.br.y){
+            target.set({top:target.top + (coc.br.y-toc.br.y)});
+            svgelem.invokeOnCanvas('renderAll');
+          }
+          if(coc.tl.y<toc.tl.y){
+            target.set({top:target.top + (coc.tl.y-toc.tl.y)});
+            svgelem.invokeOnCanvas('renderAll');
+          }
+        }
       }
     }
     fabric.Clickable(hotspot,{ctx:svgelem,downcb:function(e){
@@ -20,6 +31,7 @@
     },clickcb:function(){
       delete this.dragActive;
       delete this.dragPosition;
+      doConstrain && doConstrain();
     }});
     fabric.MouseAware(area);
     area.on('mouse:move',function(e){
