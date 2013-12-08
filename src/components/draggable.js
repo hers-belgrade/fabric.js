@@ -8,6 +8,12 @@
     var hotspot = config&&config.hotspot ? svgelem.getObjectById(config.hotspot) : svgelem;
     var target = config&&config.target ? svgelem.getObjectById(config.target) : svgelem;
     var area = config&&config.area ? svgelem.getObjectById(config.area) : svgelem;
+    var direction = config ? config.direction : '';
+    var doConstrain;
+    if(config && config.constrainto){
+      doConstrain = function(){
+      }
+    }
     fabric.Clickable(hotspot,{ctx:svgelem,downcb:function(e){
       this.dragActive=true;
       this.dragPosition=e.e;
@@ -19,7 +25,17 @@
     area.on('mouse:move',function(e){
       if(svgelem.dragActive){
         var p = e.e;
-        target.set({left:target.left + (p.x-svgelem.dragPosition.x),top:target.top + (p.y-svgelem.dragPosition.y)});
+        switch(direction){
+          case 'vertical':
+            target.set({top:target.top + (p.y-svgelem.dragPosition.y)});
+          break;
+          case 'horizontal':
+            target.set({left:target.left + (p.x-svgelem.dragPosition.x)});
+          break;
+          default:
+            target.set({left:target.left + (p.x-svgelem.dragPosition.x),top:target.top + (p.y-svgelem.dragPosition.y)});
+          break;
+        }
         svgelem.dragPosition=p;
         svgelem.invokeOnCanvas('renderAll');
       }

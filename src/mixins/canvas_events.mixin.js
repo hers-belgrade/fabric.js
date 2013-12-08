@@ -49,7 +49,7 @@
         p.x*=fabric.backingScale;
         p.y*=fabric.backingScale;
       }
-      console.log(eventalias);
+      //console.log(eventalias);
       switch(eventalias){
         case 'mouse:down':
           p.listeners=[];
