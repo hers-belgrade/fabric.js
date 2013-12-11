@@ -398,6 +398,7 @@
               current[6],
               current[7]
             ]]);
+            x = current[6];
             y = current[7];
             break;
 
