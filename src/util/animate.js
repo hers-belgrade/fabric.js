@@ -28,6 +28,11 @@
     options.onStart && options.onStart();
 
     return function tick() {
+			if (fxoff) {
+				onChange(endValue);
+				options.onComplete && options.onComplete();
+				return;
+			}
       time = +new Date();
       var currentTime = time > finish ? duration : (time - start);
       if (abort()) {
@@ -59,7 +64,16 @@
     return _requestAnimFrame.apply(fabric.window, arguments);
   };
 
+	var fxoff = false;
+	var fxOff = function (val) {
+		if (arguments.length) {
+			fxoff = val && true;
+		}
+		return fxoff;
+	}
+
   fabric.util.animate = animate;
   fabric.util.requestAnimFrame = requestAnimFrame;
+	fabric.util.fxOff = fxOff;
 
 })();
