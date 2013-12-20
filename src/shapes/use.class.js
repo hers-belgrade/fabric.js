@@ -65,7 +65,7 @@
     },
     localRotate: function(ctx){
       if(!this.localAngle){return;}
-      var uoc = this.getUsedObj()._cache.content;
+      var uoc = this.getUsedObj()._cache.global_content;
       if(!uoc){return;}
       var uocx = uoc.x, uocy = uoc.y, uocw = uoc.width, uoch = uoc.height;
       var gz = this.localToGlobal(new fabric.Point(0,0));

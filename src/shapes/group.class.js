@@ -127,7 +127,7 @@
       var canvas = this.getCanvas();
       if(canvas){
         canvas.addToMouseListeners(object);
-        !object._cache.content && typeof object.forEachObjectRecursive === 'function' && object.forEachObjectRecursive(function(obj){canvas.addToMouseListeners(obj);});
+        !object._cache.global_content && typeof object.forEachObjectRecursive === 'function' && object.forEachObjectRecursive(function(obj){canvas.addToMouseListeners(obj);});
       }
       object.group = this;
       if(object.id){
@@ -143,7 +143,7 @@
       var canvas = this.getCanvas();
       if(canvas){
         canvas.removeFromMouseListeners(object);
-        !object._cache.content && typeof object.forEachObjectRecursive === 'function' && object.forEachObjectRecursive(function(obj){canvas.removeFromMouseListeners(obj);});
+        !object._cache.global_content && typeof object.forEachObjectRecursive === 'function' && object.forEachObjectRecursive(function(obj){canvas.removeFromMouseListeners(obj);});
       }
       delete object.group;
       object.set('active', false);
@@ -348,6 +348,21 @@
         '</g>');
     },
     /* _TO_SVG_END_ */
+
+
+		/** Get object to be rasterized once rasterize method is called 
+		 * Since group will allways tell ya document dimensions as it's width and height, try to find object named as
+		 * {id}_rasterize and return it. If there is none, return group obj
+		 * @return {fabric.Object}
+		 * @chainable
+		**/
+
+		getRasterizationObject : function () {
+			var rid = this.id + '_rasterize';
+			return (this[rid]) ? this[rid] : this;
+		}
+
+
 
   });
 

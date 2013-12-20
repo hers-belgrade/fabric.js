@@ -470,6 +470,8 @@
      * @param {Boolean} fromLeft When true, context is transformed to object's top/left corner. This is used when rendering text on Node
      */
     transform: function(ctx) {
+
+
       var m = this.transformMatrix;
       this._currentTransform = ctx._currentTransform;
       if (m) {
@@ -522,6 +524,34 @@
       this._currentGlobalTransform = ctx._currentTransform;
       this._currentLocalTransform = m;
       this.localRotate(ctx);
+
+
+
+			/*
+			if(this.shouldRasterize){
+				delete this.shouldRasterize;
+				var obj = this.getRasterizationObject();
+				var w = obj.get('width');
+				var h = obj.get('height');
+
+				var offel = fabric.document.createElement('canvas');
+				offel.width = w*fabric.backingScale;
+				offel.height = h*fabric.backingScale;
+				var lctx = offel.getContext('2d');
+
+				var lm = [1,0,0,1,0,0];
+				lm = fabric.util.multiplyTransformMatrices(lm, fabric.util.matrixInverse([1,0,0,1,obj.left,obj.top]));
+				lm = fabric.util.multiplyTransformMatrices(lm, fabric.util.matrixInverse(this._localTransformationMatrix));
+				lm = fabric.util.multiplyTransformMatrices(lm, fabric.util.matrixInverse(this._currentGlobalTransform));
+
+				//console.log(obj, this);
+				lctx.transform.apply(lctx,lm);
+				lctx._currentTransform = [1,0,0,1,0,0];
+				this.render(lctx);
+
+				this._cache.local_content = new fabric.Sprite(offel,{x:0, y:0, width:w, height:h});
+			}
+				*/
     },
 
     _extraTransformations : function(ctx){
@@ -871,8 +901,8 @@
       if (!this.visible) return;
       if (this.opacity===0) return;
       if (this.display==='none') return;
-      if(this._cache.content){
-        this._cache.content.render(ctx);
+      if(this._cache.global_content){
+        this._cache.global_content.render(ctx);
         return;
       }
       //var _render_start = (new Date()).getTime();
@@ -881,25 +911,58 @@
       ctx.save();
 
       this.transform(ctx); //there is a special ctx.save in this call
+
+
       if(topctx){
         this.drawBorderRect(topctx);
       }
 
       //this._setShadow(ctx);
       //this.clipTo && fabric.util.clipContext(this, ctx);
-      this._render(ctx, topctx);
-      //this.clipTo && ctx.restore();
-      ctx.restore();
-      if(!ctx.suppressPaint){
-        this._paint(ctx);
-      }
-      this._removeShadow(ctx);
+
+      if(this._cache.local_content){
+				ctx.transform.apply(ctx,this._cache.local_content_transformation);
+        this._cache.local_content.render(ctx);
+				ctx.restore();
+			}else{
+				this._render(ctx, topctx);
+				//this.clipTo && ctx.restore();
+				ctx.restore();
+				if(!ctx.suppressPaint){
+					this._paint(ctx);
+				}
+				this._removeShadow(ctx);
+			}
 
       //var utstart = (new Date()).getTime();
       this.untransform(ctx,topctx);
       //console.log('\t\t','untransform done in',(((new Date()).getTime()) - utstart));
       //console.log('\t',this.type,this.id,'rendered in', (((new Date()).getTime()) - _render_start));
       this.finalizeRender(ctx);
+
+			if (this.shouldRasterize) {
+				console.log('will rasterize');
+				delete this.shouldRasterize;
+				var obj = this.getRasterizationObject();
+				var lm = obj._localTransformationMatrix;
+				var w = obj.get('width');
+				var h = obj.get('height');
+				var offel = fabric.document.createElement('canvas');
+				offel.width = Math.ceil(w*fabric.backingScale);
+				offel.height = Math.ceil(h*fabric.backingScale);
+
+				var lctx = offel.getContext('2d');
+				lctx._currentTransform = [1,0,0,1,0,0];
+
+				/// small but very obvious correction .... Why? It appears that canvas will floor down width/height numbers creating a pure integer sized canvas, and this 'move bit up and right' correction affects sprite to be positioned correct enough .... but that is just an assumption ...
+				var off_matrix = [1,0,0,1,(Math.ceil(w)-w)/2,-(Math.ceil(h)-h)/2]; 
+				off_matrix = fabric.util.multiplyTransformMatrices(off_matrix,fabric.util.matrixInverse(obj._currentGlobalTransform));
+				off_matrix = fabric.util.multiplyTransformMatrices(off_matrix, this._currentGlobalTransform);
+				lctx.transform.apply(lctx,off_matrix);
+				this.render(lctx);
+				this._cache.local_content = new fabric.Sprite(offel,{x:0, y:0, width:w, height:h});
+				this._cache.local_content_transformation = lm;
+			}
     },
 
     accountForGradientTransform: function(p1,p2){},
@@ -1299,7 +1362,20 @@
         oc && oc.call(this);
       }});
       return this;
-    }
+    },
+
+		/** Get object to be rasterized once rasterize method is called 
+		 * @return {fabric.Object}
+		 * @chainable
+		**/
+		getRasterizationObject : function () {
+			return this;
+		},
+
+		rasterize : function () {
+			this.shouldRasterize=true;
+			this.invokeOnCanvas('renderAll');
+		}
   });
   /**
    * List of properties to consider when checking if state
