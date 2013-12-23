@@ -48,84 +48,79 @@
 				x : this.repeat.x && (this.area.x < 0 || this.area.x+this.area.width > this._element.width),
 				y : this.repeat.y && (this.area.y < 0 || this.area.y+this.area.height > this._element.height)
 			}
-			so_far = {y:this.area.y};
+
+
 			var self = this;
 
-			function repeat_x (canvas_y, slice_from) {
-				var canvas_x = 0; ///where I'm gona render on canvas ...
-				if (slice_from < 0) { slice_from = (slice_from % self._element.width) + self._element.width; }
-				var control_width = 0;
+			function repeat_axis (axis, other_pos, slice_from) {
+				var x_axis = (axis === 'x');
+				if (slice_from < 0) { 
+					slice_from = (x_axis) ? ((slice_from % self._element.width) + self._element.width) : ((slice_from % self._element.height) + self._element.height);
 
-				while (canvas_x < self.width) {
-					var render_width = self._element.width - slice_from;
-					if (render_width <= 0) return;
+				}
+				var control = 0;
+				var render_height = self.area.height;
+				var render_width = self.area.width;
+				var max_dimension = (x_axis) ? self.width : self.height;
+				var element_dimension = (x_axis) ? self._element.width : self._element.height;
+				var dynamic_dimension = 0;
+
+				while (dynamic_dimension < max_dimension) {
+					var render_dimension = element_dimension - slice_from;
+					if (render_dimension <= 0) return;
 					var should_break = false;
 
-
-					if (canvas_x+render_width > self.where) {
-						render_width = self.width- canvas_x;
+					if (dynamic_dimension +render_dimension > max_dimension) {
+						render_dimension = max_dimension - dynamic_dimension;
 						should_break = true;
 					}
 
-					if (self.repeat.y) {
-						repeat_y(canvas_x, self.area.y);
+
+					if (x_axis) {
+						if (self.repeat.y) {
+							repeat_axis('y', dynamic_dimension, self.area.y);
+						}else{
+							ctx.drawImage (
+									self._element,
+									//where I am clipping from
+									slice_from, other_pos, 
+									render_dimension*ms, render_height*ms,
+									//where I am pasting to
+									dynamic_dimension, other_pos,
+									render_dimension,render_height
+									);
+						}
 					}else{
 						ctx.drawImage (
 								self._element,
 								//where I am clipping from
-								slice_from, canvas_y, 
-								render_width*ms, self.area.height*ms,
+								0, slice_from,
+								render_width*ms, render_dimension*ms,
 								//where I am pasting to
-								canvas_x, canvas_y,
-								render_width,self.area.height 
+								other_pos, dynamic_dimension,
+								render_width,render_dimension 
 								);
-
 					}
 
 
-					canvas_x += render_width;
+					dynamic_dimension += render_dimension;
 					slice_from = 0;
-					control_width += render_width;
+					control += render_dimension;
 					if (should_break) break; /// just in case, if I get any weird float ...
-				}
 
-			}
-
-			function repeat_y (canvas_x, slice_from) {
-				var canvas_y = 0; ///where I'm gona render on canvas ...
-				if (slice_from < 0) { slice_from = (slice_from % self._element.height) + self._element.height; }
-				var control_height = 0;
-
-
-				while (canvas_y < self.height) {
-					var render_height = self._element.height - slice_from;
-					if (render_height <= 0) return;
-					var should_break = false;
-
-
-					if (canvas_y+render_height > self.height) {
-						render_height = self.height - canvas_y;
-						should_break = true;
-					}
-
-					ctx.drawImage (
-							self._element,
-							//where I am clipping from
-							0, slice_from, 
-							self.area.width*ms, render_height,
-							//where I am pasting to
-							canvas_x, canvas_y,
-							self.area.width,render_height 
-					);
-
-
-					canvas_y += render_height;
-					slice_from = 0;
-					control_height += render_height;
-					if (should_break) break; /// just in case, if I get any weird float ...
 				}
 			}
+		
+			function repeat_x (other_pos, slice_from) {
+				return repeat_axis('x', other_pos, slice_from);
+			}
+
+			function repeat_y (other_pos, slice_from) {
+				return repeat_axis('y', other_pos, slice_from);
+			}
+
 			if (should_repeat.x) {
+				///this will cover both x and y repeat if needed :D
 				return repeat_x (this.y, this.area.x);
 			}
 
@@ -140,61 +135,6 @@
 				this.x,this.y,
 				this.width, this.height
 			);
-			var so_far = {};
-			so_far.y = this._element.height;
-
-			if (should_repeat.x) {
-
-				return;
-			}
-
-			if (should_repeat.y) {
-				return;
-
-
-
-
-				console.log('ELEMENT IS ', this._element.height, 'high, and area is ', this.area.height);
-				/// ovo je zabavan deo: koliko treba puta ovo da ponovim, jednom je malo ....
-				var h = this.area.y+this.area.height - this._element.height;
-				var so_far = this.y+this.area.height;
-				ctx.drawImage(
-						this._element,
-						this.area.x*ms, 0,
-						this.width*ms, h*ms,
-						this.x, this.y + this.area.height-h,
-						this.width,h
-				);
-				ctx.drawImage(
-						this._element,
-						this.area.x*ms, this._element.height,
-						this.width*ms, h*ms,
-						this.x, this.y + 2*this.area.height-h,
-						this.width,h
-				);
-
-				return;
-			}
-			return;
-			console.log('WRAPPING?');
-
-
-
-
-			if (!this.area) {
-				return;
-			}else{
-				if (this.area.tile) {
-				}else{
-					ctx.drawImage(
-							this._element,
-							this.area.x, this.area.y,
-							this.area.width, this.area.height,
-							this.x, this.y,
-							this.area.width, this.area.height
-							);
-				}
-			}
     },
     /**
      * Returns object representation of an instance
