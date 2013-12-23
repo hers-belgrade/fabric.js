@@ -941,12 +941,13 @@
       this.finalizeRender(ctx);
 
 			if (this.shouldRasterize) {
-				console.log('will rasterize');
 				delete this.shouldRasterize;
 				var obj = this.getRasterizationObject();
 				var lm = obj._localTransformationMatrix;
 				var w = obj.get('width');
 				var h = obj.get('height');
+				console.log('will rasterize, height ',h,'width', w, obj.id);
+
 				var offel = fabric.document.createElement('canvas');
 				offel.width = Math.ceil(w*fabric.backingScale);
 				offel.height = Math.ceil(h*fabric.backingScale);
@@ -960,8 +961,12 @@
 				off_matrix = fabric.util.multiplyTransformMatrices(off_matrix, this._currentGlobalTransform);
 				lctx.transform.apply(lctx,off_matrix);
 				this.render(lctx);
+
+				var rc = !this._cache.local_content;
 				this._cache.local_content = new fabric.Sprite(offel,{x:0, y:0, width:w, height:h});
+
 				this._cache.local_content_transformation = lm;
+				rc ? this.fire ('raster:created', this._cache.local_content) : this.fire ('raster:changed', this._cache.local_content);
 			}
     },
 
@@ -1375,7 +1380,7 @@
 		rasterize : function () {
 			this.shouldRasterize=true;
 			this.invokeOnCanvas('renderAll');
-		}
+		},
   });
   /**
    * List of properties to consider when checking if state
