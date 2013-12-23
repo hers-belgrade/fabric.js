@@ -1381,6 +1381,12 @@
 			this.shouldRasterize=true;
 			this.invokeOnCanvas('renderAll');
 		},
+
+		setRasterArea : function (area_params, lc_props) {
+			if (!this._cache.local_content) return;
+			this._cache.local_content.setRasterArea(area_params, lc_props);
+			this.invokeOnCanvas('renderAll');
+		}
   });
   /**
    * List of properties to consider when checking if state
