@@ -36,6 +36,11 @@
 			};
       this.callSuper('initialize',element,options);
     },
+		setRasterArea: function (area_params, props) {
+			props && this.set(props);
+			this.set({area:area_params});
+			this.invokeOnCanvas('renderAll');
+		},
     _render : function(ctx){
 
 			////more work to be done ....
@@ -148,26 +153,6 @@
         name:this.name
       });
     },
-		setArea: function (na) {
-			///consider calling render all immidiatelly ...
-			var dims =  ['x', 'y', 'width', 'height'];
-			for (var i in dims) {
-				if ('undefined' != typeof(na[dims[i]])) this.area[dims[i]] = na[dims[i]];
-			}
-
-			if (na.repeat) {
-				if ('undefined' === typeof(na.repeat.x)) this.repeat.x = na.repeat.x;
-				if ('undefined' === typeof(na.repeat.y)) this.repeat.y = na.repeat.y;
-			}
-		},
-
-		getArea: function () {
-			return this.area;
-		},
-
-		removeArea : function () {
-			delete this.area;
-		}
   });
 
   /**
