@@ -941,6 +941,10 @@
       this.finalizeRender(ctx);
 
 			if (this.shouldRasterize) {
+				var params = {};
+				if (typeof(this.shouldRasterize) === 'object') {
+					fabric.util.object.extend(params, this.shouldRasterize);
+				}
 				delete this.shouldRasterize;
 				var obj = this.getRasterizationObject();
 				var lm = obj._localTransformationMatrix;
@@ -963,9 +967,11 @@
 				this.render(lctx);
 
 				var rc = !this._cache.local_content;
-				this._cache.local_content = new fabric.Sprite(offel,{x:0, y:0, width:w, height:h});
+				fabric.util.object.extend(params, {x:0, y:0, width:w, height:h});
+				this._cache.local_content = new fabric.Sprite(offel,params);
 
 				this._cache.local_content_transformation = lm;
+				this.invokeOnCanvas('renderAll');
 				rc ? this.fire ('raster:created', this._cache.local_content) : this.fire ('raster:changed', this._cache.local_content);
 			}
     },
@@ -1377,8 +1383,8 @@
 			return this;
 		},
 
-		rasterize : function () {
-			this.shouldRasterize=true;
+		rasterize : function (rasterize_params) {
+			this.shouldRasterize= rasterize_params || true;
 			this.invokeOnCanvas('renderAll');
 		},
   });

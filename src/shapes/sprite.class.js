@@ -35,7 +35,6 @@
 				y : false
 			};
       this.callSuper('initialize',element,options);
-
     },
     _render : function(ctx){
 
