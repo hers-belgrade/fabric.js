@@ -967,7 +967,7 @@
 				this.render(lctx);
 
 				var rc = !this._cache.local_content;
-				fabric.util.object.extend(params, {x:0, y:0, width:w, height:h});
+				fabric.util.object.extend({x:0, y:0, width:w, height:h},params);
 				this._cache.local_content = new fabric.Sprite(offel,params);
 
 				this._cache.local_content_transformation = lm;
