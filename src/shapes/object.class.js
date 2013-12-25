@@ -524,34 +524,6 @@
       this._currentGlobalTransform = ctx._currentTransform;
       this._currentLocalTransform = m;
       this.localRotate(ctx);
-
-
-
-			/*
-			if(this.shouldRasterize){
-				delete this.shouldRasterize;
-				var obj = this.getRasterizationObject();
-				var w = obj.get('width');
-				var h = obj.get('height');
-
-				var offel = fabric.document.createElement('canvas');
-				offel.width = w*fabric.backingScale;
-				offel.height = h*fabric.backingScale;
-				var lctx = offel.getContext('2d');
-
-				var lm = [1,0,0,1,0,0];
-				lm = fabric.util.multiplyTransformMatrices(lm, fabric.util.matrixInverse([1,0,0,1,obj.left,obj.top]));
-				lm = fabric.util.multiplyTransformMatrices(lm, fabric.util.matrixInverse(this._localTransformationMatrix));
-				lm = fabric.util.multiplyTransformMatrices(lm, fabric.util.matrixInverse(this._currentGlobalTransform));
-
-				//console.log(obj, this);
-				lctx.transform.apply(lctx,lm);
-				lctx._currentTransform = [1,0,0,1,0,0];
-				this.render(lctx);
-
-				this._cache.local_content = new fabric.Sprite(offel,{x:0, y:0, width:w, height:h});
-			}
-				*/
     },
 
     _extraTransformations : function(ctx){
@@ -921,6 +893,7 @@
       //this.clipTo && fabric.util.clipContext(this, ctx);
 
       if(this._cache.local_content){
+				console.log('WILL TRY TO RENDER ....', this._cache.local_content_transformation, this, this._cache.local_content);
 				ctx.transform.apply(ctx,this._cache.local_content_transformation);
         this._cache.local_content.render(ctx);
 				ctx.restore();
@@ -967,7 +940,7 @@
 				this.render(lctx);
 
 				var rc = !this._cache.local_content;
-				fabric.util.object.extend({x:0, y:0, width:w, height:h},params);
+				params = fabric.util.object.extend({x:0, y:0, width:w, height:h},params);
 				this._cache.local_content = new fabric.Sprite(offel,params);
 
 				this._cache.local_content_transformation = lm;
@@ -1384,7 +1357,7 @@
 		},
 
 		rasterize : function (rasterize_params) {
-			this.shouldRasterize= rasterize_params || true;
+			this.shouldRasterize = rasterize_params || true;
 			this.invokeOnCanvas('renderAll');
 		},
 

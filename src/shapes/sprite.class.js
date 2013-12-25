@@ -24,16 +24,9 @@
 
       this.x = options.x || 0;
       this.y = options.y || 0;
-			options.area = options.area || {
-				x : options.x,
-				y : options.y,
-				width: options.width,
-				height:options.height,
-			};
-			options.repeat = options.repeat || {
-				x : false,
-				y : false
-			};
+
+			options.area = fabric.util.object.extend({x: options.x, y:options.y, width:options.width, height:options.height},options.area);
+			options.repeat = fabric.util.object.extend({x:false, y:false}, options.repeat);
       this.callSuper('initialize',element,options);
     },
 		setRasterArea: function (area_params, props) {
@@ -139,6 +132,12 @@
 				this.x,this.y,
 				this.width, this.height
 			);
+				ctx.beginPath();
+				ctx.arc(0,0,10,0,2*Math.PI);
+				ctx.fillStyle = '#FF0000';
+				ctx.fill();
+				ctx.stroke();
+
     },
     /**
      * Returns object representation of an instance
