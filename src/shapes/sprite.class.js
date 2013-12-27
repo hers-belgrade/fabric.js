@@ -132,11 +132,13 @@
 				this.x,this.y,
 				this.width, this.height
 			);
+			/*
 				ctx.beginPath();
 				ctx.arc(0,0,10,0,2*Math.PI);
 				ctx.fillStyle = '#FF0000';
 				ctx.fill();
 				ctx.stroke();
+				*/
 
     },
     /**

@@ -893,7 +893,6 @@
       //this.clipTo && fabric.util.clipContext(this, ctx);
 
       if(this._cache.local_content){
-				console.log('WILL TRY TO RENDER ....', this._cache.local_content_transformation, this, this._cache.local_content);
 				ctx.transform.apply(ctx,this._cache.local_content_transformation);
         this._cache.local_content.render(ctx);
 				ctx.restore();
@@ -914,13 +913,19 @@
       this.finalizeRender(ctx);
 
 			if (this.shouldRasterize) {
+
+
+				var mult = fabric.util.multiplyTransformMatrices;
+				var inv = fabric.util.matrixInverse;
+
+
+
 				var params = {};
 				if (typeof(this.shouldRasterize) === 'object') {
 					fabric.util.object.extend(params, this.shouldRasterize);
 				}
 				delete this.shouldRasterize;
 				var obj = this.getRasterizationObject();
-				var lm = obj._localTransformationMatrix;
 				var w = obj.get('width');
 				var h = obj.get('height');
 				console.log('will rasterize, height ',h,'width', w, obj.id);
@@ -933,17 +938,23 @@
 				lctx._currentTransform = [1,0,0,1,0,0];
 
 				/// small but very obvious correction .... Why? It appears that canvas will floor down width/height numbers creating a pure integer sized canvas, and this 'move bit up and right' correction affects sprite to be positioned correct enough .... but that is just an assumption ...
-				var off_matrix = [1,0,0,1,(Math.ceil(w)-w)/2,-(Math.ceil(h)-h)/2]; 
-				off_matrix = fabric.util.multiplyTransformMatrices(off_matrix,fabric.util.matrixInverse(obj._currentGlobalTransform));
-				off_matrix = fabric.util.multiplyTransformMatrices(off_matrix, this._currentGlobalTransform);
+				var off_matrix = [1,0,0,1,(Math.ceil(w)-w)/2,-(Math.ceil(h)-h)/2];
+				if (obj.id != this.id) {
+					off_matrix = mult(off_matrix, inv(obj._currentGlobalTransform));
+					off_matrix = mult(off_matrix, this._currentTransform);
+					this._cache.local_content_transformation = obj._localTransformationMatrix;
+				}else{
+					off_matrix = mult(off_matrix, inv(this._currentGlobalTransform));
+					off_matrix = mult(off_matrix, this._currentTransform);
+					this._cache.local_content_transformation = [1,0,0,1,0,0];
+				}
+
 				lctx.transform.apply(lctx,off_matrix);
 				this.render(lctx);
 
 				var rc = !this._cache.local_content;
 				params = fabric.util.object.extend({x:0, y:0, width:w, height:h},params);
 				this._cache.local_content = new fabric.Sprite(offel,params);
-
-				this._cache.local_content_transformation = lm;
 				this.invokeOnCanvas('renderAll');
 				rc ? this.fire ('raster:created', this._cache.local_content) : this.fire ('raster:changed', this._cache.local_content);
 			}

@@ -59,8 +59,6 @@
 		rasterize: function (rasterize_params) {
 			var uo = this.getUsedObj();
 			if (!uo) return; //for now
-
-
 			return uo.rasterize(rasterize_params);
 		},
     forEachObjectRecursive: function(cb){
