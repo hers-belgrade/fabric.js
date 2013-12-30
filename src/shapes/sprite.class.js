@@ -31,19 +31,25 @@
     },
 		setRasterArea: function (area_params, props) {
 			props && this.set(props);
-			this.set({area:area_params});
+			var ts = fabric.util.object.extend(this.area, area_params);
+			this.set({area:ts});
 			this.invokeOnCanvas('renderAll');
 		},
     _render : function(ctx){
 
 			////more work to be done ....
+			var bs = fabric.backingScale;
 			var ms = fabric.masterScale;
-			this.area.y %= this._element.height;
-			this.area.x %= this._element.width;
+
+			var elw = this._element.width/bs;
+			var elh = this._element.height/bs;
+
+			var area_x = this.area.x % elw;
+			var area_y = this.area.y % elh;
 
 			var should_repeat = {
-				x : this.repeat.x && (this.area.x < 0 || this.area.x+this.area.width > this._element.width),
-				y : this.repeat.y && (this.area.y < 0 || this.area.y+this.area.height > this._element.height)
+				x : this.repeat.x && (area_x < 0 || area_x+this.area.width > elw),
+				y : this.repeat.y && (area_y < 0 || area_y+this.area.height > elw)
 			}
 
 
@@ -52,14 +58,14 @@
 			function repeat_axis (axis, other_pos, slice_from) {
 				var x_axis = (axis === 'x');
 				if (slice_from < 0) { 
-					slice_from = (x_axis) ? ((slice_from % self._element.width) + self._element.width) : ((slice_from % self._element.height) + self._element.height);
+					slice_from = (x_axis) ? ((slice_from % elw) + elw) : ((slice_from % elh) + elh);
 
 				}
 				var control = 0;
 				var render_height = self.area.height;
 				var render_width = self.area.width;
 				var max_dimension = (x_axis) ? self.width : self.height;
-				var element_dimension = (x_axis) ? self._element.width : self._element.height;
+				var element_dimension = (x_axis) ? elw : elh;
 				var dynamic_dimension = 0;
 
 				while (dynamic_dimension < max_dimension) {
@@ -80,19 +86,19 @@
 							ctx.drawImage (
 									self._element,
 									//where I am clipping from
-									slice_from, other_pos, 
-									render_dimension*ms, render_height*ms,
+									slice_from*bs, other_pos*bs, 
+									render_dimension*bs, render_height*bs,
 									//where I am pasting to
 									dynamic_dimension, other_pos,
 									render_dimension,render_height
-									);
+							 );
 						}
 					}else{
 						ctx.drawImage (
 								self._element,
 								//where I am clipping from
-								0, slice_from,
-								render_width*ms, render_dimension*ms,
+								0, slice_from*bs,
+								render_width*bs, render_dimension*bs,
 								//where I am pasting to
 								other_pos, dynamic_dimension,
 								render_width,render_dimension 
@@ -115,32 +121,28 @@
 			function repeat_y (other_pos, slice_from) {
 				return repeat_axis('y', other_pos, slice_from);
 			}
-
 			if (should_repeat.x) {
 				///this will cover both x and y repeat if needed :D
-				return repeat_x (this.y, this.area.x);
+				return repeat_x (this.y, area_x);
 			}
 
 			if (should_repeat.y) {
-				return repeat_y(this.x,this.area.y);
+				return repeat_y(this.x,area_y);
 			}
 
 			ctx.drawImage(
 				this._element,
-				this.area.x*ms,this.area.y*ms,
-				this.area.width*ms,  this.area.height*ms,
+				area_x*bs,area_y*bs,
+				this.area.width*bs,  this.area.height*bs,
 				this.x,this.y,
 				this.width, this.height
 			);
-			/*
-				ctx.beginPath();
-				ctx.arc(0,0,10,0,2*Math.PI);
-				ctx.fillStyle = '#FF0000';
-				ctx.fill();
-				ctx.stroke();
-				*/
-
     },
+		sanitize: function () {
+			var bs = fabric.backingScale;
+			this.area.x %= (this._element.width/bs);
+			this.area.y %= (this._element.height/bs);
+		},
     /**
      * Returns object representation of an instance
      * @param {Array} propertiesToInclude Any properties that you might want to additionally include in the output

@@ -28,8 +28,27 @@
       this._originalElement = element;
     },
     setUsedObj: function(object) {
+			var self = this;
+			if (this.usedObj) {
+				this.usedObj.off('raster:created', this._rasterHandlers.create);
+				this.usedObj.off('raster:changed', this._rasterHandlers.changed);
+				delete this._rasterHandlers;
+			}
+
+
+			this._rasterHandlers = {
+				create: function (sprite) {
+					self.fire('raster:created', sprite);
+				},
+				changed: function (sprite) {
+					self.fire('raster:changed', sprite);
+				}
+			}
+
       object.group = this;
       this.usedObj = object;
+			this.usedObj.on('raster:created', this._rasterHandlers.create);
+			this.usedObj.on('raster:changed', this._rasterHandlers.changed);
       delete this['xlink:href'];
     },
     toObject: function (propertiesToInclude) {
@@ -56,6 +75,11 @@
       }
       return this.usedObj;
     },
+		setRasterArea: function (area_params, lc_props) {
+			var uo = this.getUsedObj();
+			if (!uo) return;
+			return uo.setRasterArea(area_params, lc_props);
+		},
 		rasterize: function (rasterize_params) {
 			var uo = this.getUsedObj();
 			if (!uo) return; //for now

@@ -917,6 +917,7 @@
 
 				var mult = fabric.util.multiplyTransformMatrices;
 				var inv = fabric.util.matrixInverse;
+				var bs = fabric.backingScale;
 
 
 
@@ -949,12 +950,15 @@
 					this._cache.local_content_transformation = [1,0,0,1,0,0];
 				}
 
+				off_matrix = mult(off_matrix, [bs, 0, 0, bs, 0, 0]);
 				lctx.transform.apply(lctx,off_matrix);
 				this.render(lctx);
 
 				var rc = !this._cache.local_content;
 				params = fabric.util.object.extend({x:0, y:0, width:w, height:h},params);
 				this._cache.local_content = new fabric.Sprite(offel,params);
+				///controversial ....
+				this._cache.local_content.group = this;
 				this.invokeOnCanvas('renderAll');
 				rc ? this.fire ('raster:created', this._cache.local_content) : this.fire ('raster:changed', this._cache.local_content);
 			}
