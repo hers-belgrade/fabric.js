@@ -132,8 +132,8 @@
 
 			ctx.drawImage(
 				this._element,
-				area_x*bs,area_y*bs,
-				this.area.width*bs,  this.area.height*bs,
+				area_x*ms,area_y*ms,
+				this.area.width*ms,  this.area.height*ms,
 				this.x,this.y,
 				this.width, this.height
 			);
