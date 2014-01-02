@@ -130,12 +130,16 @@
 				return repeat_y(this.x,area_y);
 			}
 
+			//anyway, avoid negative values ...
+			var x_correction = (area_x < 0) ? -area_x: 0;
+			var y_correction = (area_y < 0) ? -area_y: 0;
+
 			ctx.drawImage(
 				this._element,
-				area_x*bs,area_y*bs,
-				this.area.width*bs,  this.area.height*bs,
-				this.x,this.y,
-				this.width, this.height
+				(area_x+x_correction)*bs,(area_y+y_correction)*bs,
+				(this.area.width-x_correction)*bs,  (this.area.height-y_correction)*bs,
+				(this.x-x_correction),(this.y-y_correction),
+				(this.width-x_correction), (this.height - y_correction)
 			);
     },
 		sanitize: function () {
