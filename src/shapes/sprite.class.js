@@ -136,8 +136,8 @@
 
 			ctx.drawImage(
 				this._element,
-				(area_x+x_correction)*bs,(area_y+y_correction)*bs,
-				(this.area.width-x_correction)*bs,  (this.area.height-y_correction)*bs,
+				(area_x+x_correction)*ms,(area_y+y_correction)*ms,
+				(this.area.width-x_correction)*ms,  (this.area.height-y_correction)*ms,
 				(this.x-x_correction),(this.y-y_correction),
 				(this.width-x_correction), (this.height - y_correction)
 			);
