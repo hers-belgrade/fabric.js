@@ -9,6 +9,9 @@
   }
 
   fabric.Defs = fabric.util.createClass(fabric.Group, {
+    initialize: function(objects,options){
+      this.callSuper('initialize',objects,options);
+    },
     _render: function(ctx,topctx){
     }
   });

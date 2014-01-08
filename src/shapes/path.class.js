@@ -682,18 +682,8 @@
    */
   fabric.Path.fromElement = function(element, callback, options) {
     var parsedAttributes = fabric.parseAttributes(element, fabric.Path.ATTRIBUTE_NAMES);
-    var p = new fabric.Path(parsedAttributes.d, extend(parsedAttributes, options,{_path_element: element}));
-    callback && callback(p);
+    return new fabric.Path(parsedAttributes.d, extend(parsedAttributes, options,{_path_element: element}));
   };
   /* _FROM_SVG_END_ */
-
-  /**
-   * Indicates that instances of this type are async
-   * @static
-   * @memberOf fabric.Path
-   * @type Boolean
-   * @default
-   */
-  fabric.Path.async = true;
 
 })(typeof exports !== 'undefined' ? exports : this);

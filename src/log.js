@@ -22,7 +22,8 @@ if (typeof console !== 'undefined') {
     };
   }
 
-	fabric.error = function (err) {
-		console.log(err.stack);
-	}
+  fabric.error = function (err) {
+    console.log(err);
+    console.log(err.stack);
+  }
 }

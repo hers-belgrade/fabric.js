@@ -361,6 +361,9 @@
 
   function parseFontDeclaration(value, oStyle) {
 
+    if(!value){return;}
+    if(typeof value !== 'string'){return;}
+
     // TODO: support non-px font size
     var match = value.match(/(normal|italic)?\s*(normal|small-caps)?\s*(normal|bold|bolder|lighter|100|200|300|400|500|600|700|800|900)?\s*(\d+)px(?:\/(normal|[\d\.]+))?\s+(.*)/);
 
@@ -682,94 +685,123 @@
     };
   })();
 
-  function processGroup(map,elements,g,options,cb){
-    var genericAttributes = fabric.SHARED_ATTRIBUTES.concat(fontAttributes).concat(fillAttributes);
+  function produceGroup(g,gelements,options){
+    var ga = fabric.parseAttributes(g,fabric.SHARED_ATTRIBUTES.concat(fontAttributes).concat(fillAttributes));
+    ga.left = 0;
+    ga.top = 0;
+    ga.width = ga.width || options.width;
+    ga.height = ga.height || options.height;
+    resolveGradients(gelements);
+    var group;
+    if(g.id==='static'){
+      group = new fabric.StaticLayer(gelements,ga);
+    }else{
+      switch(g.tagName){
+        case 'defs':
+          group = new fabric.Defs(gelements,ga);
+          break;
+        case 'clipPath':
+          group = new fabric.ClipPath(gelements,ga);
+          break;
+        case 'mask':
+        case 'g':
+        case 'svg':
+          group = new fabric.Group(gelements,ga);
+          break;
+        default:
+          console.log('what is this?',g);
+          break;
+      }
+    }
+    return group;
+  };
+
+  function processGroup(g,options,cb){
     //console.log('PROCESSING GROUP ', g);
-    var processElement = (function(_cn,_cb){
-      var childNodes = _cn, gmap = {}, gelements = [], cb = _cb;
-      var worker = function(i){
-        var gc = childNodes[i];
-        if(!gc){
-          var ga = fabric.parseAttributes(g,genericAttributes);
-          ga.left = 0;
-          ga.top = 0;
-          ga.width = ga.width || options.width;
-          ga.height = ga.height || options.height;
-          var group;
-          if(g.id==='static'){
-            group = new fabric.StaticLayer(gelements,ga);
-          }else{
-            switch(g.tagName){
-              case 'defs':
-                group = new fabric.Defs(gelements,ga);
-                break;
-              case 'clipPath':
-                group = new fabric.ClipPath(gelements,ga);
-                break;
-              case 'mask':
-              case 'g':
-              case 'svg':
-                group = new fabric.Group(gelements,ga);
-                break;
-              default:
-                console.log('what is this?',g);
-                break;
-            }
-          }
-          if(!group){
-            cb(g);
-            return;
-          }
-          for(var i in gmap){
-            group[i] = gmap[i];
-          }
-          elements.push(group);
-          if(g.id){
-            map[g.id] = group;
-          }
-          cb(g);
-          return;
+    var gelements = [], jobtodo = g.childNodes.length;
+    function finishall(){
+      cb && cb(produceGroup(g,gelements,options));
+    }
+    if(!jobtodo){
+      finishall();
+      return;
+    }
+    var finalize = (function(jtd){
+      var jobtodo = jtd;
+      return function(obj){
+        if(obj){
+          gelements.push(obj);
         }
-        var next = function(){worker(i+1);};
-        if(gc.tagName){
-          if(gc.tagName!=='g'){
-           if(/^(path|circle|polygon|polyline|ellipse|rect|line|image|text|use)$/.test(gc.tagName)){
-            fabric.parseElements([gc],(function(_gm,_ge,_nxt){
-              var gmap = _gm,gelements=_ge,next=_nxt;
-              return function(instances){
-                var inst = instances[0];
-                if(inst.id){
-                  gmap[inst.id] = inst;
-                }
-                gelements.push(inst);
-                next();
-              };
-            })(gmap,gelements,next),clone(options));
-           }else{
-             switch(gc.tagName){
-               case 'defs':
-                 //console.log('defs',gc);
-                 processGroup(gmap,gelements,gc,options,next);
-                 break;
-               case 'clipPath':
-                 //console.log('clipPath',gc);
-                 processGroup(gmap,gelements,gc,options,next);
-                 break;
-               default:
-                 next();
-                 break;
-             }
-           }
-          }else{
-            processGroup(gmap,gelements,gc,options,next);
-          }
+        jobtodo--;
+        if(!jobtodo){
+          finishall();
         }else{
-          next();
+          if(jobtodo<0){
+            console.log(g.id,'still got',jobtodo,'to go?!');
+          }
         }
       };
-      return worker;
-    })(g.childNodes,cb);
-    processElement(0);
+    })(jobtodo);
+    var worker = function(gc){
+      //this is the finalize func!
+      if(gc.tagName){
+         switch(gc.tagName){
+           case 'g':
+             //console.log('g',gc);
+             processGroup(gc,options,this);
+             break;
+           case 'defs':
+             //console.log('defs',gc);
+             processGroup(gc,options,this);
+             break;
+           case 'clipPath':
+             //console.log('clipPath',gc);
+             processGroup(gc,options,this);
+             break;
+           default:
+             if(/^(path|circle|polygon|polyline|ellipse|rect|line|image|text|use)$/.test(gc.tagName)){
+                var klass = fabric[capitalize(gc.tagName)];
+                if (klass && klass.fromElement) {
+                  try {
+                    if (klass.async) {
+                      klass.fromElement(gc, this, options);
+                    }
+                    else {
+                      this(klass.fromElement(gc, options));
+                    }
+                  }
+                  catch(err) {
+                    fabric.error(err);
+                  }
+                }else{
+                  console.log(gc.tagName,'does not yield a class');
+                  this();
+                }
+              }else{
+                //console.log(gc.tagName,'does not match');
+                this();
+              }
+              break;
+        }
+      }else{
+        this();
+      }
+    };
+    Array.prototype.forEach.call(g.childNodes,worker,finalize);
+    if(!jobtodo){
+      finishall();
+    }
+    /*
+    if(jobtodo){
+      console.log('parse done on',g.id,'still got',jobtodo,'to go');
+      for(var i in gelements){
+        if(typeof gelements[i] === 'undefined'){
+          console.log(g.childNodes[i]);
+        }
+      }
+    }
+    */
+    return;
   };
 
   function linkUses(svgelement){
@@ -878,21 +910,18 @@
       });
       */
 
-      var hierarchy = {};
-      var elements = [];
-      processGroup(hierarchy,elements,doc,options,function(){
+      processGroup(doc,options,function(svg){
         var parsedone = new Date();
         fabric.documentParsingTime = parsedone - startTime;
         if(callback) {
           /*
-          var anchor = elements[0].getObjectById('anchor');
+          var anchor = svg.getObjectById('anchor');
           if(anchor&&anchor.type==='rect'){
-            elements[0].anchorX = anchor.left+(anchor.width / 2);
-            elements[0].anchorY = anchor.top+(anchor.height / 2);
+            svg.anchorX = anchor.left+(anchor.width / 2);
+            svg.anchorY = anchor.top+(anchor.height / 2);
             anchor.set({opacity:0});
           }
           */
-          var svg = elements[0];
           var se = svg['static'];
           if(se){
             var seos = se.getObjects();
@@ -909,7 +938,7 @@
           linkUses(svg);
           fabric.documentTraversingTime = new Date() - parsedone;
           console.log('Parsed in',fabric.documentParsingTime,'traversed in',fabric.documentTraversingTime);
-          setTimeout(function(){callback(svg, options);},0);
+          setTimeout(function(){callback(svg, options);},1);
         }
       });
 
