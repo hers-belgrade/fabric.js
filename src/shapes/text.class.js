@@ -171,6 +171,7 @@
      */
     initialize: function(text, options) {
       this.callSuper('initialize',options);
+			this.textLines = [text];
 			this.text = text;
       this.setCoords();
     },
