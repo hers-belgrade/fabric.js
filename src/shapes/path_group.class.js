@@ -210,7 +210,6 @@
    * @static
    * @memberOf fabric.PathGroup
    * @param {Object} object
-   * @param {Function} callback Callback to invoke when an fabric.PathGroup instance is created
    */
   fabric.PathGroup.fromObject = function(object) {
     if (typeof object.paths === 'string') {
@@ -221,8 +220,6 @@
         delete object.paths;
 
         var pathGroup = fabric.util.groupSVGElements(elements, object, pathUrl);
-
-        callback(pathGroup);
       });
     }
     else {
@@ -231,14 +228,5 @@
       return new fabric.PathGroup(fabric.util.enlivenObjects(object.paths, object));
     }
   };
-
-  /**
-   * Indicates that instances of this type are async
-   * @static
-   * @memberOf fabric.PathGroup
-   * @type Boolean
-   * @default
-   */
-  fabric.PathGroup.async = true;
 
 })(typeof exports !== 'undefined' ? exports : this);

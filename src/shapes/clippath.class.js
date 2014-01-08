@@ -9,6 +9,9 @@
   }
 
   fabric.ClipPath = fabric.util.createClass(fabric.Group, {
+    initialize: function(objects,options){
+      this.callSuper('initialize',objects,options);
+    },
     transform: function(ctx){
       this.callSuper('transform',ctx);
       ctx.suppressPaint=true;

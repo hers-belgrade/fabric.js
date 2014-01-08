@@ -148,21 +148,20 @@
 	}
 	var image_pending = {};
 
+  function report_load(callback, context, result){
+    ('function' === typeof(callback)) && callback.call(context, result);
+  };
+
   function loadImage(url, callback, context) {
-
-		function report_done (context,callback,img) {
-			('function' === typeof(callback)) && callback.call(context, img);
-		}
-
     if (url) {
 			if (image_cahche[url]) {
 				//console.log('WILL GET IT FROM CACHE ', url);
-				return report_done(context, callback, image_cahche[url]);
+				return report_load(callback,context,image_cahche[url]);
 			}
 
 			if (image_pending[url]) {
 				///subscribe to get info if pending for it ...
-				image_pending[url].push (function() { report_done(context, callback, image_cahche[url]); })
+				image_pending[url].push (function() { report_load(callback,context,image_cahche[url]); })
 				return;
 			}
 
@@ -172,8 +171,8 @@
       img.onload = function () {
         img.onload = null;
 				image_cahche[url] = img;
-				report_done(context, callback, img);
-				//console.log('will check if any pending :', image_pending[url].length);
+				report_load(callback,context,img);
+				console.log('will check if any pending :', image_pending[url].length);
 				while (image_pending[url].length) {
 					(image_pending[url].shift())();
 				}
@@ -181,9 +180,8 @@
       };
 
       img.src = url;
-    }
-    else {
-      callback && callback.call(context, url);
+    } else {
+      report_load(callback,context,url);
     }
   }
 

@@ -51,13 +51,15 @@
       options = options || { };
 
       this._objects = objects || [];
-      for (var i = this._objects.length; i--; ) {
-        var o = this._objects[i];
+      this._objects.forEach(function(o){
+        if(!o){
+          console.log('no object at',i,'in',this._objects);
+        }
         if(o.id){
           this[o.id] = o;
         }
         o.group = this;
-      }
+      },this);
 
       this.originalState = { };
       this.callSuper('initialize');
@@ -378,14 +380,6 @@
     return new fabric.Group(fabric.util.enlivenObjects(object.objects),object);
   };
 
-  /**
-   * Indicates that instances of this type are async
-   * @static
-   * @memberOf fabric.Group
-   * @type Boolean
-   * @default
-   */
-  fabric.Group.async = true;
   fabric.Group.findChildGroups = function (s) {
     if (!s || !s._objects) return[];
     var ret = [];

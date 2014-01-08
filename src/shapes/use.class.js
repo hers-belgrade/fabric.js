@@ -23,7 +23,7 @@
     getElement: function () {
       return this._element;
     },
-    setElement: function (element, callback) {
+    setElement: function (element) {
       this._element = element;
       this._originalElement = element;
     },
@@ -117,11 +117,11 @@
 
   fabric.Use.ATTRIBUTE_NAMES = fabric.SHARED_ATTRIBUTES.concat('x y width height xlink:href'.split(' '))
   fabric.Use.fromElement = function (element, callback, options) {
-    var parsedAttributes = fabric.parseAttributes(element, fabric.Image.ATTRIBUTE_NAMES);
-    callback( new fabric.Use(extend((options ? fabric.util.object.clone(options) : { }), parsedAttributes)) );
+    return new fabric.Use(extend((options ? fabric.util.object.clone(options) : { }), fabric.parseAttributes(element, fabric.Image.ATTRIBUTE_NAMES)));
   };
+
   fabric.Use.fromObject = function (object) {
     return new fabric.Use(object);
   };
-  fabric.Use.async = true;
+
 })(typeof exports !== 'undefined' ? exports : this);

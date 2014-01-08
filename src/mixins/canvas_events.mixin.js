@@ -58,17 +58,15 @@
           p.listeners=cnvas.currentListeners||[];
           break;
       }
-      setTimeout(function(){
-        cnvas.distributePositionEvent(p,evntalias);
-        switch(eventalias){
-          case 'mouse:up':
-            cnvas.currentListeners=[];
-            break;
-          default:
-            cnvas.currentListeners=p.listeners;
-            break;
-        }
-      },1);
+      cnvas.distributePositionEvent(p,evntalias);
+      switch(eventalias){
+        case 'mouse:up':
+          cnvas.currentListeners=[];
+          break;
+        default:
+          cnvas.currentListeners=p.listeners;
+          break;
+      }
     };
     addListener(cnvasel, evntname, evnthandler);
     cnvas._positionEventDisposers[evntname] = function(){
