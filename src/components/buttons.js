@@ -46,9 +46,9 @@
     function renderState(state){
       for(var i in renderables){
         if(i===state){
-          renderables[i].show();
+          renderables[i] && renderables[i].show();
         }else{
-          renderables[i].hide();
+          renderables[i] && renderables[i].hide();
         }
       }
       ra();
