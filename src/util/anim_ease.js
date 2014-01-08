@@ -297,6 +297,47 @@
     return easeOutBounce (t*2-d, 0, c, d) * 0.5 + c*0.5 + b;
   }
 
+	/*
+	 * t - currentTime
+	 * b - startValue
+	 * c - byValue
+	 * d - duration
+	 */
+	function easeAstableFast(t, b, c, d) {
+		var cs = 10;
+		var segment = d/cs;
+		var ct = cs*t/d;
+
+		var ret;
+
+
+		var myOutElastic = function (t,b,c,d) {
+			var s=1.70158;var p=0;var a=c;
+			if (t===0) return b;
+			t /= d;
+			if (t===1) return b+c;
+			if (!p) p=d*0.308;
+			if (a < Math.abs(c)) { 
+				a=c; s=p/4; 
+			}
+			else {
+				s = p/(2*Math.PI) * Math.asin (c/a);
+			}
+			return a*Math.pow(1.42,-10*t) * Math.sin( (t*d-s)*(2*Math.PI)/p ) + c + b;
+		}
+		var ts = Math.floor(ct);
+		if (ts == 0) {
+			ret = -c/10 * Math.sin(2*ct * (Math.PI/2));
+		}else{
+			ret = myOutElastic(t-d/cs,b,c,0.9*d);
+		}
+		return ret;
+	}
+
+	function easeAstableSlow (t, b, c, d) {
+		return easeAstableFast(t, b, c, d);
+	}
+
   /**
    * Easing functions
    * See <a href="http://gizma.com/easing/">Easing Equations by Robert Penner</a>
@@ -333,7 +374,9 @@
     easeInOutBack: easeInOutBack,
     easeInBounce: easeInBounce,
     easeOutBounce: easeOutBounce,
-    easeInOutBounce: easeInOutBounce
+    easeInOutBounce: easeInOutBounce,
+		easeAstableFast: easeAstableFast,
+		easeAstableSlow: easeAstableSlow,
   };
 
 }());

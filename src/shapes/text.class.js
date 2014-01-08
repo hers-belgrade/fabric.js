@@ -171,8 +171,7 @@
      */
     initialize: function(text, options) {
       this.callSuper('initialize',options);
-
-      this.set({text:text});
+			this.text = text;
       this.setCoords();
     },
 
@@ -222,7 +221,7 @@
       }
 
       if (this.tspans.length == 0) {
-        this.set('text',t);
+        this.tspans[0].set('text',t);
         return;
       }
 

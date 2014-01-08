@@ -56,18 +56,18 @@
     ctx.scale(fabric.masterScale,fabric.masterScale);
     ctx._currentTransform = [1,0,0,1,0,0];
     for(var i in this.rectMap){
-      delete this[i]._cache.content;
+      delete this[i]._cache.global_content;
     }
     this.show();
     this.originalrender(ctx);
     for(var i in this.rectMap){
       //console.log('rect',i,this.rectMap[i]);
-      if(this[i]._cache.content){
-        //console.log('old sprite',this[i]._cache.content);
+      if(this[i]._cache.global_content){
+        //console.log('old sprite',this[i]._cache.global_content);
       }
-      this[i]._cache.content = new fabric.Sprite(this.canvas,this.rectMap[i]);
+      this[i]._cache.global_content = new fabric.Sprite(this.canvas,this.rectMap[i]);
       //console.log('new sprite for',this[i].id);
-      //console.log('new sprite',this[i]._cache.content);
+      //console.log('new sprite',this[i]._cache.global_content);
     }
     ctx.restore();
   };
