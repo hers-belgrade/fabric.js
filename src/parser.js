@@ -728,24 +728,13 @@
     }
     var finalize = (function(jtd){
       var jobtodo = jtd;
-      return function _finalize(thing){
+      var _finalize = function(obj,index){
         jobtodo--;
-        if(thing){
-          if(typeof thing === 'function'){
-            jobtodo++;
-            gelements.push(null);
-            thing(arguments[1],(function(index){
-              var _i = index;
-              return function(obj){
-                _finalize(obj,_i);
-              };
-            })(gelements.length-1), arguments[2]);
+        if(obj){
+          if(typeof index !== 'undefined'){
+            gelements[index] = obj;
           }else{
-            if(typeof arguments[1] !== 'undefined'){
-              gelements[arguments[1]] = thing;
-            }else{
-              gelements.push(thing);
-            }
+            gelements.push(obj);
           }
         }
         if(!jobtodo){
@@ -754,6 +743,23 @@
           if(jobtodo<0){
             console.log(g.id,'still got',jobtodo,'to go?!');
           }
+        }
+      };
+      return function (thing){
+        if(thing){
+          if(typeof thing === 'function'){
+            gelements.push(null);
+            thing(arguments[1],(function(index,fnlz){
+              var _i = index, _f = fnlz;
+              return function(obj){
+                _f(obj,_i);
+              };
+            })(gelements.length-1,_finalize), arguments[2]);
+          }else{
+            _finalize(thing,arguments[1]);
+          }
+        }else{
+          _finalize();
         }
       };
     })(jobtodo);
