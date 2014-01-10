@@ -134,13 +134,21 @@
 			var x_correction = (area_x < 0) ? -area_x: 0;
 			var y_correction = (area_y < 0) ? -area_y: 0;
 
+
+			try {
 			ctx.drawImage(
 				this._element,
 				(area_x+x_correction)*ms,(area_y+y_correction)*ms,
-				(this.area.width-x_correction)*ms,  (this.area.height-y_correction)*ms,
+				Math.min((this.area.width-x_correction)*ms, this._element.width),  Math.min((this.area.height-y_correction)*ms, this._element.height),
+				//(this.area.width-x_correction)*ms,(this.area.height-y_correction)*ms,
 				(this.x-x_correction),(this.y-y_correction),
-				(this.width-x_correction), (this.height - y_correction)
+				this.width-x_correction,this.height - y_correction
 			);
+			}catch (e) {
+				console.log('====>',this.area.width, this.area.height,((this.area.width-x_correction)*ms - this._element.width),((this.area.height-y_correction)*ms - this._element.height));
+				//console.log(this.area.width, this.area.height, ms, should_repeat);
+				//console.log('PROBLEM', e);
+			}
     },
 		sanitize: function () {
 			var bs = fabric.backingScale;
