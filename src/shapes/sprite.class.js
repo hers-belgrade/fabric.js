@@ -41,8 +41,8 @@
 			var bs = fabric.backingScale;
 			var ms = fabric.masterScale;
 
-			var elw = this._element.width/bs;
-			var elh = this._element.height/bs;
+			var elw = bs*this._element.width/(ms);
+			var elh = bs*this._element.height/(ms);
 
 			var area_x = this.area.x % elw;
 			var area_y = this.area.y % elh;
