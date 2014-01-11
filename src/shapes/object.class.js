@@ -1000,7 +1000,8 @@
      */
     _renderFill: function(ctx) {
       if(this.fill==='none'){return;}
-      if (!this.fill || '' === this.fill) ctx.fillStyle = this.fill;
+      //if (!this.fill || '' === this.fill) ctx.fillStyle = this.fill;
+      if (typeof this.fill === 'string') ctx.fillStyle = this.fill;
       ctx.fill();
       if (this.shadow && !this.shadow.affectStroke) {
         this._removeShadow(ctx);

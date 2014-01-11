@@ -44,8 +44,8 @@
 			var elw = this._element.width/bs;
 			var elh = this._element.height/bs;
 
-			var area_x = this.area.x % elw;
-			var area_y = this.area.y % elh;
+			var area_x = this.area.x;// % elw;
+			var area_y = this.area.y;// % elh;
 
 			var should_repeat = {
 				x : this.repeat.x && (area_x < 0 || area_x+this.area.width > elw),
@@ -133,6 +133,12 @@
 			//anyway, avoid negative values ...
 			var x_correction = (area_x < 0) ? -area_x: 0;
 			var y_correction = (area_y < 0) ? -area_y: 0;
+      if(x_correction){
+        console.log('x_correction',x_correction);
+      }
+      if(y_correction){
+        console.log('y_correction',y_correction);
+      }
 
 			ctx.drawImage(
 				this._element,
@@ -236,9 +242,9 @@
     },
 
     _render : function(){
-                if(!this.spritestate){
-                  throw 'No spritestate on '+this.name;
-                }
+      if(!this.spritestate){
+        throw 'No spritestate on '+this.name;
+      }
       this.callSuper.apply(this,['_render'].concat(Array.prototype.slice.call(arguments)));
     },
 
