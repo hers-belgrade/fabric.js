@@ -359,10 +359,8 @@
         left: 0,
         top: 0
       });
-			this.width = width;
-			this.height = height;
-      element.width = width*fabric.backingScale;
-      element.height = height*fabric.backingScale;
+      this.width = element.width = width*fabric.backingScale;
+      this.height = element.height = height*fabric.backingScale;
       fabric.util.makeElementUnselectable(element);
       console.log('now it is',element.width,element.height,element.style.width,element.style.height);
     },
