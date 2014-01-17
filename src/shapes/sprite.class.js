@@ -44,11 +44,11 @@
 			var bs = fabric.backingScale;
 			var ms = fabric.masterScale;
 
-			var elw = this._element.width/bs;
-			var elh = this._element.height/bs;
+			var elw = bs*this._element.width/(ms);
+			var elh = bs*this._element.height/(ms);
 
-			var area_x = this.area.x % elw;
-			var area_y = this.area.y % elh;
+			var area_x = this.area.x;// % elw;
+			var area_y = this.area.y;// % elh;
 
 			var should_repeat = {
 				x : this.repeat.x && (area_x < 0 || area_x+this.area.width > elw),
@@ -136,14 +136,28 @@
 			//anyway, avoid negative values ...
 			var x_correction = (area_x < 0) ? -area_x: 0;
 			var y_correction = (area_y < 0) ? -area_y: 0;
+      if(x_correction){
+        console.log('x_correction',x_correction);
+      }
+      if(y_correction){
+        console.log('y_correction',y_correction);
+      }
 
+
+			try {
 			ctx.drawImage(
 				this._element,
 				(area_x+x_correction)*ms,(area_y+y_correction)*ms,
-				(this.area.width-x_correction)*ms,  (this.area.height-y_correction)*ms,
+				Math.min((this.area.width-x_correction)*ms, this._element.width),  Math.min((this.area.height-y_correction)*ms, this._element.height),
+				//(this.area.width-x_correction)*ms,(this.area.height-y_correction)*ms,
 				(this.x-x_correction),(this.y-y_correction),
 				(this.area.width-x_correction), (this.area.height - y_correction)
 			);
+			}catch (e) {
+				console.log('====>',this.area.width, this.area.height,((this.area.width-x_correction)*ms - this._element.width),((this.area.height-y_correction)*ms - this._element.height));
+				//console.log(this.area.width, this.area.height, ms, should_repeat);
+				//console.log('PROBLEM', e);
+			}
     },
 		getRasterModulo : function () {
 			var bs = fabric.backingScale;
@@ -243,9 +257,9 @@
     },
 
     _render : function(){
-                if(!this.spritestate){
-                  throw 'No spritestate on '+this.name;
-                }
+      if(!this.spritestate){
+        throw 'No spritestate on '+this.name;
+      }
       this.callSuper.apply(this,['_render'].concat(Array.prototype.slice.call(arguments)));
     },
 

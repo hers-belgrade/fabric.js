@@ -14,13 +14,22 @@
       doConstrain = function(){
         if(area.oCoords && target.oCoords){
           var coc = config.constrainto.oCoords, toc = target.oCoords;
-          if(coc.br.y>toc.br.y){
-            target.set({top:target.top + (coc.br.y-toc.br.y)});
-            svgelem.invokeOnCanvas('renderAll');
-          }
           if(coc.tl.y<toc.tl.y){
-            target.set({top:target.top + (coc.tl.y-toc.tl.y)});
+            target.animate({top:target.top + (coc.tl.y-toc.tl.y)},100);
             svgelem.invokeOnCanvas('renderAll');
+          }else{
+            //display as much as possible
+            var ch = coc.br.y-coc.tl.y;
+            var th = toc.br.y-toc.tl.y;
+            if(coc.br.y>toc.br.y && th>ch){
+              target.set({top:target.top + (coc.br.y-toc.br.y)});
+              svgelem.invokeOnCanvas('renderAll');
+            }else{
+              if(coc.tl.y>toc.tl.y && th<ch){
+                target.set({top:target.top + (coc.tl.y-toc.tl.y)});
+                svgelem.invokeOnCanvas('renderAll');
+              }
+            }
           }
         }
       }

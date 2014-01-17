@@ -716,7 +716,7 @@
     return group;
   };
 
-  function processGroup(g,options,cb){
+  function processGroup(g,cb,options){
     //console.log('PROCESSING GROUP ', g);
     var gelements = [], jobtodo = g.childNodes.length;
     function finishall(){
@@ -728,17 +728,38 @@
     }
     var finalize = (function(jtd){
       var jobtodo = jtd;
-      return function(obj){
-        if(obj){
-          gelements.push(obj);
-        }
+      var _finalize = function(obj,index){
         jobtodo--;
+        if(obj){
+          if(typeof index !== 'undefined'){
+            gelements[index] = obj;
+          }else{
+            gelements.push(obj);
+          }
+        }
         if(!jobtodo){
           finishall();
         }else{
           if(jobtodo<0){
             console.log(g.id,'still got',jobtodo,'to go?!');
           }
+        }
+      };
+      return function (thing){
+        if(thing){
+          if(typeof thing === 'function'){
+            gelements.push(null);
+            thing(arguments[1],(function(index,fnlz){
+              var _i = index, _f = fnlz;
+              return function(obj){
+                _f(obj,_i);
+              };
+            })(gelements.length-1,_finalize), arguments[2]);
+          }else{
+            _finalize(thing,arguments[1]);
+          }
+        }else{
+          _finalize();
         }
       };
     })(jobtodo);
@@ -748,15 +769,15 @@
          switch(gc.tagName){
            case 'g':
              //console.log('g',gc);
-             processGroup(gc,options,this);
+             this(processGroup,gc,options);
              break;
            case 'defs':
              //console.log('defs',gc);
-             processGroup(gc,options,this);
+             this(processGroup,gc,options);
              break;
            case 'clipPath':
              //console.log('clipPath',gc);
-             processGroup(gc,options,this);
+             this(processGroup,gc,options);
              break;
            default:
              if(/^(path|circle|polygon|polyline|ellipse|rect|line|image|text|use)$/.test(gc.tagName)){
@@ -764,7 +785,7 @@
                 if (klass && klass.fromElement) {
                   try {
                     if (klass.async) {
-                      klass.fromElement(gc, this, options);
+                      this(klass.fromElement,gc,options);
                     }
                     else {
                       this(klass.fromElement(gc, options));
@@ -910,7 +931,7 @@
       });
       */
 
-      processGroup(doc,options,function(svg){
+      processGroup(doc,function(svg){
         var parsedone = new Date();
         fabric.documentParsingTime = parsedone - startTime;
         if(callback) {
@@ -940,7 +961,7 @@
           console.log('Parsed in',fabric.documentParsingTime,'traversed in',fabric.documentTraversingTime);
           setTimeout(function(){callback(svg, options);},1);
         }
-      });
+      },options);
 
     };
   })();
