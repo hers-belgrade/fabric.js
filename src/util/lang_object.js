@@ -11,6 +11,7 @@
 
 		function step(d, s) {
 			// JScript DontEnum bug is not taken care of
+			d = d || {};
 			for (var property in s) {
 				d[property] = s[property];
 			}

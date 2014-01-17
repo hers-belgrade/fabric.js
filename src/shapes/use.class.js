@@ -17,7 +17,7 @@
       options = options || { };
       this.callSuper('initialize', options);
       if(this.usedObj){
-        this.setUsedObj(this.usedObj.clone());
+        this.setUsedObj(this.usedObj);
       }
     },
     getElement: function () {
@@ -29,6 +29,7 @@
     },
     setUsedObj: function(object) {
 			var self = this;
+
 			if (this.usedObj) {
 				this.usedObj.off('raster:created', this._rasterHandlers.create);
 				this.usedObj.off('raster:changed', this._rasterHandlers.changed);
@@ -45,8 +46,8 @@
 				}
 			}
 
-      object.group = this;
-      this.usedObj = object;
+      this.usedObj = object.clone();
+      this.usedObj.group = this;
 			this.usedObj.on('raster:created', this._rasterHandlers.create);
 			this.usedObj.on('raster:changed', this._rasterHandlers.changed);
       delete this['xlink:href'];
@@ -68,7 +69,7 @@
         if(this.masteruse){
           uo = this.masteruse.getUsedObj();
           if(uo){
-            this.setUsedObj(uo.clone());
+            this.setUsedObj(uo);
             delete this.masteruse;
           }
         }

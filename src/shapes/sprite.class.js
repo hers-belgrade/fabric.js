@@ -12,6 +12,7 @@
     fabric.warn('fabric.Sprite is already defined.');
     return;
   }
+	var cnt = 0;
 
   /**
    * Sprite class
@@ -21,6 +22,8 @@
   fabric.Sprite = fabric.util.createClass(fabric.Image , {
     type : 'Sprite',
     initialize : function(element,options){
+			this._cnt = cnt;
+			cnt++;
 
       this.x = options.x || 0;
       this.y = options.y || 0;
@@ -49,7 +52,7 @@
 
 			var should_repeat = {
 				x : this.repeat.x && (area_x < 0 || area_x+this.area.width > elw),
-				y : this.repeat.y && (area_y < 0 || area_y+this.area.height > elw)
+				y : this.repeat.y && (area_y < 0 || area_y+this.area.height > elh)
 			}
 
 
@@ -64,7 +67,7 @@
 				var control = 0;
 				var render_height = self.area.height;
 				var render_width = self.area.width;
-				var max_dimension = (x_axis) ? self.width : self.height;
+				var max_dimension = (x_axis) ? self.area.width : self.area.height;
 				var element_dimension = (x_axis) ? elw : elh;
 				var dynamic_dimension = 0;
 
@@ -139,13 +142,17 @@
 				(area_x+x_correction)*ms,(area_y+y_correction)*ms,
 				(this.area.width-x_correction)*ms,  (this.area.height-y_correction)*ms,
 				(this.x-x_correction),(this.y-y_correction),
-				(this.width-x_correction), (this.height - y_correction)
+				(this.area.width-x_correction), (this.area.height - y_correction)
 			);
     },
-		sanitize: function () {
+		getRasterModulo : function () {
 			var bs = fabric.backingScale;
-			this.area.x %= (this._element.width/bs);
-			this.area.y %= (this._element.height/bs);
+			return {width: this._element.width/bs, height: this._element.height/bs};
+		},
+		sanitize: function () {
+			var m = this.getRasterModulo();
+			this.area.x %= m.width;
+			this.area.y %= m.height;
 		},
     /**
      * Returns object representation of an instance

@@ -15,6 +15,8 @@
     return;
   }
 
+	var cntr = 1;
+
   /**
    * Root object class from which all 2d shape classes inherit from
    * @class fabric.Object
@@ -363,7 +365,12 @@
      * @param {Object} [options] Options object
      */
     initialize: function(options) {
+			this._cntr = cntr;
+			cntr++;
       this._cache = {};
+			if (options && options._cache) {
+				if (options._cache.local_content) console.log('GOTCHA !!!!!!!!!!!');
+			}
       if (options) {
         this.setOptions(options);
       }
@@ -911,61 +918,62 @@
       //console.log('\t\t','untransform done in',(((new Date()).getTime()) - utstart));
       //console.log('\t',this.type,this.id,'rendered in', (((new Date()).getTime()) - _render_start));
       this.finalizeRender(ctx);
-
 			if (this.shouldRasterize) {
-
-
 				var mult = fabric.util.multiplyTransformMatrices;
 				var inv = fabric.util.matrixInverse;
 				var bs = fabric.backingScale;
-
-
 
 				var params = {};
 				if (typeof(this.shouldRasterize) === 'object') {
 					fabric.util.object.extend(params, this.shouldRasterize);
 				}
-				delete this.shouldRasterize;
 				var obj = this.getRasterizationObject();
-				var w = obj.get('width');
-				var h = obj.get('height');
-				console.log('will rasterize, height ',h,'width', w, obj.id);
+				if (obj._currentGlobalTransform)  {
+					///delay this moment until obj get _currentTransform
+					delete this.shouldRasterize;
+					var w = obj.get('width');
+					var h = obj.get('height');
+					console.log('will rasterize, height ',h,'width', w, obj.id);
 
-				var offel = fabric.document.createElement('canvas');
-				offel.width = Math.ceil(w*fabric.backingScale);
-				offel.height = Math.ceil(h*fabric.backingScale);
+					var offel = fabric.document.createElement('canvas');
+					offel.width = Math.ceil(w*fabric.backingScale);
+					offel.height = Math.ceil(h*fabric.backingScale);
 
-				var lctx = offel.getContext('2d');
-				lctx._currentTransform = [1,0,0,1,0,0];
+					var lctx = offel.getContext('2d');
+					lctx._currentTransform = [1,0,0,1,0,0];
 
-				/// small but very obvious correction .... Why? It appears that canvas will floor down width/height numbers creating a pure integer sized canvas, and this 'move bit up and right' correction affects sprite to be positioned correct enough .... but that is just an assumption ...
-				var off_matrix = [1,0,0,1,(Math.ceil(w)-w)/2,-(Math.ceil(h)-h)/2];
-				if (obj.id != this.id) {
-					off_matrix = mult(off_matrix, inv(obj._currentGlobalTransform));
-					off_matrix = mult(off_matrix, this._currentTransform);
-					this._cache.local_content_transformation = obj._localTransformationMatrix;
-				}else{
-					off_matrix = mult(off_matrix, inv(this._currentGlobalTransform));
-					off_matrix = mult(off_matrix, this._currentTransform);
-					this._cache.local_content_transformation = [1,0,0,1,0,0];
+					/// small but very obvious correction .... Why? It appears that canvas will floor down width/height numbers creating a pure integer sized canvas, and this 'move bit up and right' correction affects sprite to be positioned correct enough .... but that is just an assumption ...
+					var off_matrix = [1,0,0,1,(Math.ceil(w)-w)/2,-(Math.ceil(h)-h)/2];
+					if (obj.id != this.id) {
+						off_matrix = mult(off_matrix, inv(obj._currentGlobalTransform));
+						off_matrix = mult(off_matrix, this._currentTransform);
+						this._cache.local_content_transformation = obj._localTransformationMatrix;
+					}else{
+						off_matrix = mult(off_matrix, inv(this._currentGlobalTransform));
+						off_matrix = mult(off_matrix, this._currentTransform);
+						this._cache.local_content_transformation = [1,0,0,1,0,0];
+					}
+
+					off_matrix = mult(off_matrix, [bs, 0, 0, bs, 0, 0]);
+					lctx.transform.apply(lctx,off_matrix);
+					this.render(lctx);
+
+					var rc = !this._cache.local_content;
+					params = fabric.util.object.extend({x:0, y:0, width:w, height:h},params);
+					this._cache.local_content = new fabric.Sprite(offel,params);
+					///controversial ....
+					this._cache.local_content.group = this;
+					console.log('RASTERIZED ', this.id, this._cntr, this._cache.local_content._cntr);
+					rc ? this.fire ('raster:created', this._cache.local_content) : this.fire ('raster:changed', this._cache.local_content);
+					this.invokeOnCanvas('renderAll');
 				}
-
-				off_matrix = mult(off_matrix, [bs, 0, 0, bs, 0, 0]);
-				lctx.transform.apply(lctx,off_matrix);
-				this.render(lctx);
-
-				var rc = !this._cache.local_content;
-				params = fabric.util.object.extend({x:0, y:0, width:w, height:h},params);
-				this._cache.local_content = new fabric.Sprite(offel,params);
-				///controversial ....
-				this._cache.local_content.group = this;
-				this.invokeOnCanvas('renderAll');
-				rc ? this.fire ('raster:created', this._cache.local_content) : this.fire ('raster:changed', this._cache.local_content);
 			}
     },
 
     accountForGradientTransform: function(p1,p2){},
-
+		getRasteredImage : function () {
+			return this._cache.local_content;
+		},
     _paint : function(ctx){
     },
 
@@ -1380,6 +1388,23 @@
 			if (!this._cache.local_content) return;
 			this._cache.local_content.setRasterArea(area_params, lc_props);
 			this.invokeOnCanvas('renderAll');
+		},
+
+		getTreeMatrix: function () {
+			//var to_mult = [this.transformMatrix];
+			var to_mult = [];
+			var g = this.group;
+			while (g) {
+				g.transformMatrix && to_mult.unshift(g.transformMatrix);
+				g = g.group;
+			}
+
+			var ret = new Matrix();
+			ret.mult.apply(ret, to_mult);
+			return ret.val;
+		}, 
+		dropCache: function () {
+			this._cache = {};
 		}
   });
   /**
