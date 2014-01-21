@@ -368,10 +368,7 @@
 			this._cntr = cntr;
 			cntr++;
       this._cache = {};
-			if (options && options._cache) {
-				if (options._cache.local_content) console.log('GOTCHA !!!!!!!!!!!');
-			}
-      if (options) {
+			if (options) {
         this.setOptions(options);
       }
     },
@@ -477,8 +474,6 @@
      * @param {Boolean} fromLeft When true, context is transformed to object's top/left corner. This is used when rendering text on Node
      */
     transform: function(ctx) {
-
-
       var m = this.transformMatrix;
       this._currentTransform = ctx._currentTransform;
       if (m) {
@@ -868,6 +863,63 @@
         console.log('invalid border rect',this.oCoords.tl,this.oCoords.br);
       }
     },
+		_generateRaster : function (debug) {
+			var mult = fabric.util.multiplyTransformMatrices;
+			var inv = fabric.util.matrixInverse;
+			var bs = fabric.backingScale;
+
+			var params = {};
+			if (typeof(this.shouldRasterize) === 'object') {
+				fabric.util.object.extend(params, this.shouldRasterize);
+			}
+			var obj = this.getRasterizationObject();
+			if (debug) {
+				console.log('******', obj._currentGlobalTransform);
+			}
+
+			if (obj._currentGlobalTransform)  {
+				///delay this moment until obj get _currentTransform
+				delete this.shouldRasterize;
+				var w = obj.get('width');
+				var h = obj.get('height');
+				console.log('will rasterize, height ',h,'width', w, obj.id);
+
+				var offel = fabric.document.createElement('canvas');
+
+				offel.width = Math.ceil(w*bs);
+				offel.height = Math.ceil(h*bs);
+
+				var lctx = offel.getContext('2d');
+				lctx._currentTransform = this._currentGlobalTransform;
+
+				/// small but very obvious correction .... Why? It appears that canvas will floor down width/height numbers creating a pure integer sized canvas, and this 'move bit up and right' correction affects sprite to be positioned correct enough .... but that is just an assumption ...
+				var off_matrix = [1,0,0,1,(Math.ceil(w)-w)/2,-(Math.ceil(h)-h)/2];
+				if (obj.id != this.id) {
+					off_matrix = mult(off_matrix, inv(obj._currentGlobalTransform));
+					off_matrix = mult(off_matrix, this._currentTransform);
+					this._cache.local_content_transformation = obj._localTransformationMatrix;
+				}else{
+					off_matrix = mult(off_matrix, inv(this._currentGlobalTransform));
+					off_matrix = mult(off_matrix, this._currentTransform);
+					this._cache.local_content_transformation = [1,0,0,1,0,0];
+				}
+
+				off_matrix = mult(off_matrix, [bs, 0, 0, bs, 0, 0]);
+				lctx.transform.apply(lctx,off_matrix);
+				var rc = !this._cache.local_content;
+				var done = params.done;
+				delete this._cache.local_content;
+				delete params.done;
+				this.render(lctx);
+				this._cache.local_content = new fabric.Sprite(offel,fabric.util.object.extend({x:0, y:0, width:w, height:h},params));
+				///controversial ....
+				this._cache.local_content.group = this;
+				//console.log('RASTERIZED ', this.id, this._cntr, this._cache.local_content._cntr);
+				('function' === typeof(done)) && done.call(this, (rc) ? 'created':'changed', this._cache.local_content); 
+				rc ? this.fire ('raster:created', this._cache.local_content) : this.fire ('raster:changed', this._cache.local_content);
+				return true;
+			}
+		},
 
     /**
      * Renders an object on a specified context
@@ -887,10 +939,27 @@
       //var _render_start = (new Date()).getTime();
       //console.log(this.type,this.id,'starts render');
 
+
+			if (this._cache.local_content && this.shouldRasterize) {
+				var lc = this._cache.local_content;
+				if ('object' !== typeof(this.shouldRasterize)) {
+					this.shouldRasterize = lc.getRasterParams();
+				}else{
+					var rp = lc.getRasterParams();
+					var ol = this.shouldRasterize;
+
+					this.shouldRasterize = {
+						area: extend(rp.area, ol.area),
+						repeat: extend (rp.repeat, ol.repeat),
+						done: ('function' === typeof(ol.done)) ? ol.done : rp.done
+					}
+				}
+				this._generateRaster();
+			}
+
       ctx.save();
 
       this.transform(ctx); //there is a special ctx.save in this call
-
 
       if(topctx){
         this.drawBorderRect(topctx);
@@ -918,56 +987,8 @@
       //console.log('\t\t','untransform done in',(((new Date()).getTime()) - utstart));
       //console.log('\t',this.type,this.id,'rendered in', (((new Date()).getTime()) - _render_start));
       this.finalizeRender(ctx);
-			if (this.shouldRasterize) {
-				var mult = fabric.util.multiplyTransformMatrices;
-				var inv = fabric.util.matrixInverse;
-				var bs = fabric.backingScale;
+			this.shouldRasterize && this._generateRaster() && this.invokeOnCanvas('renderAll');
 
-				var params = {};
-				if (typeof(this.shouldRasterize) === 'object') {
-					fabric.util.object.extend(params, this.shouldRasterize);
-				}
-				var obj = this.getRasterizationObject();
-				if (obj._currentGlobalTransform)  {
-					///delay this moment until obj get _currentTransform
-					delete this.shouldRasterize;
-					var w = obj.get('width');
-					var h = obj.get('height');
-					console.log('will rasterize, height ',h,'width', w, obj.id);
-
-					var offel = fabric.document.createElement('canvas');
-					offel.width = Math.ceil(w*fabric.backingScale);
-					offel.height = Math.ceil(h*fabric.backingScale);
-
-					var lctx = offel.getContext('2d');
-					lctx._currentTransform = [1,0,0,1,0,0];
-
-					/// small but very obvious correction .... Why? It appears that canvas will floor down width/height numbers creating a pure integer sized canvas, and this 'move bit up and right' correction affects sprite to be positioned correct enough .... but that is just an assumption ...
-					var off_matrix = [1,0,0,1,(Math.ceil(w)-w)/2,-(Math.ceil(h)-h)/2];
-					if (obj.id != this.id) {
-						off_matrix = mult(off_matrix, inv(obj._currentGlobalTransform));
-						off_matrix = mult(off_matrix, this._currentTransform);
-						this._cache.local_content_transformation = obj._localTransformationMatrix;
-					}else{
-						off_matrix = mult(off_matrix, inv(this._currentGlobalTransform));
-						off_matrix = mult(off_matrix, this._currentTransform);
-						this._cache.local_content_transformation = [1,0,0,1,0,0];
-					}
-
-					off_matrix = mult(off_matrix, [bs, 0, 0, bs, 0, 0]);
-					lctx.transform.apply(lctx,off_matrix);
-					this.render(lctx);
-
-					var rc = !this._cache.local_content;
-					params = fabric.util.object.extend({x:0, y:0, width:w, height:h},params);
-					this._cache.local_content = new fabric.Sprite(offel,params);
-					///controversial ....
-					this._cache.local_content.group = this;
-					console.log('RASTERIZED ', this.id, this._cntr, this._cache.local_content._cntr);
-					rc ? this.fire ('raster:created', this._cache.local_content) : this.fire ('raster:changed', this._cache.local_content);
-					this.invokeOnCanvas('renderAll');
-				}
-			}
     },
 
     accountForGradientTransform: function(p1,p2){},

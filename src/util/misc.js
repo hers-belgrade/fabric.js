@@ -142,9 +142,9 @@
     * @param {Any} context optional Context to invoke callback in
     */
 
-	var image_cahche = {};
+	var image_cache = {};
 	function resetImageCache () {
-		image_cahche = {};
+		image_cache = {};
 	}
 	var image_pending = {};
 
@@ -154,14 +154,14 @@
 
   function loadImage(url, callback, context) {
     if (url) {
-			if (image_cahche[url]) {
+			if (image_cache[url]) {
 				//console.log('WILL GET IT FROM CACHE ', url);
-				return report_load(callback,context,image_cahche[url]);
+				return report_load(callback,context,image_cache[url]);
 			}
 
 			if (image_pending[url]) {
 				///subscribe to get info if pending for it ...
-				image_pending[url].push (function() { report_load(callback,context,image_cahche[url]); })
+				image_pending[url].push (function() { report_load(callback,context,image_cache[url]); })
 				return;
 			}
 
@@ -170,7 +170,7 @@
 
       img.onload = function () {
         img.onload = null;
-				image_cahche[url] = img;
+				image_cache[url] = img;
 				report_load(callback,context,img);
 				console.log('will check if any pending :', image_pending[url].length);
 				while (image_pending[url].length) {

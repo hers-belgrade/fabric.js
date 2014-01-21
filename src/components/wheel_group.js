@@ -13,7 +13,7 @@
 		}, config);
 
 
-		var prefix = config.prefix || '';
+		var prefix = config.prefix || svgelem.id;
 		if (prefix.length) prefix+= '_';
 		var vs = ('function' === typeof(config.valueSetter)) ? config.valueSetter : function () {};
 		var wheels = [];
@@ -47,12 +47,21 @@
 					ready[_i] = true;
 					if (ready.filter(function(v) {return !v}).length) return;
 					wheelReady = true;
-					if (svgelem.wheelValue) svgelem.setWheelValue(svgelem.wheelValue)
+					svgelem.fire('wheels:ready', wheels);
+					if (svgelem.wheelValue) {
+						svgelem.setWheelValue(svgelem.wheelValue);
+					}else{
+						svgelem.wheelValue = config.initValue;
+					}
+				});
+				clone.on('raster:changed', function (raster) {
 				});
 				clone.rasterize({area:{width: dd.width, height:dd.height}, repeat: {y:true}});
 				clone.invokeOnCanvas('renderAll');
 			})(i);
 		}
+		svgelem.wheelCount = function () {return wheels.length;};
+		svgelem.wheelAt = function (index) {return (wheels[index]) ? wheels[index].getUsedObj() : undefined;};
 
 		svgelem.setWheelValue = function (val, local_config) {
 			///todo: animate set finally ....
@@ -73,8 +82,8 @@
 			for (var i = 0; i < wheels.length; i++) {
 				(function (w, dims, index) {
 					var objs = w._objects;
-					var ztm = objs[0].transformMatrix;
-					var ttm = objs[sp[i]].transformMatrix;
+					var ztm = objs[0]._localTransformationMatrix;
+					var ttm = objs[sp[i]]._localTransformationMatrix;
 					var off = {x : ttm[4] - ztm[4], y : ttm[5] - ztm[5]};
 					///MORE WORK TO BE DONE ...
 					ri = w.getRasteredImage();

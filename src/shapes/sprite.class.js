@@ -32,6 +32,9 @@
 			options.repeat = fabric.util.object.extend({x:false, y:false}, options.repeat);
       this.callSuper('initialize',element,options);
     },
+		getRasterParams : function () {
+			return {area: this.area, repeat: this.repeat};
+		},
 		setRasterArea: function (area_params, props) {
 			props && this.set(props);
 			var ts = fabric.util.object.extend(this.area, area_params);
@@ -44,8 +47,8 @@
 			var bs = fabric.backingScale;
 			var ms = fabric.masterScale;
 
-			var elw = bs*this._element.width/(ms);
-			var elh = bs*this._element.height/(ms);
+			var elw = this._element.width/(ms);
+			var elh = this._element.height/(ms);
 
 			var area_x = this.area.x % elw;
 			var area_y = this.area.y % elh;
@@ -133,10 +136,10 @@
 				return repeat_y(this.x,area_y);
 			}
 
-			//anyway, avoid negative values ...
+	
+		//anyway, avoid negative values ...
 			var x_correction = (area_x < 0) ? -area_x: 0;
 			var y_correction = (area_y < 0) ? -area_y: 0;
-
 			ctx.drawImage(
 				this._element,
 				(area_x+x_correction)*ms,(area_y+y_correction)*ms,
@@ -242,14 +245,6 @@
       }
       return this.callSuper('_set',key,value);
     },
-
-    _render : function(){
-      if(!this.spritestate){
-        throw 'No spritestate on '+this.name;
-      }
-      this.callSuper.apply(this,['_render'].concat(Array.prototype.slice.call(arguments)));
-    },
-
     /**
      * Returns object representation of an instance
      * @param {Array} propertiesToInclude Any properties that you might want to additionally include in the output

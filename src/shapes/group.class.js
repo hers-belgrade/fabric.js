@@ -361,7 +361,7 @@
 
 		getRasterizationObject : function () {
 			var rid = this.id + '_rasterize';
-			return (this[rid]) ? this[rid] : this;
+			return (this[rid]) ? this[rid] : undefined;
 		}
 
 
