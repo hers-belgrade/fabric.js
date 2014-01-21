@@ -83,7 +83,7 @@
 				(function (w, dims, index) {
 					var objs = w._objects;
 					var ztm = objs[0]._localTransformationMatrix;
-					var ttm = objs[sp[i]]._localTransformationMatrix;
+					var ttm = objs[sp[index]]._localTransformationMatrix;
 					var off = {x : ttm[4] - ztm[4], y : ttm[5] - ztm[5]};
 					///MORE WORK TO BE DONE ...
 					ri = w.getRasteredImage();
