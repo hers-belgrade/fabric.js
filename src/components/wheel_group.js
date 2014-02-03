@@ -97,8 +97,8 @@
 			for (var i = 0; i < wheels.length; i++) {
 				(function (w, dims, index) {
 					var objs = w._objects;
-					var ztm = objs[0]._localTransformationMatrix;
-					var ttm = objs[val[index]]._localTransformationMatrix;
+					var ztm = objs[0]._currentLocalTransform;
+					var ttm = objs[val[index]]._currentLocalTransform;
 					var off = {x : ttm[4] - ztm[4], y : ttm[5] - ztm[5]};
 					///MORE WORK TO BE DONE ...
 					ri = w.getRasteredImage();
