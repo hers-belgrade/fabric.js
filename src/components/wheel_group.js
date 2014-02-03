@@ -33,6 +33,8 @@
 			ready.push (false);
 		}
 
+		svgelem.getWheelObjs = function () {return wheels;}
+		svgelem.wheelsReady = function () { return wheelReady; }
 
 		for (var i = 0; i < wheels.length; i++) {
 			(function (_i) {
@@ -46,36 +48,49 @@
 				clone.on('raster:created', function (raster) {
 					ready[_i] = true;
 					if (ready.filter(function(v) {return !v}).length) return;
+					svgelem.wheelValue = [];
+					for (var k = 0; k < wheels.length; k++) svgelem.wheelValue.push (0);
 					wheelReady = true;
-					svgelem.fire('wheels:ready', wheels);
-					if (svgelem.wheelValue) {
-						svgelem.setWheelValue(svgelem.wheelValue);
-					}else{
-						svgelem.wheelValue = config.initValue;
-					}
+					setTimeout(function () {
+						svgelem.fire('wheels:ready', wheels);
+						console.log(' I am ready ...', wheels.map(function (v) {return v._cntr;}));
+					}, 1);
 				});
 				clone.on('raster:changed', function (raster) {
 				});
+				console.log('OVO SE DESI SAMO JEDNOM?');
 				clone.rasterize({area:{width: dd.width, height:dd.height}, repeat: {y:true}});
 				clone.invokeOnCanvas('renderAll');
 			})(i);
 		}
+
 		svgelem.wheelCount = function () {return wheels.length;};
 		svgelem.wheelAt = function (index) {return (wheels[index]) ? wheels[index].getUsedObj() : undefined;};
 
+		var debug = false;
+		svgelem.doDebug = function (bool) {
+			debug = bool;
+		}
+
 		svgelem.setWheelValue = function (val, local_config) {
+			///MUST BE AN ARRAY OR A STRING
+			if (typeof(val) !== 'object') throw "Invalid value for wheel";
+			if ('string' === typeof(val)) val = val.split('');
+			if (!(val instanceof Array)) throw "Invalid value for wheel"; 
 			///todo: animate set finally ....
 			local_config = extend(local_config, config);
-			var v = val+'';
-			var sp = v.split('');
-			this.wheelValue = val;
-			if (!wheelReady) return;
 
-			var done =wheels.map(function(){return false;});
+			if (!wheelReady) return;
+			val = val.slice();
+			this.wheelValue = val;
+
+			var done = wheels.map(function(){return false;});
 
 			var self = this;
 			function check_all_done () {
-				(done.filter (function (v) {return !v}).length == 0) && (self.fire('wheels:done', val));
+				if (done.filter (function (v) {return !v}).length == 0) {
+				 	self.fire('wheels:done', val);
+				}
 			}
 
 			this.fire('wheels:started');
@@ -83,24 +98,38 @@
 				(function (w, dims, index) {
 					var objs = w._objects;
 					var ztm = objs[0]._localTransformationMatrix;
-					var ttm = objs[sp[index]]._localTransformationMatrix;
+					var ttm = objs[val[index]]._localTransformationMatrix;
 					var off = {x : ttm[4] - ztm[4], y : ttm[5] - ztm[5]};
 					///MORE WORK TO BE DONE ...
 					ri = w.getRasteredImage();
 					var m = ri.getRasterModulo();
 					var animation_config = {};
+
 					if (local_config.type == 'horizontal') {
-						animation_config = {'area.x': (local_config.round_count || 5)*m.width+off.x};
+						ri.area.x += (local_config.round_count || 3)*m.width;
+						animation_config = {'area.x': off.x};
 					}else{
-						animation_config = {'area.y': (local_config.round_count || 5)*m.height+off.y};
+						ri.area.y += (local_config.round_count || 3)*m.height;
+						animation_config = {'area.y': off.y};
 					}
 
 					(function (_ri) {
 						var do_go = function (){
+							if (debug) {
+							ri.area.y += (local_config.round_count || 3)*m.height;
+							var y = _ri.area.y;
+							setInterval(function () {
+								_ri.area.y = y;
+								_ri.invokeOnCanvas('renderAll');
+								y-= 10;
+							}, 200);
+							return;
+							}
+
 							_ri.animate (
 								animation_config,
 								{
-									easing: fabric.util.ease.easeAstableFast,
+									easing: fabric.util.ease.easeOutElastic,
 									duration:local_config.duration, 
 									onComplete: function () { 
 										this.sanitize();
@@ -120,7 +149,10 @@
 					})(ri);
 				})(wheels[i].getUsedObj(), dimensions[i], i);
 			}
+
+							//debug = true;
 		}
 	}
 
 })(typeof exports !== 'undefined' ? exports : this);
+

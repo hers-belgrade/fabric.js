@@ -104,6 +104,9 @@
 
       this.setCoords(true);
       this.saveCoords();
+			if (object.id) {
+				this[object.id] = object;
+			}
       return this;
     },
 
@@ -148,6 +151,7 @@
         !object._cache.global_content && typeof object.forEachObjectRecursive === 'function' && object.forEachObjectRecursive(function(obj){canvas.removeFromMouseListeners(obj);});
       }
       delete object.group;
+			delete this[object.id];
       object.set('active', false);
       this._calcBounds();
     },

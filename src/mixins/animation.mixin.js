@@ -196,7 +196,7 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
       to = parseFloat(to);
     }
 
-    if(!this.invokeOnCanvas('addToAnimations',fabric.util.animate({
+		var animation_worker = fabric.util.animate({
       startValue: options.from,
       endValue: to,
       byValue: options.by,
@@ -212,16 +212,19 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
         setValue.call(obj,value);
         currentValue=getValue.call(obj);
         if (skipCallbacks) return;
-        options.onChange && options.onChange.call(obj);
+        options.onChange && options.onChange.call(obj, value);
       },
       onComplete: function() {
         if (skipCallbacks) return;
 
         options.onComplete && options.onComplete.call(obj);
       }
-    }))){
+    });
+
+    if(!animation_worker || !this.invokeOnCanvas('addToAnimations',animation_worker)){
       setValue.call(this,to);
       options.onComplete && options.onComplete.call(obj);
     }
+
   }
 });

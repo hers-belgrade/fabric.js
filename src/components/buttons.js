@@ -36,6 +36,7 @@
   };
 
   fabric.ResourceButton = function(svgelem,config){
+
     var renderables= {
       enabled : svgelem.getObjectById(svgelem.id+'_enabled'),
       disabled : svgelem.getObjectById(svgelem.id+'_disabled'),
@@ -61,14 +62,34 @@
       outercb && outercb.apply(config.ctx,Array.prototype.slice.call(arguments,1));
       ra();
     };
-    function clicked(state){
+    function clicked(e){
       if(!svgelem.enabled){return;}
       renderState('enabled');
-      config.clickcb.call(config.ctx);
+      config.clickcb.call(config.ctx, e);
+			if (config.stopPropagation) e.e.propagationStopped = true;
     };
+
+		var old_hide = svgelem.hide;
+		svgelem.hide = function () {
+			this.disable();
+			return old_hide.apply(this, arguments);
+		}
+
     var target = svgelem.getObjectById(svgelem.id+'_hotspot');
-    svgelem.enable = function(){this.enabled=true;renderState('enabled');return this;};
-    svgelem.disable = function(){this.enabled=false;renderState('disabled');return this;};
+
+		/// one should disable/enable target as well once button is disabled/enabled
+    svgelem.enable = function(){
+			this.enabled=true;
+			target.enabled = true;
+			renderState('enabled');
+			return this;
+		};
+    svgelem.disable = function(){
+			this.enabled=false;
+			target.enabled = false;
+			renderState('disabled');
+			return this;
+		};
     var clickconfig = {ctx:config.ctx||svgelem,clickcb:clicked,downcb:function(e){processState('pressed',e);}};
     fabric.Clickable(fabric.Hoverable(target,{outcb:function(e){processState('enabled',e);},overcb:function(e){processState('hovered',e);}}),clickconfig);
     if(config.initialState==='enabled'){

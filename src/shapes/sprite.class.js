@@ -36,13 +36,14 @@
 			return {area: this.area, repeat: this.repeat};
 		},
 		setRasterArea: function (area_params, props) {
+			console.log('SETTING TO', this._cntr, area_params.y);
 			props && this.set(props);
 			var ts = fabric.util.object.extend(this.area, area_params);
 			this.set({area:ts});
 			this.invokeOnCanvas('renderAll');
 		},
-    _render : function(ctx){
 
+    _render : function(ctx){
 			////more work to be done ....
 			var bs = fabric.backingScale;
 			var ms = fabric.masterScale;
@@ -89,11 +90,12 @@
 						if (self.repeat.y) {
 							repeat_axis('y', dynamic_dimension, self.area.y);
 						}else{
+							//ms = 1;
 							ctx.drawImage (
 									self._element,
 									//where I am clipping from
-									slice_from*bs, other_pos*bs, 
-									render_dimension*bs, render_height*bs,
+									slice_from*bs*ms, other_pos*bs*ms, 
+									render_dimension*bs*ms, render_height*bs*ms,
 									//where I am pasting to
 									dynamic_dimension, other_pos,
 									render_dimension,render_height
@@ -103,11 +105,11 @@
 						ctx.drawImage (
 								self._element,
 								//where I am clipping from
-								0, slice_from*bs,
-								render_width*bs, render_dimension*bs,
+								0, slice_from*bs*ms,
+								render_width*bs*ms, render_dimension*bs*ms,
 								//where I am pasting to
 								other_pos, dynamic_dimension,
-								render_width,render_dimension 
+								render_width,render_dimension
 								);
 					}
 
@@ -136,7 +138,6 @@
 				return repeat_y(this.x,area_y);
 			}
 
-	
 		//anyway, avoid negative values ...
 			var x_correction = (area_x < 0) ? -area_x: 0;
 			var y_correction = (area_y < 0) ? -area_y: 0;
@@ -144,19 +145,20 @@
 				this._element,
 				(area_x+x_correction)*ms,(area_y+y_correction)*ms,
 				Math.min((this.area.width-x_correction)*ms, this._element.width),  Math.min((this.area.height-y_correction)*ms, this._element.height),
-				//(this.area.width-x_correction)*ms,(this.area.height-y_correction)*ms,
 				(this.x-x_correction),(this.y-y_correction),
 				(this.area.width-x_correction), (this.area.height - y_correction)
 			);
     },
 		getRasterModulo : function () {
 			var bs = fabric.backingScale;
-			return {width: this._element.width/bs, height: this._element.height/bs};
+			//return {width: this._element.width/bs, height: this._element.height/bs};
+			return {width: this.width/bs, height: this.height/bs};
 		},
 		sanitize: function () {
 			var m = this.getRasterModulo();
 			this.area.x %= m.width;
 			this.area.y %= m.height;
+			//console.log('WILL SANITIZE ', this.area.x, this.area.y, m.height, this._cntr);
 		},
     /**
      * Returns object representation of an instance
@@ -270,3 +272,4 @@
   };
 
 })(typeof exports !== 'undefined' ? exports : this);
+

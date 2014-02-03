@@ -27,7 +27,7 @@
 
     options.onStart && options.onStart();
 
-    return function tick() {
+    return (fxoff) ? undefined : function tick() {
 			if (fxoff) {
 				onChange(endValue);
 				options.onComplete && options.onComplete();

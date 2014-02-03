@@ -8,6 +8,7 @@
     var downcb=config.downcb,clickcb=config.clickcb,doubleclickcb=config.doubleclickcb,ctx=config.ctx||svgelem;
     var mousePressed;
     var longPressTimeout;
+
     svgelem.on('mouse:down',function(e){
       if(this.isVisible() && this.enabled){
         if(!mousePressed){

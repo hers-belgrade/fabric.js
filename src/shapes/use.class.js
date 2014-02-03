@@ -86,6 +86,11 @@
 			if (!uo) return; //for now
 			return uo.rasterize(rasterize_params);
 		},
+		getRasteredImage: function () {
+			var uo = this.getUsedObj();
+			if (!uo) return; //for now
+			return uo.getRasteredImage();
+		},
     forEachObjectRecursive: function(cb){
       var uo = this.getUsedObj();
       if(uo){
@@ -126,3 +131,4 @@
   };
 
 })(typeof exports !== 'undefined' ? exports : this);
+

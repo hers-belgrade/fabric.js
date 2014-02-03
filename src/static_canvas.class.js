@@ -448,14 +448,22 @@
      * @param {Event} e mouse event
      * @param {Boolean} skipGroup when true, group is skipped and only objects are traversed through
      */
-    distributePositionEvent: function (e,eventname) {
+    distributePositionEvent: function (e,eventname, dom_event) {
       if(this.currentListeners&&this.currentListeners.length){
         for(var i =this.currentListeners.length-1; i>=0; i--){
           this.currentListeners[i].fire(eventname,{e:e});
+					if (e.propagationStopped === true) {
+						delete e.propagationStopped;
+						break;
+					}
         }
       }else{
         for(var i =this._mouseListeners.length-1; i>=0; i--){
           this._mouseListeners[i].processPositionEvent(e,eventname);
+					if (e.propagationStopped === true) {
+						delete e.propagationStopped;
+						break;
+					}
         }
       }
     },
