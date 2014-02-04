@@ -22,8 +22,8 @@
 			var t = w.getUsedObj();
 			local_config = extend(local_config, config);
 			var objs = t._objects;
-			var ztm = objs[0]._localTransformationMatrix;
-			var ttm = objs[v]._localTransformationMatrix;
+			var ztm = objs[0]._currentLocalTransform;
+			var ttm = objs[v]._currentLocalTransform;
 			var off = {x : ttm[4] - ztm[4], y : ttm[5] - ztm[5]};
 			///MORE WORK TO BE DONE ...
 			ri = t.getRasteredImage();
