@@ -2,22 +2,27 @@
   var fabric = global.fabric || (global.fabric = { }),
 		extend = fabric.util.object.extend;
 
-	fabric.TextWithShadow = function (svgelem) {
 
+	////TODO: pokusaj da napravis ovo tako da podrzava i shadow i outline ...
+	
+	fabric.TextWithDecorations = function (svgelem) {
 		var id = svgelem.id;
-		var shadow_id = svgelem.id+'_shadow';
+		var els = {
+			shadow:null,
+			outline:null
+		}
 		var g = svgelem.group;
+		if (!g) return svgelem;
 
-		var shadow = null;
-		if (g && shadow_id) shadow = g[shadow_id];
+		for (var i in els) {
+			els[i] = g[id+'_'+els]
+		}
 
-		svgelem.setShadowedText = function (text) {
-			svgelem.set('text', text);
-			shadow && shadow.set('text', text);
-			return svgelem;
+		svgelem.setText = function (t) {
+			for (var i in els) {
+				els[i].set('text', t);
+			}
 		}
 		return svgelem;
 	}
-
-
 })(typeof exports !== 'undefined' ? exports : this);
