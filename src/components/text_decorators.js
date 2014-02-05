@@ -22,6 +22,7 @@
 			for (var i in els) {
 				els[i].set('text', t);
 			}
+			this.set('text', t);
 		}
 		return svgelem;
 	}
