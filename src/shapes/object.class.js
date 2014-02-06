@@ -871,13 +871,11 @@
 			var ms = fabric.masterScale;
 
 			var params = {};
+
 			if (typeof(this.shouldRasterize) === 'object') {
 				fabric.util.object.extend(params, this.shouldRasterize);
 			}
 			var obj = this.getRasterizationObject();
-			if (debug) {
-				console.log('******', obj._currentGlobalTransform);
-			}
 
 			if (obj._currentGlobalTransform)  {
 				///delay this moment until obj get _currentTransform
@@ -887,15 +885,14 @@
 				//console.log('will rasterize, height ',h,'width', w, obj.id);
 
 				var offel = fabric.document.createElement('canvas');
-
 				offel.width = Math.ceil(w*bs*ms);
 				offel.height = Math.ceil(h*bs*ms);
 
 				var lctx = offel.getContext('2d');
-				lctx._currentTransform = this._currentGlobalTransform;
+				lctx._currentTransform = this._currentGlobalTransform; //-> ovde je velika razlika?
 
 				/// small but very obvious correction .... Why? It appears that canvas will floor down width/height numbers creating a pure integer sized canvas, and this 'move bit up and right' correction affects sprite to be positioned correct enough .... but that is just an assumption ...
-				var off_matrix = [1,0,0,1,(Math.ceil(w)-w)/2,-(Math.ceil(h)-h)/2];
+				var off_matrix = mult([ms*bs, 0, 0, ms*bs, 0, 0],[1,0,0,1,(Math.ceil(w)-w)/2,-(Math.ceil(h)-h)/2]);
 
 				if (obj.id != this.id) {
 					off_matrix = mult(off_matrix, inv(obj._currentGlobalTransform));
@@ -907,10 +904,6 @@
 					this._cache.local_content_transformation = [1,0,0,1,0,0];
 				}
 
-				var offset = [1,0,0,1,obj.left, obj.top];
-				off_matrix = mult(off_matrix, [ms*bs, 0, 0, ms*bs, 0, 0]);
-				off_matrix = mult(off_matrix, offset);
-
 				this._cache.local_content_transformation = mult([1, 0, 0, 1, 0, 0], this._cache.local_content_transformation);
 
 				lctx.transform.apply(lctx,off_matrix);
@@ -919,6 +912,7 @@
 				delete this._cache.local_content;
 				delete params.done;
 				this.render(lctx);
+
 				this._cache.local_content = new fabric.Sprite(offel,fabric.util.object.extend({x:0, y:0, width:w, height:h},params));
 				//console.log('RERASTER PARAMS ** ', (params.area || {}).y, this._cache.local_content.getRasterParams(), this._cntr, this._cache.local_content._cntr);
 				///controversial ....

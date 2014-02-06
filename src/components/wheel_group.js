@@ -2,6 +2,70 @@
   var fabric = global.fabric || (global.fabric = { }),
       extend = fabric.util.object.extend;
 
+	fabric.Wheel = function (w, config) {
+		var or = w.getUsedObj();
+		var dd = or[config.dims];
+		w.setUsedObj(config.wheel);
+		var clone = w.getUsedObj();
+		clone.dropCache();
+
+		clone.on('raster:created', function (raster) {
+			w.fire('wheel:created', raster);
+		});
+		clone.on('raster:changed', function (raster) {
+			w.fire('wheel:changed', raster);
+		});
+		clone.rasterize({area:{width: dd.width, height:dd.height}, repeat: {y:true}});
+		clone.invokeOnCanvas('renderAll');
+		w.setWheelValue = function(v, local_config, done_cb) {
+
+			var t = w.getUsedObj();
+			local_config = extend(local_config, config);
+			var objs = t._objects;
+			var ztm = objs[0]._currentLocalTransform;
+			var ttm = objs[v]._currentLocalTransform;
+			var off = {x : ttm[4] - ztm[4], y : ttm[5] - ztm[5]};
+			///MORE WORK TO BE DONE ...
+			ri = t.getRasteredImage();
+			var m = ri.getRasterModulo();
+			var animation_config = {};
+
+			if (local_config.type == 'horizontal') {
+				ri.area.x += (local_config.round_count || 3)*m.width;
+				animation_config = {'area.x': off.x};
+			}else{
+				ri.area.y += (local_config.round_count || 3)*m.height;
+				animation_config = {'area.y': off.y};
+			}
+
+			(function (_ri) {
+				var do_go = function (){
+					_ri.animate (
+						animation_config,
+						{
+							easing: fabric.util.ease.easeOutElastic,
+							duration:local_config.duration, 
+							onComplete: function () { 
+								this.sanitize();
+								('function' === typeof(done_cb)) && done_cb();
+								w.fire('wheel:done');
+							}
+						}
+					);
+				}
+
+				if (!local_config.max_start_delay || fabric.util.fxOff())  {
+					do_go();
+				}else{
+					var d = Math.floor(local_config.max_start_delay * Math.random());
+					setTimeout(do_go,d);
+				}
+			})(ri);
+		};
+
+		return w;
+	}
+
 	fabric.WheelGroup = function (svgelem, config) {
 		if (!svgelem) throw "No svgelem for component WheelGroup";
 
@@ -22,7 +86,7 @@
 		var matrix_mult = fabric.util.multiplyTransformMatrices;
 		var matrix_inv = fabric.util.matrixInverse;
 
-		var wheelReady = false;
+		var wheelsReady = false;
 
 		/// do not allow dynamic wheel groups for now in terms of a wheel count ....
 		var ready = [];
@@ -34,45 +98,39 @@
 		}
 
 		svgelem.getWheelObjs = function () {return wheels;}
-		svgelem.wheelsReady = function () { return wheelReady; }
+		svgelem.wheelsReady = function () { return wheelsReady; }
 
 		for (var i = 0; i < wheels.length; i++) {
 			(function (_i) {
 				var w = wheels[_i];
-				var or = w.getUsedObj();
-				var dd = or[config.dims];
-				dimensions.push (dd);
-				w.setUsedObj(config.wheel);
-				var clone = w.getUsedObj();
-				clone.dropCache();
-				clone.on('raster:created', function (raster) {
+
+				w.on('wheel:created', function () {
 					ready[_i] = true;
 					if (ready.filter(function(v) {return !v}).length) return;
 					svgelem.wheelValue = [];
 					for (var k = 0; k < wheels.length; k++) svgelem.wheelValue.push (0);
-					wheelReady = true;
+					wheelsReady = true;
 					setTimeout(function () {
 						svgelem.fire('wheels:ready', wheels);
 						console.log(' I am ready ...', wheels.map(function (v) {return v._cntr;}));
 					}, 1);
 				});
-				clone.on('raster:changed', function (raster) {
+
+				w.on('wheel:changed', function () {
 				});
-				console.log('OVO SE DESI SAMO JEDNOM?');
-				clone.rasterize({area:{width: dd.width, height:dd.height}, repeat: {y:true}});
-				clone.invokeOnCanvas('renderAll');
+
+				fabric.Wheel(wheels[_i], {
+					dims: config.dims,
+					wheel: config.wheel
+				});
+				
 			})(i);
 		}
 
 		svgelem.wheelCount = function () {return wheels.length;};
 		svgelem.wheelAt = function (index) {return (wheels[index]) ? wheels[index].getUsedObj() : undefined;};
 
-		var debug = false;
-		svgelem.doDebug = function (bool) {
-			debug = bool;
-		}
-
-		svgelem.setWheelValue = function (val, local_config) {
+		svgelem.setWheelsValue = function (val, local_config) {
 			///MUST BE AN ARRAY OR A STRING
 			if (typeof(val) !== 'object') throw "Invalid value for wheel";
 			if ('string' === typeof(val)) val = val.split('');
@@ -80,7 +138,7 @@
 			///todo: animate set finally ....
 			local_config = extend(local_config, config);
 
-			if (!wheelReady) return;
+			if (!wheelsReady) return;
 			val = val.slice();
 			this.wheelValue = val;
 
@@ -94,63 +152,16 @@
 			}
 
 			this.fire('wheels:started');
+
 			for (var i = 0; i < wheels.length; i++) {
 				(function (w, dims, index) {
-					var objs = w._objects;
-					var ztm = objs[0]._currentLocalTransform;
-					var ttm = objs[val[index]]._currentLocalTransform;
-					var off = {x : ttm[4] - ztm[4], y : ttm[5] - ztm[5]};
-					///MORE WORK TO BE DONE ...
-					ri = w.getRasteredImage();
-					var m = ri.getRasterModulo();
-					var animation_config = {};
-
-					if (local_config.type == 'horizontal') {
-						ri.area.x += (local_config.round_count || 3)*m.width;
-						animation_config = {'area.x': off.x};
-					}else{
-						ri.area.y += (local_config.round_count || 3)*m.height;
-						animation_config = {'area.y': off.y};
-					}
-
-					(function (_ri) {
-						var do_go = function (){
-							if (debug) {
-							ri.area.y += (local_config.round_count || 3)*m.height;
-							var y = _ri.area.y;
-							setInterval(function () {
-								_ri.area.y = y;
-								_ri.invokeOnCanvas('renderAll');
-								y-= 10;
-							}, 200);
-							return;
-							}
-
-							_ri.animate (
-								animation_config,
-								{
-									easing: fabric.util.ease.easeOutElastic,
-									duration:local_config.duration, 
-									onComplete: function () { 
-										this.sanitize();
-										done[index] = true;
-										check_all_done();
-									}
-								}
-							);
-						}
-
-						if (!local_config.max_start_delay || fabric.util.fxOff())  {
-							do_go();
-						}else{
-							var d = Math.floor(local_config.max_start_delay * Math.random());
-							setTimeout(do_go,d);
-						}
-					})(ri);
-				})(wheels[i].getUsedObj(), dimensions[i], i);
+					w.setWheelValue(val[index], local_config, function () {
+						console.log('DONEEEE');
+						done[index] = true;
+						check_all_done();
+					});
+				})(wheels[i], dimensions[i], i);
 			}
-
-							//debug = true;
 		}
 	}
 

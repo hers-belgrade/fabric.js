@@ -559,6 +559,10 @@
 		return Math.sqrt (matrix[0] * matrix[0] + matrix[1]*matrix[1]);
 	}
 
+	Matrix.ScaleMatrix = function (sx, sy) {
+		return [sx, 0, 0, sy, 0, 0];
+	}
+
 	Matrix.CalculateTransformToObject = function (object_list) {
 			var ret = Matrix.UnityMatrix();
 			for (var i in object_list) {
