@@ -90,6 +90,8 @@
 			renderState('disabled');
 			return this;
 		};
+
+		if ('undefined' === typeof(config.stopPropagation)) config.stopPropagation = true;
     var clickconfig = {ctx:config.ctx||svgelem,clickcb:clicked,downcb:function(e){processState('pressed',e);}};
     fabric.Clickable(fabric.Hoverable(target,{outcb:function(e){processState('enabled',e);},overcb:function(e){processState('hovered',e);}}),clickconfig);
     if(config.initialState==='enabled'){
