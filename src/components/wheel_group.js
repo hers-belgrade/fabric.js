@@ -17,8 +17,24 @@
 		});
 		clone.rasterize({area:{width: dd.width, height:dd.height}, repeat: {y:true}});
 		clone.invokeOnCanvas('renderAll');
-		w.setWheelValue = function(v, local_config, done_cb) {
 
+		w.do_test = function () {
+			var y = 0;
+			var t = w.getUsedObj();
+			ri = t.getRasteredImage();
+
+			if (!ri) return;
+			console.log('!!!!', ri._cntr);
+
+			var interval = null;
+			//ri.setRasterArea({y:600});
+			interval = setInterval (function () {
+				ri.setRasterArea({y:y});
+				y+=20;
+			}, 200);
+		}
+
+		w.setWheelValue = function(v, local_config, done_cb) {
 			var t = w.getUsedObj();
 			local_config = extend(local_config, config);
 			var objs = t._objects;
@@ -44,6 +60,7 @@
 						animation_config,
 						{
 							easing: fabric.util.ease.easeOutElastic,
+							//easing: fabric.util.ease.Linear,
 							duration:local_config.duration, 
 							onComplete: function () { 
 								this.sanitize();
@@ -130,6 +147,10 @@
 		svgelem.wheelCount = function () {return wheels.length;};
 		svgelem.wheelAt = function (index) {return (wheels[index]) ? wheels[index].getUsedObj() : undefined;};
 
+		svgelem.do_test = function () {
+			wheels[0].do_test();
+		}
+
 		svgelem.setWheelsValue = function (val, local_config) {
 			///MUST BE AN ARRAY OR A STRING
 			if (typeof(val) !== 'object') throw "Invalid value for wheel";
@@ -156,7 +177,7 @@
 			for (var i = 0; i < wheels.length; i++) {
 				(function (w, dims, index) {
 					w.setWheelValue(val[index], local_config, function () {
-						console.log('DONEEEE');
+						//console.log('DONEEEE');
 						done[index] = true;
 						check_all_done();
 					});

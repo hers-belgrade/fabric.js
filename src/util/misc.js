@@ -560,7 +560,8 @@
 	}
 
 	Matrix.ScaleMatrix = function (sx, sy) {
-		return [sx, 0, 0, sy, 0, 0];
+		if (!arguments.length || isNaN(sx)) return Matrix.UnityMatrix();
+		return (isNaN(sy)) ? [sx, 0, 0, sx, 0, 0] : [sx, 0, 0, sy, 0, 0];
 	}
 
 	Matrix.CalculateTransformToObject = function (object_list) {

@@ -35,8 +35,8 @@
 		getRasterParams : function () {
 			return {area: this.area, repeat: this.repeat};
 		},
+
 		setRasterArea: function (area_params, props) {
-			console.log('SETTING TO', this._cntr, area_params.y);
 			props && this.set(props);
 			var ts = fabric.util.object.extend(this.area, area_params);
 			this.set({area:ts});
@@ -53,6 +53,7 @@
 
 			var area_x = this.area.x % elw;
 			var area_y = this.area.y % elh;
+			//console.log('====', elh, area_y);
 
 			var should_repeat = {
 				x : this.repeat.x && (area_x < 0 || area_x+this.area.width > elw),
@@ -94,19 +95,19 @@
 							ctx.drawImage (
 									self._element,
 									//where I am clipping from
-									slice_from*bs*ms, other_pos*bs*ms, 
-									render_dimension*bs*ms, render_height*bs*ms,
+									slice_from*ms, other_pos*ms, 
+									render_dimension*ms, render_height*ms,
 									//where I am pasting to
-									dynamic_dimension, other_pos,
-									render_dimension,render_height
+									dynamic_dimension*bs, other_pos*bs,
+									render_dimension*bs,render_height*bs
 							 );
 						}
 					}else{
 						ctx.drawImage (
 								self._element,
 								//where I am clipping from
-								0, slice_from*bs*ms,
-								render_width*bs*ms, render_dimension*bs*ms,
+								0, slice_from*ms,
+								render_width*ms, render_dimension*ms,
 								//where I am pasting to
 								other_pos, dynamic_dimension,
 								render_width,render_dimension
@@ -138,9 +139,10 @@
 				return repeat_y(this.x,area_y);
 			}
 
-		//anyway, avoid negative values ...
+			//anyway, avoid negative values ...
 			var x_correction = (area_x < 0) ? -area_x: 0;
 			var y_correction = (area_y < 0) ? -area_y: 0;
+
 			ctx.drawImage(
 				this._element,
 				(area_x+x_correction)*ms,(area_y+y_correction)*ms,
@@ -151,8 +153,9 @@
     },
 		getRasterModulo : function () {
 			var bs = fabric.backingScale;
+			var ms = fabric.masterScale;
 			//return {width: this._element.width/bs, height: this._element.height/bs};
-			return {width: this.width/bs, height: this.height/bs};
+			return {width: this.width/(bs*ms), height: this.height/(bs*ms)};
 		},
 		sanitize: function () {
 			var m = this.getRasterModulo();

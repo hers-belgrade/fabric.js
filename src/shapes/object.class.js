@@ -580,7 +580,7 @@
         clipTo:             this.clipTo && String(this.clipTo),
         transformMatrix:    this.transformMatrix,
         nonIteratable:      this.nonIteratable,
-        _cache:             this._cache
+        //_cache:             this._cache
       };
 
       if (!this.includeDefaultValues) {
@@ -880,19 +880,18 @@
 			if (obj._currentGlobalTransform)  {
 				///delay this moment until obj get _currentTransform
 				delete this.shouldRasterize;
-				var w = obj.get('width');
-				var h = obj.get('height');
+				var w = obj.get('width')*bs;
+				var h = obj.get('height')*bs;
 				//console.log('will rasterize, height ',h,'width', w, obj.id);
 
 				var offel = fabric.document.createElement('canvas');
-				offel.width = Math.ceil(w*bs*ms);
-				offel.height = Math.ceil(h*bs*ms);
+
+				offel.width = Math.ceil(w*ms/bs);
+				offel.height = Math.ceil(h*ms/bs);
 
 				var lctx = offel.getContext('2d');
 				lctx._currentTransform = this._currentGlobalTransform; //-> ovde je velika razlika?
-
-				/// small but very obvious correction .... Why? It appears that canvas will floor down width/height numbers creating a pure integer sized canvas, and this 'move bit up and right' correction affects sprite to be positioned correct enough .... but that is just an assumption ...
-				var off_matrix = mult([ms*bs, 0, 0, ms*bs, 0, 0],[1,0,0,1,(Math.ceil(w)-w)/2,-(Math.ceil(h)-h)/2]);
+				var off_matrix = mult(Matrix.ScaleMatrix(ms),[1,0,0,1,(Math.ceil(w)-w)/2,-(Math.ceil(h)-h)/2]);
 
 				if (obj.id != this.id) {
 					off_matrix = mult(off_matrix, inv(obj._currentGlobalTransform));
@@ -904,8 +903,6 @@
 					this._cache.local_content_transformation = [1,0,0,1,0,0];
 				}
 
-				this._cache.local_content_transformation = mult([1, 0, 0, 1, 0, 0], this._cache.local_content_transformation);
-
 				lctx.transform.apply(lctx,off_matrix);
 				var rc = !this._cache.local_content;
 				var done = params.done;
@@ -913,11 +910,10 @@
 				delete params.done;
 				this.render(lctx);
 
-				this._cache.local_content = new fabric.Sprite(offel,fabric.util.object.extend({x:0, y:0, width:w, height:h},params));
-				//console.log('RERASTER PARAMS ** ', (params.area || {}).y, this._cache.local_content.getRasterParams(), this._cntr, this._cache.local_content._cntr);
-				///controversial ....
+				params.area = extend({width: obj.width, height: obj.height, x: 0, y: 0},params.area || {});
+				this._cache.local_content = new fabric.Sprite(offel,fabric.util.object.extend({x:0, y:0, width:offel.width, height:offel.height},params));
 				this._cache.local_content.group = this;
-				//console.log('RASTERIZED ', this.id, this._cntr, this._cache.local_content._cntr);
+
 				('function' === typeof(done)) && done.call(this, (rc) ? 'created':'changed', this._cache.local_content); 
 				rc ? this.fire ('raster:created', this._cache.local_content) : this.fire ('raster:changed', this._cache.local_content);
 				this._cache.local_content.calculated_on_ms = ms;
