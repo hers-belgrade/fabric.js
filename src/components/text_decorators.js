@@ -15,12 +15,12 @@
 		if (!g) return svgelem;
 
 		for (var i in els) {
-			els[i] = g[id+'_'+els]
+			els[i] = g[id+'_'+i];
 		}
 
 		svgelem.setText = function (t) {
 			for (var i in els) {
-				els[i].set('text', t);
+				els[i] && els[i].set('text', t);
 			}
 			this.set('text', t);
 		}
