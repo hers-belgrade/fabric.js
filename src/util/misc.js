@@ -574,6 +574,14 @@
 			return ret;
 	}
 
+	function isFunction (f) {
+		return ('function' === typeof(f));
+	}
+
+	function isArray (a) {
+		return ('object' === typeof(a) && a instanceof Array);
+	}
+
 
 	fabric.util.Matrix = Matrix;
 
@@ -601,5 +609,7 @@
   fabric.util.getFunctionBody = getFunctionBody;
   fabric.util.drawArc = drawArc;
 	fabric.util.resetImageCache = resetImageCache;
+	fabric.util.isFunction = isFunction;
+	fabric.util.isArray = isArray;
 
 })(typeof exports !== 'undefined' ? exports : this);
