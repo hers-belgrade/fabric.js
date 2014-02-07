@@ -1355,7 +1355,9 @@
       return this;
     },
     isVisible: function(){
-      return this.opacity>0 && this.display!=='none' && this.visible;
+			var iam_visible = this.opacity>0 && this.display!=='none' && this.visible;
+			if (!this.group || !iam_visible) return iam_visible;
+			return this.group.isVisible();
     },
     /**
      * Shows an object and fires shown event

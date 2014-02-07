@@ -62,6 +62,17 @@ fabric.Collection = {
     // only call onObjectRemoved if an object was actually removed
     if (index !== -1) {
       objects.splice(index, 1);
+
+			var cc = object.getCanvas();
+			///if object / group was added to canvas then all it's children have same canvas ... no need to check
+
+			if (cc && object.forEachObjectRecursive) {
+				object.forEachObjectRecursive(function (o) {
+					if (!o || !o.wantsMouse) return;
+					cc.removeFromMouseListeners(o);
+				});
+			}
+			cc && object.wantsMouse && c.removeFromMouseListeners(object);
       this._onObjectRemoved(object);
     }
 
