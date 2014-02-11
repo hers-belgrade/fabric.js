@@ -1356,8 +1356,11 @@
     },
     isVisible: function(){
 			var iam_visible = this.opacity>0 && this.display!=='none' && this.visible;
+			return iam_visible;
+			/*
 			if (!this.group || !iam_visible) return iam_visible;
 			return this.group.isVisible();
+			*/
     },
     /**
      * Shows an object and fires shown event
