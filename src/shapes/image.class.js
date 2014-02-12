@@ -68,6 +68,11 @@
      * @chainable
      */
     setElement: function(element, callback) {
+			if (this.id === 'image4978') {
+				element.onload = function () {
+					console.log('ETO JE I SLIKA ...');
+				}
+			}
       this._element = element;
       this._originalElement = element;
       this._initConfig();
@@ -274,6 +279,10 @@
      * @param {CanvasRenderingContext2D} ctx Context to render on
      */
     _render: function(ctx) {
+			if (this.id === 'image4978') {
+				//console.log('IMAGE ', this._element, this._element.complete, this._element.src);
+				//console.log(this._element.toDataURL());
+			}
       ctx.drawImage(
         this._element,
         0,//-this.width / 2,

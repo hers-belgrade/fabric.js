@@ -3,6 +3,7 @@
       extend = fabric.util.object.extend;
 
 	fabric.Wheel = function (w, config) {
+		fabric.CanvasUser(w);
 		var or = w.getUsedObj();
 		var dd = or[config.dims];
 		w.setUsedObj(config.wheel);
