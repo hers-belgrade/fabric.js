@@ -574,23 +574,6 @@
 			return ret;
 	}
 
-	function isFunction (f) {
-		return ('function' === typeof(f));
-	}
-
-	function isArray (a) {
-		return ('object' === typeof(a) && a instanceof Array);
-	}
-
-	function isDefined (a) {
-		return !isUndefined(a);
-	}
-
-	function isUndefined(a) {
-		return (typeof(a) === 'undefined');
-	}
-
-
 	fabric.util.Matrix = Matrix;
 
   fabric.util.removeFromArray = removeFromArray;
@@ -617,9 +600,5 @@
   fabric.util.getFunctionBody = getFunctionBody;
   fabric.util.drawArc = drawArc;
 	fabric.util.resetImageCache = resetImageCache;
-	fabric.util.isFunction = isFunction;
-	fabric.util.isArray = isArray;
-	fabric.util.isUndefined = isUndefined;
-	fabric.util.isDefined = isDefined;
 
 })(typeof exports !== 'undefined' ? exports : this);

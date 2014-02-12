@@ -366,9 +366,6 @@
 			var rid = this.id + '_rasterize';
 			return (this[rid]) ? this[rid] : undefined;
 		}
-
-
-
   });
 
   /**
