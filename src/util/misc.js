@@ -574,7 +574,6 @@
 			return ret;
 	}
 
-
 	fabric.util.Matrix = Matrix;
 
   fabric.util.removeFromArray = removeFromArray;

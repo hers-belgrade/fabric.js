@@ -12,6 +12,7 @@
       getElementOffset = fabric.util.getElementOffset,
       removeFromArray = fabric.util.removeFromArray,
       removeListener = fabric.util.removeListener,
+			isUndefined = fabric.util.isUndefined,
 
       CANVAS_INIT_ERROR = new Error('Could not initialize `canvas` element');
 
@@ -145,15 +146,28 @@
 
     _computeMasterScale: function () {
       var ms = fabric.masterSize;
-      var lce = this.lowerCanvasEl;
+			var old = fabric.masterScale;
+
+      var lce = {
+				width: window.innerWidth,
+				height:window.innerHeight
+			};
+
       if(ms&&
         (ms.width!==lce.width||
          ms.height!==lce.height)
         ){
         var hscale = lce.width/ms.width;
         var vscale = lce.height/ms.height;
-        var scale = Math.min(hscale,vscale);
+        var scale = Math.min(hscale,vscale) * fabric.backingScale;
         fabric.masterScale = scale;
+				if (fabric.masterScale !== old) {
+					this.fire('fabric:masterScaleChanged');
+				}
+				if (isUndefined(old)) {
+					this._applyCanvasStyle(this.lowerCanvasEl);
+					this._applyCanvasStyle(this.upperCanvasEl);
+				}
       }else{
         fabric.masterScale = 1;
       }
@@ -171,7 +185,7 @@
       this.animationTickers = [];
 
       this._createLowerCanvas(el);
-      this._computeMasterScale();
+      //this._computeMasterScale();
       fabric.staticLayerManager.monitor(this.lowerCanvasEl);
       this._initOptions(options);
 
@@ -637,7 +651,7 @@
 
       this.fire('before:render');
 
-      this._computeMasterScale();
+      //this._computeMasterScale();
       ctxToDrawOn.save();
       ctxToDrawOn.scale(fabric.masterScale,fabric.masterScale);
       if (this.clipTo) {

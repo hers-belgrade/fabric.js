@@ -2,7 +2,8 @@
 
   "use strict";
 
-  var extend = fabric.util.object.extend;
+  var extend = fabric.util.object.extend,
+		safeDrawImage = fabric.util.safeDrawImage;
 
   if (!global.fabric) {
     global.fabric = { };
@@ -91,27 +92,37 @@
 						if (self.repeat.y) {
 							repeat_axis('y', dynamic_dimension, self.area.y);
 						}else{
-							//ms = 1;
-							ctx.drawImage (
-									self._element,
-									//where I am clipping from
-									slice_from*ms, other_pos*ms, 
-									render_dimension*ms, render_height*ms,
-									//where I am pasting to
-									dynamic_dimension*bs, other_pos*bs,
-									render_dimension*bs,render_height*bs
-							 );
+
+							safeDrawImage (ctx, self._element, {
+								clip : {
+									x : slice_from,
+									y : other_pos,
+									width: dynamic_dimension,
+									height: render_height,
+								},
+								target : {
+									x : dynamic_dimension*bs,
+									y : other_pos*bs,
+									width: render_dimension*bs,
+									height:render_height*bs
+								}
+							});
 						}
 					}else{
-						ctx.drawImage (
-								self._element,
-								//where I am clipping from
-								0, slice_from*ms,
-								render_width*ms, render_dimension*ms,
-								//where I am pasting to
-								other_pos, dynamic_dimension,
-								render_width,render_dimension
-								);
+						safeDrawImage (ctx, self._element, {
+							clip : {
+								x : 0,
+								y : slice_from,
+								width: render_width,
+								height: render_dimension,
+							},
+							target: {
+								x : other_pos,
+								y : dynamic_dimension,
+								width : render_width,
+								height: render_dimension
+							}
+						});
 					}
 
 
@@ -139,17 +150,20 @@
 				return repeat_y(this.x,area_y);
 			}
 
-			//anyway, avoid negative values ...
-			var x_correction = (area_x < 0) ? -area_x: 0;
-			var y_correction = (area_y < 0) ? -area_y: 0;
-
-			ctx.drawImage(
-				this._element,
-				(area_x+x_correction)*ms,(area_y+y_correction)*ms,
-				Math.min((this.area.width-x_correction)*ms, this._element.width),  Math.min((this.area.height-y_correction)*ms, this._element.height),
-				(this.x-x_correction),(this.y-y_correction),
-				(this.area.width-x_correction), (this.area.height - y_correction)
-			);
+			safeDrawImage (ctx, this._element, {
+				clip : {
+					x: area_x,
+					y: area_y,
+					width: this.area.width,
+					height:this.area.height
+				},
+				target: {
+					x : this.x,
+					y : this.y,
+					width:  this.area.width,
+					height: this.area.height
+				}
+			});
     },
 		getRasterModulo : function () {
 			var bs = fabric.backingScale;

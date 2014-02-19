@@ -8,6 +8,7 @@
       min = Math.min,
       max = Math.max,
 
+			isDefined = fabric.util.isDefined,
       STROKE_OFFSET = 0.5;
 
   /**
@@ -349,9 +350,24 @@
      * @param {Element} element
      */
     _applyCanvasStyle: function (element) {
-      var width = this.autoresize ? window.innerWidth : (this.getWidth()/fabric.backingScale || element.width),
-          height = this.autoresize ? window.innerHeight : (this.getHeight()/fabric.backingScale || element.height);
-      //console.log('applying canvas style on',element.width,element.height,'target size is',width,height);
+			var ms = fabric.masterScale;
+			var msz = fabric.masterSize;
+
+			var width = 0;
+			var height = 0;
+
+			if (this.autoresize) {
+				if (isDefined(msz) && isDefined(ms)) {
+					width = msz.width*ms/fabric.backingScale;
+					height = msz.height*ms/fabric.backingScale;
+				}else{
+					width = window.innerWidth;
+					height =window.innerHeight;
+				}
+			}else{
+				width = this.getWidth()/fabric.backingScale || element.width;
+				height= this.getHeight()/fabric.backingScale|| element.height;
+			}
       fabric.util.setStyle(element, {
         position: 'absolute',
         width: width + 'px',
@@ -359,8 +375,12 @@
         left: 0,
         top: 0
       });
+
       this.width = element.width = width*fabric.backingScale;
       this.height = element.height = height*fabric.backingScale;
+
+			//this.width = width*fabric.backingScale;
+			//this.height = height*fabric.backingScale;
       fabric.util.makeElementUnselectable(element);
       console.log('now it is',element.width,element.height,element.style.width,element.style.height);
     },

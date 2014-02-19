@@ -368,6 +368,7 @@
 			this._cntr = cntr;
 			cntr++;
       this._cache = {};
+			this._raster= {};
 			if (options) {
         this.setOptions(options);
       }
@@ -896,27 +897,27 @@
 				if (obj.id != this.id) {
 					off_matrix = mult(off_matrix, inv(obj._currentGlobalTransform));
 					off_matrix = mult(off_matrix, this._currentTransform);
-					this._cache.local_content_transformation = obj._localTransformationMatrix;
+					this._raster.content_transformation = obj._localTransformationMatrix;
 				}else{
 					off_matrix = mult(off_matrix, inv(this._currentGlobalTransform));
 					off_matrix = mult(off_matrix, this._currentTransform);
-					this._cache.local_content_transformation = [1,0,0,1,0,0];
+					this._raster.content_transformation = [1,0,0,1,0,0];
 				}
 
 				lctx.transform.apply(lctx,off_matrix);
-				var rc = !this._cache.local_content;
+				var rc = !this._raster.content;
 				var done = params.done;
-				delete this._cache.local_content;
+				delete this._raster.content;
 				delete params.done;
 				this.render(lctx);
 
 				params.area = extend({width: obj.width, height: obj.height, x: 0, y: 0},params.area || {});
-				this._cache.local_content = new fabric.Sprite(offel,fabric.util.object.extend({x:0, y:0, width:offel.width, height:offel.height},params));
-				this._cache.local_content.group = this;
+				this._raster.content = new fabric.Sprite(offel,fabric.util.object.extend({x:0, y:0, width:offel.width, height:offel.height},params));
+				this._raster.content.group = this;
 
-				('function' === typeof(done)) && done.call(this, (rc) ? 'created':'changed', this._cache.local_content); 
-				rc ? this.fire ('raster:created', this._cache.local_content) : this.fire ('raster:changed', this._cache.local_content);
-				this._cache.local_content.calculated_on_ms = ms;
+				('function' === typeof(done)) && done.call(this, (rc) ? 'created':'changed', this._raster.content); 
+				rc ? this.fire ('raster:created', this._raster.content) : this.fire ('raster:changed', this._raster.content);
+				this._raster.content.calculated_on_ms = ms;
 				return true;
 			}
 		},
@@ -940,8 +941,8 @@
       //console.log(this.type,this.id,'starts render');
 
 
-			if (this._cache.local_content && this.shouldRasterize) {
-				var lc = this._cache.local_content;
+			if (this._raster.content && this.shouldRasterize) {
+				var lc = this._raster.content;
 				if ('object' !== typeof(this.shouldRasterize)) {
 					this.shouldRasterize = lc.getRasterParams();
 				}else{
@@ -968,9 +969,9 @@
       //this._setShadow(ctx);
       //this.clipTo && fabric.util.clipContext(this, ctx);
 
-      if(this._cache.local_content){
-				ctx.transform.apply(ctx,this._cache.local_content_transformation);
-        this._cache.local_content.render(ctx);
+      if(this._raster.content){
+				ctx.transform.apply(ctx,this._raster.content_transformation);
+        this._raster.content.render(ctx);
 				ctx.restore();
 			}else{
 				this._render(ctx, topctx);
@@ -993,7 +994,7 @@
 
     accountForGradientTransform: function(p1,p2){},
 		getRasteredImage : function () {
-			return this._cache.local_content;
+			return this._raster.content;
 		},
     _paint : function(ctx){
     },
@@ -1354,7 +1355,12 @@
       return this;
     },
     isVisible: function(){
-      return this.opacity>0 && this.display!=='none' && this.visible;
+			var iam_visible = this.opacity>0 && this.display!=='none' && this.visible;
+			return iam_visible;
+			/*
+			if (!this.group || !iam_visible) return iam_visible;
+			return this.group.isVisible();
+			*/
     },
     /**
      * Shows an object and fires shown event
@@ -1407,8 +1413,8 @@
 		},
 
 		setRasterArea : function (area_params, lc_props) {
-			if (!this._cache.local_content) return;
-			this._cache.local_content.setRasterArea(area_params, lc_props);
+			if (!this._raster.content) return;
+			this._raster.content.setRasterArea(area_params, lc_props);
 			this.invokeOnCanvas('renderAll');
 		},
 

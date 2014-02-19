@@ -18,10 +18,14 @@
 			return d;
 		}
 
-
-		var sources = Array.prototype.slice.call(arguments, 1);
+		var sources = [];
+		try {
+		sources = arguments.length > 0 ? Array.prototype.slice.call(arguments, 1) : [];
+		}catch (e) {
+			console.log('FAIL');
+		}
 		for (var i in sources) {
-			destination = step(destination, sources[i]);
+			sources[i] && (destination = step(destination, sources[i]));
 		}	
 		return destination;
 	}

@@ -46,8 +46,8 @@
     if(!ctx){
       var offel = fabric.document.createElement('canvas');
       this.canvas = offel;
-      offel.width = this.mastercanvas.width;
-      offel.height = this.mastercanvas.height;
+      offel.width = Math.ceil(this.mastercanvas.width);
+      offel.height = Math.ceil(this.mastercanvas.height);
       //console.log(this.id,'created a canvas for self',offel.width,offel.height);
       ctx = this.canvas.getContext('2d');
 			ctx.clearRect(0,0,offel.with, offel.height);

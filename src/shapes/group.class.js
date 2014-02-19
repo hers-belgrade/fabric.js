@@ -120,7 +120,6 @@
       this._restoreObjectsState();
       // since _restoreObjectsState set objects inactive
       this.forEachObject(function(o){ o.set('active', true); o.group = this; }, this);
-
       this.remove(object);
       return this;
     },
@@ -367,9 +366,6 @@
 			var rid = this.id + '_rasterize';
 			return (this[rid]) ? this[rid] : undefined;
 		}
-
-
-
   });
 
   /**

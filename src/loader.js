@@ -1,5 +1,6 @@
 (function(global) {
   var fabric = global.fabric || (global.fabric = { }),
+			isFunction = fabric.util.isFunction,
       extend = fabric.util.object.extend;
 
   /**
@@ -63,6 +64,7 @@
     
     var picnamearraylen = picnamearray.length;
     var loaded = {};
+
     var _lf = (function(_loaded,_type){
       var loaded = _loaded;
       var type = _type;
@@ -97,6 +99,7 @@
         }
       };
     })(loaded,type);
+
     _lf(0);
   };
 
@@ -132,7 +135,34 @@
     });
   };
 
+	function loadInParallel (resobj, cb, ctx) {
+		var root = resobj.root;
+
+		var pending = {};
+
+		function check_pending () {
+			for (var c in pending) {
+				if (Object.keys(pending[c]).length) return;
+			}
+			pending = undefined;
+			isFunction(cb) && cb.call(ctx);
+		}
+
+		for (var _i in resobj.svg) {
+			pending.svg = {};
+			(function (o, i) {
+				pending.svg[o.name] = true;
+				_loadSVG(root+'/'+o.name+'.svg', function (el) {
+					delete pending.svg[o.name];
+					(isFunction(o.cb)) && o.cb.call(this, el, o.name);
+					check_pending();
+				});
+			})(resobj.svg[_i],_i);
+		}
+	}
+
   extend(fabric, {
-    loadResources : loadResources
+    loadResources : loadResources,
+		loadInParallel: loadInParallel
   });
 })(typeof exports !== 'undefined' ? exports : this);

@@ -84,7 +84,6 @@
     _positionEventDisposers: {},
     _initEvents: function () {
       var _this = this;
-
       this._onResize = this._onResize.bind(this);
 
       this._onGesture = function(e, s) {
@@ -184,12 +183,12 @@
      */
     _onResize: function () {
       if(this.autoresize){
+        this._computeMasterScale();
         this._applyWrapperStyle(this.wrapperEl);
         this._applyCanvasStyle(this.lowerCanvasEl);
         if(this.upperCanvasEl){
           this._applyCanvasStyle(this.upperCanvasEl);
         }
-        this._computeMasterScale();
       }
       this.calcOffset();
       fabric.staticLayerManager.refresh();

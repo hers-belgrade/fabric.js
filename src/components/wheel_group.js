@@ -3,6 +3,7 @@
       extend = fabric.util.object.extend;
 
 	fabric.Wheel = function (w, config) {
+		fabric.CanvasUser(w);
 		var or = w.getUsedObj();
 		var dd = or[config.dims];
 		w.setUsedObj(config.wheel);
@@ -96,7 +97,6 @@
 
 		var prefix = config.prefix || svgelem.id;
 		if (prefix.length) prefix+= '_';
-		var vs = ('function' === typeof(config.valueSetter)) ? config.valueSetter : function () {};
 		var wheels = [];
 		var dimensions = [];
 
