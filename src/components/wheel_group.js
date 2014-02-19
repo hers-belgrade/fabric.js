@@ -97,7 +97,6 @@
 
 		var prefix = config.prefix || svgelem.id;
 		if (prefix.length) prefix+= '_';
-		var vs = ('function' === typeof(config.valueSetter)) ? config.valueSetter : function () {};
 		var wheels = [];
 		var dimensions = [];
 
