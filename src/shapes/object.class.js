@@ -580,7 +580,7 @@
         clipTo:             this.clipTo && String(this.clipTo),
         transformMatrix:    this.transformMatrix,
         nonIteratable:      this.nonIteratable,
-        //_cache:             this._cache
+        _cache:             this._cache
       };
 
       if (!this.includeDefaultValues) {

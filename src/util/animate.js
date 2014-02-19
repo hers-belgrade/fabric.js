@@ -31,7 +31,7 @@
 			if (fxoff) {
 				onChange(endValue);
 				options.onComplete && options.onComplete();
-				return;
+				return true;
 			}
       time = +new Date();
       var currentTime = time > finish ? duration : (time - start);
