@@ -9,40 +9,57 @@
  */
 	fabric.MouseEventBucket = function (svgelem) {
 		svgelem.mouse_event_bucket = true;
+		svgelem.visible_for_mouse = svgelem.isVisible();
+
 		var old_hide = svgelem.hide;
 		var old_show = svgelem.show;
 
 		svgelem.show = function () {
-			if (!this.isVisible()) {
-				var canvas = this.getCanvas();
-				if (canvas) {
-					if (this.forEachObjectRecursive) {
-						this.forEachObjectRecursive(function (o) {
-							//avoid hidden mouse_event_buckets who are chids ...
-							if (o.mouse_event_bucket && !o.isVisible()) return;
-							(o && o.wantsMouse) && canvas.addToMouseListeners(o);
-						});
-					}
-					this.wantsMouse && canvas.addToMouseListeners(this);
-				}
+			var was_hidden = !this.isVisible();
+			var ret = old_show.apply(this, arguments);
+			var canvas = this.getCanvas();
+			if (!canvas) return ret;
+			if (this.visible_for_mouse) return ret;
+
+			if (!this.visible_for_mouse) {
+				// ! visible for mouse events ? make it visible ....
+				this.visible_for_mouse = true;
+				this.wantsMouse && canvas.addToMouseListeners(this);
 			}
-			old_show.apply(this, arguments);
+
+			if (!this.forEachObjectRecursive) return ret;
+
+			this.forEachObjectRecursive(function (o) {
+				if (!o) return;
+				if (o.mouse_event_bucket) {
+					///make child available for mouse clicks ...
+					if (o.isVisible()) o.show();
+					return;
+				}
+
+				o.wantsMouse && canvas.addToMouseListeners(o);
+			});
+
+			return ret;
 		}
 
 		svgelem.hide = function () {
-			if (this.isVisible()){
-				var canvas = this.getCanvas();
-				if (canvas) {
-					if (this.forEachObjectRecursive) {
-						this.forEachObjectRecursive(function (o) {
-							(o && o.wantsMouse) && canvas.removeFromMouseListeners(o);
-						});
-					}
-					this.wantsMouse && canvas.removeFromMouseListeners(this);
-				}
+			var was_visible = this.isVisible();
+			var ret = old_hide.apply(this, arguments);
+			if (this.visible_for_mouse) {
+				this.visible_for_mouse = false;
+				this.wantsMouse && canvas.removeFromMouseListeners(this);
 			}
-			old_hide.apply(this, arguments);
+			if (!was_visible || !this.forEachObjectRecursive) return ret;
+			this.forEachObjectRecursive(function (o) {
+				if (!o) return;
+				if (o.mouse_event_bucket && o.visible_for_mouse) o.visible_for_mouse = false;
+				if (o.wantsMouse) canvas.removeFromMouseListeners(o);
+			});
+			return ret;
 		}
+
+
 		return svgelem;
 	}
 

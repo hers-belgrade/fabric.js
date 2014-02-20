@@ -619,22 +619,15 @@
       this.dirty = true;
     },
     _realRenderAll: function (allOnTop) {
-      var fordeletion = [];
-      for(var i in this.animationTickers){
-        var tr = this.animationTickers[i]();
+      var cursor = 0;
+      while(cursor<this.animationTickers.length){
+        var tr = this.animationTickers[cursor]();
         if(tr){
-          fordeletion.push(i);
+          this.animationTickers.splice(cursor,1);
+        }else{
+          cursor++;
         }
         this.dirty = true;
-      }
-      if(fordeletion.length){
-        var ts = [];
-        for(var i in this.animationTickers){
-          if(fordeletion.indexOf(i)<0){
-            ts.push(this.animationTickers[i]);
-          }
-        }
-        this.animationTickers = ts;
       }
       if(!this.dirty){
         this.goRender();

@@ -99,6 +99,7 @@
     }else{
       svgelem.disable();
     }
+		fabric.MouseEventBucket(svgelem);
     return svgelem;
   };
 
