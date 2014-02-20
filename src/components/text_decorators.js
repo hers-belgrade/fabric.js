@@ -18,6 +18,33 @@
 			els[i] = g[id+'_'+i];
 		}
 
+		function traverse (cb) {
+			for (var i in els) {
+				('function' === typeof(cb)) && els[i]  && cb(els[i]);
+			}
+		}
+
+
+		var or_show = svgelem.show;
+		var or_hide = svgelem.hide;
+
+		svgelem.hide = function () {
+			var args = arguments;
+			traverse(function (el) {
+				el.hide.apply(el, args);
+			});
+			return or_hide.apply(svgelem, args);
+		}
+
+		svgelem.show = function () {
+			var args = arguments;
+			traverse(function (el) {
+				el.show.apply(el, args);
+			});
+			return or_show.apply(svgelem, args);
+		}
+
+
 		svgelem.setText = function (t) {
 			for (var i in els) {
 				els[i] && els[i].set('text', t);
