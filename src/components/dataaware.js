@@ -28,6 +28,13 @@
       }
       setDataAwareListener.call(this,'scalar_'+scalarname,this.follower.listenToScalar(this,scalarname,listenerpack));
     };
+		svgelem.listenToJSONScalar = function(scalarname,listenerpack){
+      if(!this.follower){
+        return;
+      }
+      setDataAwareListener.call(this,'jsonscalar_'+scalarname,this.follower.listenToJSONScalar(this,scalarname,listenerpack));
+    };
+
     svgelem.listenToMultiScalars = function(scalarnames,listenerpack){
       if(!this.follower){
         return;
@@ -55,7 +62,4 @@
     };
     return svgelem;
   };
-
 })(typeof exports !== 'undefined' ? exports : this);
-
-

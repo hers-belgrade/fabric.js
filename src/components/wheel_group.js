@@ -129,7 +129,6 @@
 					wheelsReady = true;
 					setTimeout(function () {
 						svgelem.fire('wheels:ready', wheels);
-						console.log(' I am ready ...', wheels.map(function (v) {return v._cntr;}));
 					}, 1);
 				});
 
