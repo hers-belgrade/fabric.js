@@ -3,7 +3,9 @@
       extend = fabric.util.object.extend;
 
 	fabric.Wheel = function (w, config) {
+		if (w.wheel_created) return w;
 		fabric.CanvasUser(w);
+		w.wheel_created = true;
 		var or = w.getUsedObj();
 		var dd = or[config.dims];
 		w.setUsedObj(config.wheel);
@@ -86,6 +88,8 @@
 
 	fabric.WheelGroup = function (svgelem, config) {
 		if (!svgelem) throw "No svgelem for component WheelGroup";
+		if (svgelem.wheels_created) return;
+		svgelem.wheels_created = true;
 
 		config = extend ({
 			round_count: 20,
@@ -156,10 +160,11 @@
 			if ('string' === typeof(val)) val = val.split('');
 			if (!(val instanceof Array)) throw "Invalid value for wheel"; 
 			///todo: animate set finally ....
-			local_config = extend(local_config, config);
+			local_config = extend(local_config || {}, config);
 
 			if (!wheelsReady) return;
 			val = val.slice();
+			if (JSON.stringify(this.wheelValue) === JSON.stringify(val)) return;
 			this.wheelValue = val;
 
 			var done = wheels.map(function(){return false;});
