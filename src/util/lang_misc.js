@@ -62,8 +62,10 @@
 			params.target.y -= c.y;
 			params.target.height -= c.y;
 		}
+		/*
 
 		reduce_dimension (params.target, {width: Math.floor(ctx.canvas.width/ms), height: Math.floor(ctx.canvas.height/ms)});
+		*/
 
 		return ctx.drawImage (
 			image,
