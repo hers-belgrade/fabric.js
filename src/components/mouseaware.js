@@ -45,7 +45,9 @@
 
 		svgelem.hide = function () {
 			var was_visible = this.isVisible();
+			var canvas = this.getCanvas();
 			var ret = old_hide.apply(this, arguments);
+			if (!canvas) return ret;
 			if (this.visible_for_mouse) {
 				this.visible_for_mouse = false;
 				this.wantsMouse && canvas.removeFromMouseListeners(this);
@@ -58,8 +60,6 @@
 			});
 			return ret;
 		}
-
-
 		return svgelem;
 	}
 

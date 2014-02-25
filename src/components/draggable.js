@@ -1,13 +1,19 @@
 (function(global) {
 
   var fabric = global.fabric || (global.fabric = { });
+	var isFunction = fabric.util.isFunction;
 
   if(fabric.Draggable){return;}
 
   fabric.Draggable = function(svgelem,config){
-    var hotspot = config&&config.hotspot ? svgelem.getObjectById(config.hotspot) : svgelem;
-    var target = config&&config.target ? svgelem.getObjectById(config.target) : svgelem;
-    var area = config&&config.area ? svgelem.getObjectById(config.area) : svgelem;
+		function get_me_obj (req) {
+			return ('string' === typeof(req)) ? svgelem.getObjectById(req) : req;
+		}
+
+		var config = config || {};
+    var hotspot = config&&config.hotspot ? get_me_obj(config.hotspot) : svgelem;
+    var target = config&&config.target ? get_me_obj(config.target) : svgelem;
+    var area = config&&config.area ? get_me_obj(config.area) : svgelem;
     var direction = config ? config.direction : '';
     var doConstrain;
     if(config && config.constrainto){
@@ -34,27 +40,65 @@
         }
       }
     }
+
+
+		function add(a, b) {return a+b;}
+		function sub(a, b) {return a-b;}
+
+		var update = (config.nature === 'negative') ? sub : add;
+		var vm = function () {
+			return config.value_manipulator.apply(target, arguments);
+		}
+
+
     fabric.Clickable(hotspot,{ctx:svgelem,downcb:function(e){
       this.dragActive=true;
       this.dragPosition=e.e;
+			isFunction(config.onStarted) && config.onStarted.call(svgelem, {
+				x : vm('get', 'x'),
+				y : vm('get', 'y')
+			});
     },clickcb:function(){
       delete this.dragActive;
       delete this.dragPosition;
       doConstrain && doConstrain();
+			isFunction(config.onFinished) && config.onFinished.call(svgelem, {
+				x: vm('get','x'),
+				y: vm('get','y')
+			});
+
     }});
     fabric.MouseAware(area);
+
+
+		if (!isFunction(config.value_manipulator)) {
+			config.value_manipulator = function (action, axis, value) {
+				if (action === 'get') {
+					return (axis === 'x') ? this.left : this.top;
+				}
+
+				if (action === 'set') {
+					if (axis === 'x') {
+						return this.set('left', value);
+					}else{
+						return this.set('top', value);
+					}
+				}
+			}
+		}
     area.on('mouse:move',function(e){
       if(svgelem.dragActive){
         var p = e.e;
         switch(direction){
           case 'vertical':
-            target.set({top:target.top + (p.y-svgelem.dragPosition.y)});
+            vm('set','y',update(vm('get', 'y'),(p.y-svgelem.dragPosition.y)));
           break;
           case 'horizontal':
-            target.set({left:target.left + (p.x-svgelem.dragPosition.x)});
+            vm('set','x',update(vm('get', 'x'),(p.x-svgelem.dragPosition.x)));
           break;
           default:
-            target.set({left:target.left + (p.x-svgelem.dragPosition.x),top:target.top + (p.y-svgelem.dragPosition.y)});
+            vm('set','x',update(vm('get', 'x'),(p.x-svgelem.dragPosition.x)));
+            vm('set','y',update(vm('get', 'y'),(p.y-svgelem.dragPosition.y)));
           break;
         }
         svgelem.dragPosition=p;
