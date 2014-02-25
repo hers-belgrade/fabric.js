@@ -473,6 +473,7 @@
         }
       }else{
         for(var i =this._mouseListeners.length-1; i>=0; i--){
+					if (!this._mouseListeners[i]) continue;
           this._mouseListeners[i].processPositionEvent(e,eventname);
 					if (e.propagationStopped === true) {
 						delete e.propagationStopped;
