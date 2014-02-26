@@ -100,6 +100,22 @@ fabric.Collection = {
     }
     return this;
   },
+	branchConditionalEachObjectRecursive: function (callback){
+    var count = 0;
+    var objects = this.getObjects(),
+        i = objects.length;
+    while (i--) {
+      var obj = objects[i];
+      var cbret = callback(obj);
+      if(cbret){
+				//console.log('will skip ', obj.id, 'children');
+				continue;
+      }
+      if(!obj.nonIteratable&&obj.branchConditionalEachObjectRecursive){
+        obj.branchConditionalEachObjectRecursive(callback);
+      }
+    }
+  },
 
   forEachObjectRecursive: function(callback) {
     var count = 0;

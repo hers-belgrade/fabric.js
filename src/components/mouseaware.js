@@ -1,65 +1,88 @@
 (function(global) {
 
   var fabric = global.fabric || (global.fabric = { }),
-      extend = fabric.util.object.extend;
+      extend = fabric.util.object.extend,
+			isDefined = fabric.util.isDefined ;
 
 /*
  *
  * Use this component to designate group of elements which contain mouseaware proprties ... Using this component, will allow you to completely remove mouse event handlers from event pipeline once element is hidden ...
  */
 	fabric.MouseEventBucket = function (svgelem) {
+		if (svgelem.mouse_event_bucket) return svgelem; ///no need to mark them again ...
 		svgelem.mouse_event_bucket = true;
-		svgelem.visible_for_mouse = svgelem.isVisible();
 
 		var old_hide = svgelem.hide;
 		var old_show = svgelem.show;
 
 		svgelem.show = function () {
-			var was_hidden = !this.isVisible();
 			var ret = old_show.apply(this, arguments);
-			var canvas = this.getCanvas();
-			if (!canvas) return ret;
-			if (this.visible_for_mouse) return ret;
+			//console.log(this.id, 'show done');
 
-			if (!this.visible_for_mouse) {
-				// ! visible for mouse events ? make it visible ....
-				this.visible_for_mouse = true;
-				this.wantsMouse && canvas.addToMouseListeners(this);
+			this.visible_for_mouse = true;
+			if (this.wantsMouse){
+				this.invokeOnCanvas('addToMouseListeners',this);
 			}
 
-			if (!this.forEachObjectRecursive) return ret;
+			if (!this.branchConditionalEachObjectRecursive) {
+				//console.log(ret.id, 'has no method branchConditionalEachObjectRecursive');
+				return ret;
+			}
 
-			this.forEachObjectRecursive(function (o) {
-				if (!o) return;
+			var self = this;
+
+			this.branchConditionalEachObjectRecursive(function (o) {
+				if (!o){
+					console.log('no object?!?!?');
+				 	return;
+				}
 				if (o.mouse_event_bucket) {
-					///make child available for mouse clicks ...
-					if (o.isVisible()) o.show();
-					return;
+					///do show() on a bucket since show will reatach mouse event listeners ... 
+					//of course if object is visible if not wait for show on that bucket....
+					if (o.isVisible()) {
+						//console.log('will do show on bucket',o.id);
+						o.show();
+					}
+					return true;
 				}
 
-				o.wantsMouse && canvas.addToMouseListeners(o);
+				if (o.wantsMouse) {
+					//console.log('should add ', o.id);
+					self.invokeOnCanvas('addToMouseListeners',o);
+				}
 			});
 
 			return ret;
 		}
 
 		svgelem.hide = function () {
-			var was_visible = this.isVisible();
-			var canvas = this.getCanvas();
+			//console.log('hide done', this.id);
 			var ret = old_hide.apply(this, arguments);
-			if (!canvas) return ret;
-			if (this.visible_for_mouse) {
-				this.visible_for_mouse = false;
-				this.wantsMouse && canvas.removeFromMouseListeners(this);
+
+			///if I'm visible for mouse do remove 
+			if (this.wantsMouse) {
+				//console.log('should remove ', this.id, 'BUCKET');
+				this.invokeOnCanvas('removeFromMouseListeners',this);
 			}
-			if (!was_visible || !this.forEachObjectRecursive) return ret;
+
+			if (!this.forEachObjectRecursive) return ret;
+			var self = this;
 			this.forEachObjectRecursive(function (o) {
 				if (!o) return;
-				if (o.mouse_event_bucket && o.visible_for_mouse) o.visible_for_mouse = false;
-				if (o.wantsMouse) canvas.removeFromMouseListeners(o);
+				///mark bucket as invisible for mouse and remove all it's children from listeners as well ...
+				if (o.mouse_event_bucket) {
+					o.visible_for_mouse = false;
+				}
+				if (o.wantsMouse) {
+					//console.log('should remove', o.id);
+					self.invokeOnCanvas('removeFromMouseListeners', o);
+				}
 			});
 			return ret;
 		}
+
+		//execute this one to add mouse listeners if required ...
+		if (svgelem.isVisible()) svgelem.show();
 		return svgelem;
 	}
 

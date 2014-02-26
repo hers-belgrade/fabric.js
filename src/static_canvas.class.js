@@ -449,12 +449,6 @@
         }
       }
       return;
-      if(obj.wantsMouse){
-        var mii = this._mouseListeners.indexOf(obj);
-        if(mii>=0){
-          this._mouseListeners.splice(mii,1);
-        }
-      }
     },
 
     /**

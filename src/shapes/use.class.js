@@ -91,6 +91,15 @@
 			if (!uo) return; //for now
 			return uo.getRasteredImage();
 		},
+		
+		branchConditionalEachObjectRecursive: function (cb) {
+			var uo = this.getUsedObj();
+			if(uo){
+				!uo.nonIteratable && uo.branchConditionalEachObjectRecursive && uo.branchConditionalEachObjectRecursive(cb);
+				cb(uo);
+			}
+		},
+
     forEachObjectRecursive: function(cb){
       var uo = this.getUsedObj();
       if(uo){
@@ -98,6 +107,7 @@
         cb(uo);
       }
     },
+
     localRotate: function(ctx){
       if(!this.localAngle){return;}
       var uoc = this.getUsedObj()._cache.global_content;
