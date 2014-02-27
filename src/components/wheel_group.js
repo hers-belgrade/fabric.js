@@ -49,11 +49,26 @@
 			var m = ri.getRasterModulo();
 			var animation_config = {};
 
+			///TODO: make some math instead of while down there ...
+			var inc = null,
+					target = null,
+					rc = local_config.round_count || 3;
+
 			if (local_config.type == 'horizontal') {
-				ri.area.x += (local_config.round_count || 3)*m.width;
-				animation_config = {'area.x': off.x};
+				inc = rc*m.width;
+				target = off.x + inc;
+				ri.area.x+=inc;
+				while (ri.area.x - off.x < target) {
+					ri.area.x += m.width;
+				}
+				animation_config = {'area.y': off.y};
 			}else{
-				ri.area.y += (local_config.round_count || 3)*m.height;
+				inc = rc*m.height;
+				target = off.y + inc;
+				ri.area.y+=inc;
+				while (ri.area.y - off.y < target) {
+					ri.area.y += m.height;
+				}
 				animation_config = {'area.y': off.y};
 			}
 
