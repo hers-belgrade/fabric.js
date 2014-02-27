@@ -5,6 +5,7 @@
   if(fabric.CanvasUser){return;}
 
   fabric.CanvasUser = function(svgelem,config){
+    if (svgelem.canvasQueue) return svgelem;
     svgelem.canvasQueue = [];
     svgelem.invokeOnCanvasOrig = svgelem.invokeOnCanvas;
     svgelem.invokeOnCanvas = function(){
