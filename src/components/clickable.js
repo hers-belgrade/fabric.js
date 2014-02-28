@@ -14,6 +14,7 @@
         if(!mousePressed){
           e.e.listeners.push(svgelem);
           downcb&&downcb.call(ctx,e);
+					//if (config.stopPropagation) e.e.propagationStopped = true;
         }
         mousePressed=(new Date()).getTime();
         longPressTimeout = longPressTimeout||setTimeout(function(){
@@ -28,6 +29,7 @@
       }});
     var mouseReleased;
     function clicked(e){
+			//if (config.stopPropagation) e.e.propagationStopped = true;
       mousePressed=null;
       if(this.isVisible() && this.enabled){
         var released = (new Date()).getTime();

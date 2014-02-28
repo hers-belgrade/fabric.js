@@ -449,12 +449,6 @@
         }
       }
       return;
-      if(obj.wantsMouse){
-        var mii = this._mouseListeners.indexOf(obj);
-        if(mii>=0){
-          this._mouseListeners.splice(mii,1);
-        }
-      }
     },
 
     /**
@@ -473,6 +467,7 @@
         }
       }else{
         for(var i =this._mouseListeners.length-1; i>=0; i--){
+					if (!this._mouseListeners[i]) continue;
           this._mouseListeners[i].processPositionEvent(e,eventname);
 					if (e.propagationStopped === true) {
 						delete e.propagationStopped;

@@ -2,7 +2,8 @@
   var fabric = global.fabric || (global.fabric = { }),
 		Matrix = fabric.util.Matrix,
 		matrix_mult = fabric.util.multiplyTransformMatrices,
-		isDefined = fabric.util.isDefined;
+		isDefined = fabric.util.isDefined,
+		isFunction = fabric.util.isFunction;
 
 	function WheelSelector (svgobj, config) {
 		///TODO:
@@ -19,7 +20,6 @@
 		var low = self[id+'_low'];
 		var high= self[id+'_high'];
 		var value = ('undefined' !== typeof(config.initialVal)) ? config.initialVal : undefined;
-		var raster_valid = false;
 
 		var label = fabric.TextWithDecorations(self[id+'_low'][id+'_low_value']);
 		updateValueText();
@@ -57,8 +57,7 @@
 		var container_correction = 0;
 		var visible_elements = 0;
 
-		///create two dummies to fill up gaps
-
+		var valid_raster = null;
 
 		(function () {
 			while (true) {
@@ -115,18 +114,83 @@
 		function rasterValid(el) {
 			el.setRasterArea({y:before*getMovementQuant(), height: visible_elements*getMovementQuant()});
 			if ('undefined' === typeof(value)) return;
-			raster_valid = true;
+			valid_raster = el;
+
+			var to_delta = null;
+			var movement_direction = undefined;
+
+			function animate_to_val (val, done) {
+				return animate_to_index(local_value_set.indexOf(val), done);
+			}
+
+			function animate_to_index (index, done) {
+				var cb = function () {
+					return (isFunction(done)) ? done.apply(this, arguments) : undefined;
+				}
+				if (index < 0) cb ({'err': 'invalid_index'});
+				valid_raster.animate({
+					'area.y': (1+index) * getMovementQuant()
+				}, {
+					duration: 200,
+					easing: fabric.util.ease.easeLinear,
+					onComplete: cb
+				});
+			}
+
+
+			fabric.Draggable(container, {
+				target: container._raster.content,
+				area: container.id+'_area',
+				hotspot:container.id+'_area',
+
+				onStarted: function (vals) {
+					hd_minus.disable();
+					hd_plus.disable();
+					to_delta = vals;
+				},
+
+				onFinished: function (vals) {
+					animate_to_index (Math.floor((vals.y + getMovementQuant()/2)/getMovementQuant()) - 1, updateButtons)
+				},
+
+				value_manipulator : function (action, axis, val) {
+					if (action === 'set') {
+
+						if (val < 0) return;
+						if (val + 3*getMovementQuant() > this.getRasterModulo().height) return;
+						if (val === this.area[axis]) return;
+
+						var vs = {};
+						vs[axis] = val;
+						movement_direction = (this.area[axis] - val > 0) ? -1 : 1;
+						var sb = local_value_set[Math.floor((val + getMovementQuant()/2)/getMovementQuant())];
+						if (sb != value) {
+							var old = value;
+							value = sb;
+							doChanged(old);
+						}
+						return this.setRasterArea(vs);
+					}
+					if (action === 'get') {
+						return this.area[axis];
+					}
+				},
+				direction: 'vertical',
+				nature:'negative'
+			});
 			doMove(value, true);
 		}
 
 		function invalidRaster () {
-			raster_valid = false;
 			hd_minus.disable();
 			hd_plus.disable();
 
 			container.transformMatrix = matrix_mult(container.transformMatrix || Matrix.UnityMatrix(), Matrix.TranslationMatrix(0, -container_correction));
 			container_correction = 0;
-
+			if (valid_raster) {
+				console.log('should detach all possible mouse handlers');
+			}
+			valid_raster = null;
 		}
 
 		container.on('raster:created', rasterValid);
@@ -189,7 +253,7 @@
 			hd.enable();
 			high.show();
 
-			if (raster_valid && 'undefined' !== typeof(value)) {
+			if (valid_raster && 'undefined' !== typeof(value)) {
 				doMove(value, true);
 			}
 			updateButtons();
