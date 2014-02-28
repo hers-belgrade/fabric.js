@@ -437,6 +437,8 @@
       if(obj.wantsMouse && !obj.addedToCanvasMouseListeners){//this._mouseListeners.indexOf(obj)<0){
         this._mouseListeners.push(obj);
         obj.addedToCanvasMouseListeners=true;
+				/// koliko je ovo zaista skupo?
+				obj.fire('mouselisteners:added');
       }
     },
 
@@ -447,6 +449,14 @@
           delete obj.addedToCanvasMouseListeners;
           this._mouseListeners.splice(mii,1);
         }
+				if (this.currentListeners) {
+					mii = this.currentListeners.indexOf(obj);
+					if (mii >= 0) {
+          	this.currentListeners.splice(mii,1);
+					}
+				}
+				/// koliko je ovo zaista skupo?
+				obj.fire('mouselisteners:removed');
       }
       return;
     },
@@ -459,7 +469,7 @@
     distributePositionEvent: function (e,eventname, dom_event) {
       if(this.currentListeners&&this.currentListeners.length){
         for(var i =this.currentListeners.length-1; i>=0; i--){
-          this.currentListeners[i].fire(eventname,{e:e});
+          this.currentListeners[i] && this.currentListeners[i].fire(eventname,{e:e});
 					if (e.propagationStopped === true) {
 						delete e.propagationStopped;
 						break;

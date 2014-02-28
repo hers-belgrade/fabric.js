@@ -143,8 +143,8 @@
 				w.on('wheel:created', function () {
 					ready[_i] = true;
 					if (ready.filter(function(v) {return !v}).length) return;
-					svgelem.wheelValue = [];
-					for (var k = 0; k < wheels.length; k++) svgelem.wheelValue.push (0);
+					svgelem.wheelsValue = [];
+					for (var k = 0; k < wheels.length; k++) svgelem.wheelsValue.push (0);
 					wheelsReady = true;
 					setTimeout(function () {
 						svgelem.fire('wheels:ready', wheels);
@@ -179,7 +179,7 @@
 
 			if (!wheelsReady) return;
 			val = val.slice();
-			if (JSON.stringify(this.wheelValue) === JSON.stringify(val)) return;
+			if (JSON.stringify(this.wheelsValue) === JSON.stringify(val)) return;
 
 			var done = wheels.map(function(){return false;});
 
@@ -190,7 +190,7 @@
 				}
 			}
 
-      console.log('OLD', this.wheelsValue, 'VS NEW', val);
+      //console.log('OLD', this.wheelsValue, 'VS NEW', val);
 			this.fire('wheels:started');
       if ('undefined' !== typeof(this.wheelsValue) && this.wheelsValue.join('') === val.join('')) {
         this.fire('wheels:done', val);

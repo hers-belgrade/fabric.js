@@ -50,15 +50,9 @@
 			return config.value_manipulator.apply(target, arguments);
 		}
 
-
-    fabric.Clickable(hotspot,{ctx:svgelem,downcb:function(e){
-      this.dragActive=true;
-      this.dragPosition=e.e;
-			isFunction(config.onStarted) && config.onStarted.call(svgelem, {
-				x : vm('get', 'x'),
-				y : vm('get', 'y')
-			});
-    },clickcb:function(){
+		////TODO: we still have bit odd behavior, to restore dragging abilities ...
+		function doneWithDragging () {
+			//console.log('=================>', this.id, this);
       delete this.dragActive;
       delete this.dragPosition;
       doConstrain && doConstrain();
@@ -66,8 +60,17 @@
 				x: vm('get','x'),
 				y: vm('get','y')
 			});
+		}
 
-    }});
+		hotspot.on('mouselisteners:removed', doneWithDragging);
+    fabric.Clickable(hotspot,{ctx:svgelem,downcb:function(e){
+      this.dragActive=true;
+      this.dragPosition=e.e;
+			isFunction(config.onStarted) && config.onStarted.call(svgelem, {
+				x : vm('get', 'x'),
+				y : vm('get', 'y')
+			});
+    },clickcb:doneWithDragging});
     fabric.MouseAware(area);
 
 
@@ -87,6 +90,7 @@
 			}
 		}
     area.on('mouse:move',function(e){
+			//console.log('doing mouse move ...');
       if(svgelem.dragActive){
         var p = e.e;
         switch(direction){
