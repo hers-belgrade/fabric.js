@@ -6,6 +6,9 @@
 	////TODO: pokusaj da napravis ovo tako da podrzava i shadow i outline ...
 	
 	fabric.TextWithDecorations = function (svgelem) {
+		if (svgelem._text_with_decorations) return;
+		svgelem._text_with_decorations = true;
+
 		var id = svgelem.id;
 		var els = {
 			shadow:null,

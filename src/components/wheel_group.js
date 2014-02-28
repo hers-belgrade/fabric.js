@@ -165,7 +165,6 @@
 			if (!wheelsReady) return;
 			val = val.slice();
 			if (JSON.stringify(this.wheelValue) === JSON.stringify(val)) return;
-			this.wheelValue = val;
 
 			var done = wheels.map(function(){return false;});
 
@@ -176,7 +175,13 @@
 				}
 			}
 
+      console.log('OLD', this.wheelsValue, 'VS NEW', val);
 			this.fire('wheels:started');
+      if ('undefined' !== typeof(this.wheelsValue) && this.wheelsValue.join('') === val.join('')) {
+        this.fire('wheels:done', val);
+        return;
+      }
+			this.wheelsValue = val;
 
 			for (var i = 0; i < wheels.length; i++) {
 				(function (w, dims, index) {
