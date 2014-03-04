@@ -147,10 +147,11 @@
     _computeMasterScale: function () {
       var ms = fabric.masterSize;
 			var old = fabric.masterScale;
+      var switchdimensions = ((typeof window.orientation==='number') && (window.orientation!=90) && (window.orientation!=-90));
 
       var lce = {
 				width: window.innerWidth,
-				height:window.innerHeight
+				height: window.innerHeight
 			};
 
       if(ms&&
@@ -692,7 +693,13 @@
 
       //this._computeMasterScale();
       ctxToDrawOn.save();
-      ctxToDrawOn.scale(fabric.masterScale,fabric.masterScale);
+      if(fabric.masterScale!==1){
+        ctxToDrawOn.scale(fabric.masterScale,fabric.masterScale);
+      }
+      if(fabric.masterRotation){
+        ctxToDrawOn.rotate(fabric.masterRotation);
+        ctxToDrawOn.translate(0,-this.getHeight());
+      }
       if (this.clipTo) {
         fabric.util.clipContext(this, ctxToDrawOn);
       }

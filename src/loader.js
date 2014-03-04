@@ -148,15 +148,11 @@
 			isFunction(cb) && cb.call(ctx);
 		}
 
+    pending.svg = {};
 		for (var _i in resobj.svg) {
-			pending.svg = {};
 			(function (o, i) {
 				pending.svg[o.name] = true;
 				_loadSVG(root+'/'+o.name+'.svg', function (el) {
-          if (!pending) {
-            console.warn('====> no pending?');
-            return;
-          }
 					delete pending.svg[o.name];
 					(isFunction(o.cb)) && o.cb.call(this, el, o.name);
 					check_pending();

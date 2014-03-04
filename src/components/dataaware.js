@@ -59,6 +59,7 @@
       }
       this.dataListeners={};
       config && config.onUnfollowed && config.onUnfollowed.call(svgelem);
+      delete this.follower;
     };
     return svgelem;
   };
