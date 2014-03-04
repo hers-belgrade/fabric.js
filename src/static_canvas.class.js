@@ -611,8 +611,23 @@
       return this;
     },
 
-    addToAnimations: function(animtick){
-      this.animationTickers.push(animtick);
+    forceFinishAllAnimations : function () {
+      for (var i in this.animationTickers) {
+        this.animationTickers[i].ff = true;
+      }
+    },
+
+    forceFinishObjectsAnimations: function (obj) {
+      var itm;
+      for (var i in this.animationTickers) {
+        itm = this.animationTickers[i];
+        if (itm.obj !== obj) continue;
+        itm.ff = true;
+      }
+    },
+
+    addToAnimations: function(obj,animtick){
+      this.animationTickers.push({obj: obj, ticker:animtick});
     },
     /**
      * Renders both the top canvas and the secondary container canvas.
@@ -623,17 +638,36 @@
     renderAll: function (allOnTop) {
       this.dirty = true;
     },
+
     _realRenderAll: function (allOnTop) {
       var cursor = 0;
+      var itm = undefined;
+      var should_splice = false;
+
+      //there are animations at the queue, so we will be dirty anyway ....
+      this.dirty = this.animationTickers.length && true; ///make it always boolean not a number or so ...
+
       while(cursor<this.animationTickers.length){
-        var tr = this.animationTickers[cursor]();
-        if(tr){
+        should_splice = false;
+        itm = this.animationTickers[cursor];
+
+        if (itm.ff) {
+          should_splice = true;
+          itm.ticker.forceFinish();
+        }else if (itm.ticker()) {
+          should_splice = true;
+        }
+
+        if(should_splice){
           this.animationTickers.splice(cursor,1);
         }else{
           cursor++;
         }
-        this.dirty = true;
       }
+
+      ///TODO
+      this.dirty = true;
+
       if(!this.dirty){
         this.goRender();
         return;

@@ -192,6 +192,7 @@
       }
       this.calcOffset();
       fabric.staticLayerManager.refresh();
+      this.fire('fabric:canvasResized');
       this.renderAll();
     },
 

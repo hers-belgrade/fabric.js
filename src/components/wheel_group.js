@@ -37,6 +37,13 @@
 			}, 200);
 		}
 
+    w.forceStop = function () {
+      this.invokeOnCanvas('forceFinishObjectsAnimations', w.getUsedObj().getRasteredImage());
+    }
+
+    clone.on ('object:resizeRerasterRequested' , function () {
+      w.forceStop();
+    });
 		w.setWheelValue = function(v, local_config, done_cb) {
 			var t = w.getUsedObj();
 			local_config = extend(local_config, config);
@@ -168,6 +175,12 @@
 		svgelem.do_test = function () {
 			wheels[0].do_test();
 		}
+
+    svgelem.forceStop = function () {
+      wheels.forEach (function (v) {
+        v.forceStop();
+      });
+    }
 
 		svgelem.setWheelsValue = function (val, local_config) {
 			///MUST BE AN ARRAY OR A STRING

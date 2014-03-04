@@ -864,6 +864,9 @@
         console.log('invalid border rect',this.oCoords.tl,this.oCoords.br);
       }
     },
+		dropRaster: function () {
+			///TODO
+		},
 		_generateRaster : function (debug) {
 			//console.log('RERASTER PARAMS !! ', (this.shouldRasterize.area || {}).y);
 			var mult = fabric.util.multiplyTransformMatrices;
@@ -918,6 +921,14 @@
 				('function' === typeof(done)) && done.call(this, (rc) ? 'created':'changed', this._raster.content); 
 				rc ? this.fire ('raster:created', this._raster.content) : this.fire ('raster:changed', this._raster.content);
 				this._raster.content.calculated_on_ms = ms;
+				var self = this;
+				if (!this._raster.canvas_resized) {
+					this._raster.canvas_resized = function () {
+						self.fire('object:resizeRerasterRequested');
+						self.rasterize();
+					}
+					this.getCanvas().on('fabric:canvasResized', this._raster.canvas_resized);
+				}
 				return true;
 			}
 		},

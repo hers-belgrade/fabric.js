@@ -202,6 +202,8 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
       byValue: options.by,
       easing: options.easing,
       duration: options.duration,
+      forceFinish: function () {
+      },
       abort: function(){
         if(getValue.call(obj)!==currentValue){
           return true;
@@ -216,12 +218,11 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
       },
       onComplete: function() {
         if (skipCallbacks) return;
-
         options.onComplete && options.onComplete.call(obj);
       }
     });
 
-    if(!animation_worker || !this.invokeOnCanvas('addToAnimations',animation_worker)){
+    if(!animation_worker || !this.invokeOnCanvas('addToAnimations',this,animation_worker)){
       setValue.call(this,to);
       options.onComplete && options.onComplete.call(obj);
     }

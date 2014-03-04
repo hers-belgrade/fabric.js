@@ -25,12 +25,17 @@
       endValue = parseFloat('endValue' in options ? options.endValue : 100),
       byValue = options.byValue || endValue - startValue;
 
-    options.onStart && options.onStart();
+    var forceFinish = function () {
+      onChange(endValue);
+      options.onComplete && options.onComplete();
+    }
 
-    return (fxoff) ? undefined : function tick() {
+    options.onStart && options.onStart();
+    if (fxoff) return undefined;
+
+    var tick = function () {
 			if (fxoff) {
-				onChange(endValue);
-				options.onComplete && options.onComplete();
+        forceFinish();
 				return true;
 			}
       time = +new Date();
@@ -40,10 +45,12 @@
       }
       onChange(easing(currentTime, startValue, byValue, duration));
       if (time > finish) {
-        options.onComplete && options.onComplete();
+        forceFinish();
         return true;
       }
     };
+    tick.forceFinish = forceFinish;
+    return tick;
   }
 
   var _requestAnimFrame = fabric.window.requestAnimationFrame       ||
