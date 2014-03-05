@@ -196,6 +196,36 @@
         '): { "text": "' + this.text + '", "fontFamily": "' + this.fontFamily + '" }>';
     },
 
+    splitToLines : function (ctx, text, max_width) {
+      ctx.save();
+      this._setTextStyles(ctx);
+      ///clear all new lines ...
+      text.replace(/\r?\n/g,' ').trim();
+      var words = text.split(/\s+/);
+      var lines = [];
+
+      var width = 0;
+      var l = '';
+      while (words.length) {
+        var c = words.shift();
+        var p = (l.length) ? l+' '+c : c;
+        if (ctx.measureText(p).width > max_width) {
+          lines.push (l);
+          l = c;
+        }else{
+          l+= (' '+c);
+        }
+      }
+      lines.push (l);
+      var ret = { text : lines.join("\r\n")}
+      ret.width = ctx.measureText(ret.text).width;
+      ret.line_height = this._getFontSize() * this.lineHeight;
+      ret.height =  ret.line_height * lines.length;
+      ret.lines_count = lines.length;
+      ctx.restore();
+      return ret;
+    },
+
     adaptToText: function (t, span) {
       t = (typeof(t) === 'undefined') ? this.text+'' : t+'';
       if (!this.tspans){
@@ -975,7 +1005,6 @@
   fabric.Text.fromObject = function(object) {
     return new fabric.Text(object.text, clone(object));
   };
-
   fabric.util.createAccessors(fabric.Text);
 
 })(typeof exports !== 'undefined' ? exports : this);
