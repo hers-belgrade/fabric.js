@@ -12,7 +12,7 @@
       getElementOffset = fabric.util.getElementOffset,
       removeFromArray = fabric.util.removeFromArray,
       removeListener = fabric.util.removeListener,
-			isUndefined = fabric.util.isUndefined,
+      isUndefined = fabric.util.isUndefined,
 
       CANVAS_INIT_ERROR = new Error('Could not initialize `canvas` element');
 
@@ -146,15 +146,15 @@
 
     _computeMasterScale: function () {
       var ms = fabric.masterSize;
-			var old = fabric.masterScale;
+      var old = fabric.masterScale;
       var switchdimensions = ((typeof window.orientation==='number') && (window.orientation!=90) && (window.orientation!=-90));
 
       var lce = {
-				width: window.innerWidth,
-				height: window.innerHeight
-			};
+        width: window.innerWidth,
+        height: window.innerHeight
+      };
 
-      if(ms&&
+      if(this.autoresize && ms&&
         (ms.width!==lce.width||
          ms.height!==lce.height)
         ){
@@ -162,15 +162,15 @@
         var vscale = lce.height/ms.height;
         var scale = Math.min(hscale,vscale) * fabric.backingScale;
         fabric.masterScale = scale;
-				if (fabric.masterScale !== old) {
-					this.fire('fabric:masterScaleChanged');
-				}
-				if (isUndefined(old)) {
-					this._applyCanvasStyle(this.lowerCanvasEl);
-					this._applyCanvasStyle(this.upperCanvasEl);
-				}
+        if (fabric.masterScale !== old) {
+          this.fire('fabric:masterScaleChanged');
+        }
+        if (isUndefined(old)) {
+          this._applyCanvasStyle(this.lowerCanvasEl);
+          this._applyCanvasStyle(this.upperCanvasEl);
+        }
       }else{
-        fabric.masterScale = 1;
+        fabric.masterScale = fabric.backingScale;
       }
       //console.log('on size',fabric.masterSize,'scale is',fabric.masterScale);
     },
@@ -438,8 +438,8 @@
       if(obj.wantsMouse && !obj.addedToCanvasMouseListeners){//this._mouseListeners.indexOf(obj)<0){
         this._mouseListeners.push(obj);
         obj.addedToCanvasMouseListeners=true;
-				/// koliko je ovo zaista skupo?
-				obj.fire('mouselisteners:added');
+        /// koliko je ovo zaista skupo?
+        obj.fire('mouselisteners:added');
       }
     },
 
@@ -450,14 +450,14 @@
           delete obj.addedToCanvasMouseListeners;
           this._mouseListeners.splice(mii,1);
         }
-				if (this.currentListeners) {
-					mii = this.currentListeners.indexOf(obj);
-					if (mii >= 0) {
-          	this.currentListeners.splice(mii,1);
-					}
-				}
-				/// koliko je ovo zaista skupo?
-				obj.fire('mouselisteners:removed');
+        if (this.currentListeners) {
+          mii = this.currentListeners.indexOf(obj);
+          if (mii >= 0) {
+            this.currentListeners.splice(mii,1);
+          }
+        }
+        /// koliko je ovo zaista skupo?
+        obj.fire('mouselisteners:removed');
       }
       return;
     },
@@ -471,19 +471,19 @@
       if(this.currentListeners&&this.currentListeners.length){
         for(var i =this.currentListeners.length-1; i>=0; i--){
           this.currentListeners[i] && this.currentListeners[i].fire(eventname,{e:e});
-					if (e.propagationStopped === true) {
-						delete e.propagationStopped;
-						break;
-					}
+          if (e.propagationStopped === true) {
+            delete e.propagationStopped;
+            break;
+          }
         }
       }else{
         for(var i =this._mouseListeners.length-1; i>=0; i--){
-					if (!this._mouseListeners[i]) continue;
+          if (!this._mouseListeners[i]) continue;
           this._mouseListeners[i].processPositionEvent(e,eventname);
-					if (e.propagationStopped === true) {
-						delete e.propagationStopped;
-						break;
-					}
+          if (e.propagationStopped === true) {
+            delete e.propagationStopped;
+            break;
+          }
         }
       }
     },
@@ -677,7 +677,7 @@
       this.calcOffset();
       this.rendering = true;
       //console.log('render starts');
-			var _render_start = (new Date()).getTime();
+      var _render_start = (new Date()).getTime();
 
       var ctxToDrawOn = this.contextContainer;
 
