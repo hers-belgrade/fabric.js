@@ -172,7 +172,7 @@
         img.onload = null;
 				image_cache[url] = img;
 				report_load(callback,context,img);
-				console.log('will check if any pending :', image_pending[url].length);
+				//console.log('will check if any pending :', image_pending[url].length);
 				while (image_pending[url].length) {
 					(image_pending[url].shift())();
 				}
