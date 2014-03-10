@@ -112,7 +112,7 @@ fabric.Collection = {
 				continue;
       }
       if(!obj.nonIteratable&&obj.branchConditionalEachObjectRecursive){
-        obj.branchConditionalEachObjectRecursive(callback);
+        setTimeout(function(obj){obj.branchConditionalEachObjectRecursive(callback);},0,obj);
       }
     }
   },

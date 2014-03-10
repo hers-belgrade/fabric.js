@@ -439,7 +439,7 @@
         this._mouseListeners.push(obj);
         obj.addedToCanvasMouseListeners=true;
         /// koliko je ovo zaista skupo?
-        obj.fire('mouselisteners:added');
+        //obj.fire('mouselisteners:added');
       }
     },
 
