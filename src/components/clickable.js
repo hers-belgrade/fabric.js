@@ -6,39 +6,39 @@
   fabric.Clickable = function(svgelem,config){
     fabric.MouseAware(svgelem);
     var downcb=config.downcb,clickcb=config.clickcb,doubleclickcb=config.doubleclickcb,ctx=config.ctx||svgelem;
-    var mousePressed;
+    var mouseEvents={};
     var longPressTimeout;
 
     svgelem.on('mouse:down',function(e){
-      if(this.isVisible() && this.enabled){
-        if(!mousePressed){
+      if(this.addedToCanvasMouseListeners && this.isVisible() && this.enabled){
+        if(!mouseEvents.pressed){
           e.e.listeners.push(svgelem);
           downcb&&downcb.call(ctx,e);
 					//if (config.stopPropagation) e.e.propagationStopped = true;
         }
-        mousePressed=(new Date()).getTime();
+        mouseEvents.pressed=(new Date()).getTime();
+        var t=this, me = mouseEvents;
         longPressTimeout = longPressTimeout||setTimeout(function(){
           var now = (new Date()).getTime();
-          if(mousePressed&&now-mousePressed>1400){
-            mousePressed=null;
+          if(t.addedToCanvasMouseListeners && t.isVisible() && t.enabled && (me.pressed&&now-me.pressed>1400)){
+            me.pressed=null;
             longPressTimeout=null;
-            mouseReleased=now;
+            me.released=now;
             doubleclickcb&&doubleclickcb.call(ctx,e);
           }
         },1500);
       }});
-    var mouseReleased;
     function clicked(e){
 			//if (config.stopPropagation) e.e.propagationStopped = true;
-      mousePressed=null;
-      if(this.isVisible() && this.enabled){
+      mouseEvents.pressed=null;
+      if(this.addedToCanvasMouseListeners && this.isVisible() && this.enabled){
         var released = (new Date()).getTime();
-        if(mouseReleased&&released-mouseReleased<300){
+        if(mouseEvents.released&&released-mouseEvents.released<300){
           doubleclickcb&&doubleclickcb.call(ctx,e);
         }else{
           clickcb&&clickcb.call(ctx,e);
         }
-        mouseReleased = released;
+        mouseEvents.released = released;
       }
     }
     svgelem.on('mouse:up',clicked);

@@ -53,21 +53,11 @@
     initialize: function(options) {
       options = options || { };
 
-      this._initStateProperties();
       this.callSuper('initialize', options);
       this._initRxRy();
 
       this.x = options.x || 0;
       this.y = options.y || 0;
-    },
-
-    /**
-     * Creates `stateProperties` list on an instance, and adds `fabric.Rect` -specific ones to it
-     * (such as "rx", "ry", etc.)
-     * @private
-     */
-    _initStateProperties: function() {
-      this.stateProperties = this.stateProperties.concat(['rx', 'ry']);
     },
 
     /**
@@ -205,6 +195,8 @@
     attributes.top  = attributes.top  || 0;
     return attributes;
   }
+
+  fabric.Rect.prototype.stateProperties = fabric.Object.prototype.stateProperties.concat(['rx', 'ry']);
 
   /**
    * Returns {@link fabric.Rect} instance from an SVG element
