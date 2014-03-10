@@ -53,7 +53,7 @@
 			ctx.clearRect(0,0,offel.with, offel.height);
     }
     ctx.save();
-    console.log('statics scaled by',fabric.masterScale);
+    //console.log('statics scaled by',fabric.masterScale);
     ctx.scale(fabric.masterScale,fabric.masterScale);
     ctx._currentTransform = [1,0,0,1,0,0];
     for(var i in this.rectMap){
