@@ -10,6 +10,10 @@
   };
 
   fabric.DataAware = function(svgelem,config){
+    if (svgelem.unfollow) {
+      ///clean up old data listeners ...
+      svgelem.unfollow();
+    }
     svgelem.dataListeners = {};
     svgelem.follow = function(follower){
       this.unfollow();
