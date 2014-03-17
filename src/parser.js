@@ -706,7 +706,7 @@
         case 'mask':
         case 'g':
         case 'svg':
-          group = new fabric.Group(gelements,ga);
+          group = new fabric.Svg(gelements,ga);
           break;
         default:
           console.log('what is this?',g);
@@ -849,7 +849,8 @@
       var ua = uses[obj.id];
       if(ua){
         for(var i in ua){
-          ua[i].setUsedObj(obj.clone());
+          //ua[i].setUsedObj(obj.clone());
+          ua[i].setUsedObj(obj);
         }
         delete uses[obj.id];
       }

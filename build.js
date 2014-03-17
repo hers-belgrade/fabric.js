@@ -202,6 +202,7 @@ var filesToInclude = [
   'src/shapes/image.class.js',
   'src/shapes/sprite.class.js',
 	'src/shapes/use.class.js',
+	'src/shapes/svg.class.js',
 
 	'src/supershapes/StaticLayer.class.js',
 
