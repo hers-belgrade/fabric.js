@@ -581,7 +581,8 @@
         clipTo:             this.clipTo && String(this.clipTo),
         transformMatrix:    this.transformMatrix,
         nonIteratable:      this.nonIteratable,
-        _cache:             this._cache
+        _cache:             this._cache,
+        _svg_el:            this._svg_el
       };
 
       if (!this.includeDefaultValues) {
@@ -1443,8 +1444,17 @@
 			return ret.val;
 		}, 
 		dropCache: function () {
-			this._cache = {};
-		}
+      for (var i in this._cache) {
+        delete this._cache[i];
+      }
+		},
+    getSvgEl : function () {
+      if (this._svg_el) return this._svg_el;
+      if (this.group) {
+        this._svg_el = this.group.getSvgEl();
+      }
+      return this._svg_el;
+    }
   });
   /**
    * List of properties to consider when checking if state

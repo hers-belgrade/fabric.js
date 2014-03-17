@@ -57,7 +57,7 @@
     ctx.scale(fabric.masterScale,fabric.masterScale);
     ctx._currentTransform = [1,0,0,1,0,0];
     for(var i in this.rectMap){
-      delete this[i]._cache.global_content;
+      this[i].dropCache();
     }
     this.show();
     this.originalrender(ctx);
@@ -76,7 +76,18 @@
   fabric.StaticLayer = fabric.util.createClass(fabric.Group, {
     initialize: function(objects,options){
       this.callSuper('initialize',objects,options);
+      this.toMonitor = undefined;
+    },
+    activate: function () {
       var ls = this._objects.slice();
+
+      for(var i in this._objects){
+        var o = this._objects[i];
+        o.originalrender = this.render;
+        o.render = renderStaticSubLayer;
+        o.monitor = monitorCanvasElement;
+      }
+
       console.log('sublayers',ls);
       if(ls.length%2){
         console.log( "Static layer cannot contain an odd number of sub-layers" );
@@ -118,20 +129,32 @@
       for(var i in fordeletion){
         this.remove(fordeletion[i]);
       }
-      for(var i in this._objects){
+      this._apply_monitor();
+    },
+    deactivate: function () {
+      for (var i in this._objects) {
         var o = this._objects[i];
-        o.originalrender = this.render;
-        o.render = renderStaticSubLayer;
-        o.monitor = monitorCanvasElement;
+        //o.render = o.originalrender;
+        //delete o.originalrender;
+        delete o.monitorCanvasElement;
       }
+
+      for (var i in this.rectMap) {
+        this[i].dropCache();
+      }
+      this.canvas = null;
     },
     setURL: function(url){
       fabric.staticLayerManager.add(url,this);
     },
-    monitor: function(canvas){
+    _apply_monitor : function () {
       for(var i in this._objects){
-        this._objects[i].monitor(canvas);
+        this._objects[i] && this._objects[i].monitor && this._objects[i].monitor(this.toMonitor);
       }
+    },
+    monitor: function(canvas){
+      this.toMonitor = canvas;
+      this._apply_monitor();
     },
     refresh: function(){
       for(var i in this._objects){

@@ -51,6 +51,7 @@
       options = options || { };
 
       this._objects = objects || [];
+
       this._objects.forEach(function(o){
         if(!o){
           console.log('no object at',i,'in',this._objects);

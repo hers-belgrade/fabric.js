@@ -596,7 +596,6 @@
    * @param {Function} [reviver] Method for further parsing of SVG elements, called after each fabric object created.
    */
   fabric.parseSVGDocument = (function() {
-
     var reAllowedSVGTagNames = /^(path|circle|polygon|polyline|ellipse|rect|line|image|text)$/;
 
     // http://www.w3.org/TR/SVG/coords.html#ViewBoxAttribute
@@ -685,6 +684,7 @@
     };
   })();
 
+  var sttic = null;
   function produceGroup(g,gelements,options){
     var ga = fabric.parseAttributes(g,fabric.SHARED_ATTRIBUTES.concat(fontAttributes).concat(fillAttributes));
     ga.left = 0;
@@ -693,8 +693,10 @@
     ga.height = ga.height || options.height;
     resolveGradients(gelements);
     var group;
+
     if(g.id==='static'){
       group = new fabric.StaticLayer(gelements,ga);
+      sttic = group;
     }else{
       switch(g.tagName){
         case 'defs':
@@ -705,7 +707,10 @@
           break;
         case 'mask':
         case 'g':
+          group = new fabric.Group(gelements, ga);
+          break;
         case 'svg':
+          ga.static_layer = sttic;
           group = new fabric.Svg(gelements,ga);
           break;
         default:
@@ -763,6 +768,7 @@
         }
       };
     })(jobtodo);
+
     var worker = function(gc){
       //this is the finalize func!
       if(gc.tagName){
@@ -808,6 +814,7 @@
         this();
       }
     };
+
     Array.prototype.forEach.call(g.childNodes,worker,finalize);
     if(!jobtodo){
       finishall();
@@ -932,18 +939,12 @@
       });
       */
 
+      //prvi processGroup za ucitani svg ...
+      ///za sad probaj ovako ...
       processGroup(doc,function(svg){
         var parsedone = new Date();
         fabric.documentParsingTime = parsedone - startTime;
         if(callback) {
-          /*
-          var anchor = svg.getObjectById('anchor');
-          if(anchor&&anchor.type==='rect'){
-            svg.anchorX = anchor.left+(anchor.width / 2);
-            svg.anchorY = anchor.top+(anchor.height / 2);
-            anchor.set({opacity:0});
-          }
-          */
           var se = svg['static'];
           if(se){
             var seos = se.getObjects();
