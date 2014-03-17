@@ -154,29 +154,30 @@
 
   function loadImage(url, callback, context) {
     if (url) {
-			if (image_cache[url]) {
+      var hurl = CryptoJS.SHA512(url).toString();
+			if (image_cache[hurl]) {
 				//console.log('WILL GET IT FROM CACHE ', url);
-				return report_load(callback,context,image_cache[url]);
+				return report_load(callback,context,image_cache[hurl]);
 			}
 
-			if (image_pending[url]) {
+			if (image_pending[hurl]) {
 				///subscribe to get info if pending for it ...
-				image_pending[url].push (function() { report_load(callback,context,image_cache[url]); })
+				image_pending[hurl].push (function() { report_load(callback,context,image_cache[hurl]); })
 				return;
 			}
 
       var img = fabric.util.createImage();
-			image_pending[url] = [];
+			image_pending[hurl] = [];
 
       img.onload = function () {
         img.onload = null;
-				image_cache[url] = img;
+				image_cache[hurl] = img;
 				report_load(callback,context,img);
 				//console.log('will check if any pending :', image_pending[url].length);
-				while (image_pending[url].length) {
-					(image_pending[url].shift())();
+				while (image_pending[hurl].length) {
+					(image_pending[hurl].shift())();
 				}
-				delete image_pending[url];
+				delete image_pending[hurl];
       };
 
       img.src = url;
