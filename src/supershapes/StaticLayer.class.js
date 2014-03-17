@@ -83,8 +83,10 @@
 
       for(var i in this._objects){
         var o = this._objects[i];
-        o.originalrender = this.render;
-        o.render = renderStaticSubLayer;
+        if (!o.originalrender) {
+          o.originalrender = this.render;
+          o.render = renderStaticSubLayer;
+        }
         o.monitor = monitorCanvasElement;
       }
 
@@ -134,8 +136,6 @@
     deactivate: function () {
       for (var i in this._objects) {
         var o = this._objects[i];
-        //o.render = o.originalrender;
-        //delete o.originalrender;
         delete o.monitorCanvasElement;
       }
 
