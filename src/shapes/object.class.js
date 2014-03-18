@@ -6,7 +6,7 @@
       extend = fabric.util.object.extend,
       toFixed = fabric.util.toFixed,
       capitalize = fabric.util.string.capitalize,
-      matmult = fabric.util.multiplyTransformMatrices,
+      matmultwassign = fabric.util.multiplyTransformMatricesWAssign,
       degreesToRadians = fabric.util.degreesToRadians,
       Matrix = fabric.util.Matrix,
       supportsLineDash = fabric.StaticCanvas.supports('setLineDash');
@@ -493,7 +493,7 @@
 
       var em = this._extraTransformations();
       if(em){
-        m = matmult(m,em);
+        matmultwassign(m,em);
       }
 
       fabric.util.setStrokeToCanvas(ctx, this);
@@ -504,8 +504,8 @@
         this._cacheLocalTransformMatrix();
       }
       ctx.transform.apply(ctx,this._localTransformationMatrix);
-      m = matmult(m,this._localTransformationMatrix);
-      ctx._currentTransform = matmult(ctx._currentTransform,m);
+      matmultwassign(m,this._localTransformationMatrix);
+      matmultwassign(ctx._currentTransform,m);
       var xl = 0, xr = xl+this.width, yt = 0, yb = yt+this.height;
       var tl = fabric.util.pointInSpace(ctx._currentTransform,new fabric.Point(xl,yt));
       var br = fabric.util.pointInSpace(ctx._currentTransform,new fabric.Point(xr,yb));
@@ -811,16 +811,16 @@
     _cacheLocalTransformMatrix : function(){
       var m = [1,0,0,1,0,0];
       if(this.left || this.top){
-        m = matmult(m,[1,0,0,1,this.left,this.top]);
+        matmultwassign(m,[1,0,0,1,this.left,this.top]);
       }
       var sx = this.scaleX * (this.flipX ? -1 : 1), sy = this.scaleY * (this.flipY ? -1 : 1);
       if((sx!==1)||(sy!==1)){
-        m = matmult(m,[sx,0,0,sy,0,0]);
+        matmultwassign(m,[sx,0,0,sy,0,0]);
       }
       var rp = this.rotationParams;
       if(rp){
-        m = matmult(m,[rp.cos,rp.sin,-rp.sin,rp.cos,rp.x,-rp.y]);
-        m = matmult(m,[1,0,0,1,-rp.x,rp.y]);
+        matmultwassign(m,[rp.cos,rp.sin,-rp.sin,rp.cos,rp.x,-rp.y]);
+        matmultwassign(m,[1,0,0,1,-rp.x,rp.y]);
       }
       this._localTransformationMatrix = m;
     },
