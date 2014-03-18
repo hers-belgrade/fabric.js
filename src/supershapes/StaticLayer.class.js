@@ -43,6 +43,12 @@
   };
 
   var renderStaticSubLayer = function(ctx){
+    /*
+    if (!this.group.activated){ 
+      console.log('rejected to render ...', this.group.group.id, this.group.activated);
+      return;
+    }
+    */
     if(!ctx){
       var offel = fabric.document.createElement('canvas');
       this.canvas = offel;
@@ -77,19 +83,18 @@
     initialize: function(objects,options){
       this.callSuper('initialize',objects,options);
       this.toMonitor = undefined;
-    },
-    activate: function () {
-      var ls = this._objects.slice();
 
       for(var i in this._objects){
         var o = this._objects[i];
-        if (!o.originalrender) {
-          o.originalrender = this.render;
-          o.render = renderStaticSubLayer;
-        }
+        o.originalrender = this.render;
+        o.render = renderStaticSubLayer;
         o.monitor = monitorCanvasElement;
       }
+      this.activated = false;
+    },
 
+    activate: function () {
+      var ls = this._objects.slice();
       console.log('sublayers',ls);
       if(ls.length%2){
         console.log( "Static layer cannot contain an odd number of sub-layers" );
@@ -132,8 +137,10 @@
         this.remove(fordeletion[i]);
       }
       this._apply_monitor();
+      this.activated = true;
     },
     deactivate: function () {
+      this.activated = false;
       for (var i in this._objects) {
         var o = this._objects[i];
         delete o.monitorCanvasElement;
