@@ -13,22 +13,6 @@
     return;
   }
 
-  var stateProperties = fabric.Object.prototype.stateProperties.concat();
-  stateProperties.push(
-    'fontFamily',
-    'fontWeight',
-    'fontSize',
-    'path',
-    'text',
-    'textDecoration',
-    'textAlign',
-    'fontStyle',
-    'lineHeight',
-    'backgroundColor',
-    'textBackgroundColor',
-    'useNative'
-  );
-
   /**
    * Text class
    * @class fabric.Text
@@ -144,13 +128,6 @@
      * @default
      */
     useNative:            true,
-
-    /**
-     * List of properties to consider when checking if state of an object is changed ({@link fabric.Object#hasStateChanged})
-     * as well as for history (undo/redo) purposes
-     * @type Array
-     */
-    stateProperties:      stateProperties,
 
     /**
      * When defined, an object is rendered via stroke and this property specifies its color.
@@ -951,7 +928,26 @@
     complexity: function() {
       return 1;
     }
+
   });
+
+  
+  fabric.Text.prototype.stateProperties = fabric.Object.prototype.stateProperties.concat();
+  fabric.Text.prototype.stateProperties.push(
+    'fontFamily',
+    'fontWeight',
+    'fontSize',
+    'path',
+    'text',
+    'textDecoration',
+    'textAlign',
+    'fontStyle',
+    'lineHeight',
+    'backgroundColor',
+    'textBackgroundColor',
+    'useNative'
+  );
+
 
   /* _FROM_SVG_START_ */
   /**

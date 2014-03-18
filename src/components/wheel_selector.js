@@ -10,7 +10,9 @@
 		// 1.allow non - centered pointer to a valid value .... 
 		// 2.allow drag on this element ...
 		// 3.remove need for additional, external transform matrices ....
+
 		if (svgobj.type === 'use') {
+      fabric.DynamicUse(svgobj);
 			svgobj.setUsedObj (svgobj.getUsedObj());
 		}
 

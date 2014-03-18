@@ -116,13 +116,6 @@
     defaultCursor:          'default',
 
     /**
-     * Cursor value used during free drawing
-     * @type String
-     * @default
-     */
-    freeDrawingCursor:      'crosshair',
-
-    /**
      * Cursor value used for rotation point
      * @type String
      * @default
@@ -165,8 +158,6 @@
       this._initWrapperElement();
       this._createUpperCanvas();
       this._initEvents();
-
-      this.freeDrawingBrush = fabric.PencilBrush && new fabric.PencilBrush(this);
     },
 
     /**

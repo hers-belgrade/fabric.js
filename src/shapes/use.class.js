@@ -27,6 +27,9 @@
       this._element = element;
       this._originalElement = element;
     },
+    _prepareUsedObj: function (obj){
+      return obj;
+    },
     setUsedObj: function(object) {
 			var self = this;
 
@@ -46,7 +49,8 @@
 				}
 			}
 
-      this.usedObj = object.clone();
+      //this.usedObj = object.clone();
+      this.usedObj = this._prepareUsedObj(object);
       this.usedObj.group = this;
 			this.usedObj.on('raster:created', this._rasterHandlers.create);
 			this.usedObj.on('raster:changed', this._rasterHandlers.changed);
