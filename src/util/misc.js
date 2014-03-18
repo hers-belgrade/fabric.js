@@ -625,5 +625,6 @@
   fabric.util.getFunctionBody = getFunctionBody;
   fabric.util.drawArc = drawArc;
 	fabric.util.resetImageCache = resetImageCache;
+  fabric.util.multiplyTransformMatricesWAssign = multiplyTransformMatricesWAssign;
 
 })(typeof exports !== 'undefined' ? exports : this);

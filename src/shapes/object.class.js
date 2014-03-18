@@ -476,10 +476,11 @@
      */
     transform: function(ctx) {
       var m = this.transformMatrix;
-      this._currentTransform = ctx._currentTransform;
+      this._currentTransform = ctx._currentTransform.slice();
       if (m) {
         //console.log(this.id, 'matrix', m)
         ctx.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
+        m = m.slice();
       }else{
         //console.log(this.id, 'no matrix');
         m = [1,0,0,1,0,0];
@@ -506,6 +507,7 @@
       ctx.transform.apply(ctx,this._localTransformationMatrix);
       matmultwassign(m,this._localTransformationMatrix);
       matmultwassign(ctx._currentTransform,m);
+
       var xl = 0, xr = xl+this.width, yt = 0, yb = yt+this.height;
       var tl = fabric.util.pointInSpace(ctx._currentTransform,new fabric.Point(xl,yt));
       var br = fabric.util.pointInSpace(ctx._currentTransform,new fabric.Point(xr,yb));
@@ -524,7 +526,7 @@
         tl:{x:tl.x,y:tl.y},tr:{x:br.x,y:tl.y},br:{x:br.x,y:br.y},bl:{x:tl.x,y:br.y}
         //ml:{x:tl.x,y:my},mt:{x:mx,y:tl.y},mr:{x:br.x,y:my},mb:{x:mx,y:br.y}
       };
-      this._currentGlobalTransform = ctx._currentTransform;
+      this._currentGlobalTransform = ctx._currentTransform.slice();
       this._currentLocalTransform = m;
       this.localRotate(ctx);
     },
@@ -809,7 +811,13 @@
     },
 
     _cacheLocalTransformMatrix : function(){
-      var m = [1,0,0,1,0,0];
+      var m = this._localTransformationMatrix;
+      if(!m){
+        this._localTransformationMatrix = [1,0,0,1,0,0];
+        m = this._localTransformationMatrix;
+      }else{
+        m[0] = 1, m[1] = 0, m[2] = 0, m[3] = 1, m[4] = 0, m[5] = 0;
+      }
       if(this.left || this.top){
         matmultwassign(m,[1,0,0,1,this.left,this.top]);
       }
@@ -822,7 +830,6 @@
         matmultwassign(m,[rp.cos,rp.sin,-rp.sin,rp.cos,rp.x,-rp.y]);
         matmultwassign(m,[1,0,0,1,-rp.x,rp.y]);
       }
-      this._localTransformationMatrix = m;
     },
 
     /**
