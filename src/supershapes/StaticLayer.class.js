@@ -43,13 +43,19 @@
   };
 
   var renderStaticSubLayer = function(ctx){
+    /*
+    if (!this.group.activated){ 
+      console.log('rejected to render ...', this.group.group.id, this.group.activated);
+      return;
+    }
+    */
     if(!ctx){
       var offel = fabric.document.createElement('canvas');
-      this.canvas = offel;
+      this.off_canvas = offel;
       offel.width = Math.ceil(this.mastercanvas.width);
       offel.height = Math.ceil(this.mastercanvas.height);
       //console.log(this.id,'created a canvas for self',offel.width,offel.height);
-      ctx = this.canvas.getContext('2d');
+      ctx = offel.getContext('2d');
 			ctx.clearRect(0,0,offel.with, offel.height);
     }
     ctx.save();
@@ -66,7 +72,7 @@
       if(this[i]._cache.global_content){
         //console.log('old sprite',this[i]._cache.global_content);
       }
-      this[i]._cache.global_content = new fabric.Sprite(this.canvas,this.rectMap[i]);
+      this[i]._cache.global_content = new fabric.Sprite(offel,this.rectMap[i]);
       //console.log('new sprite for',this[i].id);
       //console.log('new sprite',this[i]._cache.global_content);
     }
@@ -77,19 +83,18 @@
     initialize: function(objects,options){
       this.callSuper('initialize',objects,options);
       this.toMonitor = undefined;
-    },
-    activate: function () {
-      var ls = this._objects.slice();
 
       for(var i in this._objects){
         var o = this._objects[i];
-        if (!o.originalrender) {
-          o.originalrender = this.render;
-          o.render = renderStaticSubLayer;
-        }
+        o.originalrender = this.render;
+        o.render = renderStaticSubLayer;
         o.monitor = monitorCanvasElement;
       }
+      this.activated = false;
+    },
 
+    activate: function () {
+      var ls = this._objects.slice();
       console.log('sublayers',ls);
       if(ls.length%2){
         console.log( "Static layer cannot contain an odd number of sub-layers" );
@@ -132,8 +137,10 @@
         this.remove(fordeletion[i]);
       }
       this._apply_monitor();
+      this.activated = true;
     },
     deactivate: function () {
+      this.activated = false;
       for (var i in this._objects) {
         var o = this._objects[i];
         delete o.monitorCanvasElement;
@@ -142,7 +149,7 @@
       for (var i in this.rectMap) {
         this[i].dropCache();
       }
-      this.canvas = null;
+      this.off_canvas = null;
     },
     setURL: function(url){
       fabric.staticLayerManager.add(url,this);

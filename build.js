@@ -128,6 +128,7 @@ var filesToInclude = [
   ifSpecifiedDependencyInclude('text', 'cufon', 'lib/cufon.js'),
   ifSpecifiedDependencyInclude('serialization', 'json', 'lib/json2.js'),
   ifSpecifiedInclude('gestures', 'lib/event.js'),
+  'lib/cryptojs/rollups/md5.js',
   'lib/cryptojs/rollups/sha512.js',
 
   'src/log.js',
@@ -227,6 +228,7 @@ var filesToInclude = [
   ifSpecifiedInclude('cufon', 'src/shapes/text.cufon.js'),
   ifSpecifiedInclude('text', 'src/shapes/tspan.class.js'),
 
+  ifSpecifiedInclude('components', 'src/components/dynamic_use.js'),
   ifSpecifiedInclude('components', 'src/components/canvasuser.js'),
   ifSpecifiedInclude('components', 'src/components/factory.js'),
   ifSpecifiedInclude('components', 'src/components/mouseaware.js'),
