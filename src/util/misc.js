@@ -635,6 +635,7 @@
   fabric.util.createAccessors = createAccessors;
   fabric.util.clipContext = clipContext;
   fabric.util.pointInSpace = pointInSpace;
+  fabric.util.pointToSpace = pointToSpace;
   fabric.util.multiplyTransformMatrices = multiplyTransformMatrices;
   fabric.util.matrixInverse = matrixInverse;
   fabric.util.getFunctionBody = getFunctionBody;

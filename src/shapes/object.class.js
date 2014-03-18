@@ -30,19 +30,6 @@
      */
     type:                     'object',
 
-    /**
-     * Horizontal origin of transformation of an object (one of "left", "right", "center")
-     * @type String
-     * @default
-     */
-    originX:                  'left',
-
-    /**
-     * Vertical origin of transformation of an object (one of "top", "bottom", "center")
-     * @type String
-     * @default
-     */
-    originY:                  'top',
 
     /**
      * Top position of an object. Note that by default it's relative to object center. You can change this by setting originY={top/center/bottom}
@@ -367,6 +354,7 @@
     initialize: function(options) {
 			this._cntr = cntr;
 			cntr++;
+      this.oCoords = {tl:{x:0,y:0},tr:{x:0,y:0},br:{x:0,y:0},bl:{x:0,y:0}};
       this._cache = {};
 			this._raster= {};
 			if (options) {
@@ -512,9 +500,8 @@
       this.oCoords.tl.y=0;
       this.oCoords.br.x=this.width;
       this.oCoords.br.y=this.height;
-      var xl = 0, xr = xl+this.width, yt = 0, yb = yt+this.height;
-      var tl = fabric.util.pointToSpace(ctx._currentTransform,this.oCoords.tl);
-      var br = fabric.util.pointToSpace(ctx._currentTransform,this.oCoords.br);
+      fabric.util.pointToSpace(ctx._currentTransform,this.oCoords.tl);
+      fabric.util.pointToSpace(ctx._currentTransform,this.oCoords.br);
       if(this.oCoords.tl.x>this.oCoords.br.x){
         var x = this.oCoords.tl.x;
         this.oCoords.tl.x = this.oCoords.br.x;
@@ -525,6 +512,10 @@
         this.oCoords.tl.y = this.oCoords.br.y;
         this.oCoords.br.y = y;
       }
+      this.oCoords.tr.x=this.oCoords.br.x;
+      this.oCoords.tr.y=this.oCoords.tl.y;
+      this.oCoords.bl.x=this.oCoords.tl.x;
+      this.oCoords.bl.y=this.oCoords.br.y;
       /*
       var mx = (tl.x+br.x)/2, my = (tl.y+br.y)/2;
       this.oCoords = {
