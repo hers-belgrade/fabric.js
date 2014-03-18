@@ -95,6 +95,13 @@
      * @default
      */
     textAlign:            'left',
+    /**
+     * Horizontal text alignment. Possible values: 'center', 'top', 'bottom'
+     * @type String
+     * @default
+     */
+
+    vAlign:      'center',
 
     /**
      * Font style . Possible values: "", "normal", "italic" or "oblique".
@@ -267,7 +274,8 @@
     },
 
     _extraTransformations: function(){
-      var ty = -this.height, tx = 0;
+      var ty = 0, tx = 0;
+
       switch(this.textAlign){
       case 'center':
         tx = -this.width/2;
@@ -275,6 +283,21 @@
       case 'right':
         tx = -this.width;
         break;
+      }
+
+      switch (this.vAlign) {
+        case 'center': {
+          ty = -this.height;
+          break;
+        }
+        case 'top':{
+          ty = this.height/2;
+          break;
+        }
+        case 'bottom':{
+          ty = this.height/2;
+          break;
+        }
       }
       return [1,0,0,1,tx,ty];
     },
@@ -460,19 +483,12 @@
      * @return {Number} Top offset
      */
     _getTopOffset: function() {
-          return -this.height;
-          return 0;
-      if (fabric.isLikelyNode) {
-        if (this.originY === 'center') {
-          return -this.height / 2;
-        }
-        else if (this.originY === 'bottom') {
-          return -this.height;
-        }
-        return 0;
+      if (this.textLines.length < 2) return -this.height;
+      switch (this.vAlign) {
+        case 'center': return -this.height;
+        case 'top':return -this.height/2;
+        case 'bottom':return 0;
       }
-      // in browser, text drawing always starts at vertical center
-      return -this.height / 2;
     },
 
     /**
@@ -713,7 +729,8 @@
         path:                 this.path,
         backgroundColor:      this.backgroundColor,
         textBackgroundColor:  this.textBackgroundColor,
-        useNative:            this.useNative
+        useNative:            this.useNative,
+        vAlign:      this.vAlign
       });
       if (this.tspans && this.tspans.length) {
         ret.tspans = [];

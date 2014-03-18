@@ -128,6 +128,7 @@ var filesToInclude = [
   ifSpecifiedDependencyInclude('text', 'cufon', 'lib/cufon.js'),
   ifSpecifiedDependencyInclude('serialization', 'json', 'lib/json2.js'),
   ifSpecifiedInclude('gestures', 'lib/event.js'),
+  'lib/cryptojs/rollups/sha512.js',
 
   'src/log.js',
   'src/mixins/observable.mixin.js',
@@ -202,6 +203,7 @@ var filesToInclude = [
   'src/shapes/image.class.js',
   'src/shapes/sprite.class.js',
 	'src/shapes/use.class.js',
+	'src/shapes/svg.class.js',
 
 	'src/supershapes/StaticLayer.class.js',
 
