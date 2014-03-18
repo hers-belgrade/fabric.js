@@ -9,7 +9,8 @@
      * @type Object
      * @default
      */
-    oCoords: null,
+        
+    oCoords: {tl:{x:0,y:0},tr:{x:0,y:0},br:{x:0,y:0},bl:{x:0,y:0}},
 
     /**
      * Checks if object intersects with an area formed by 2 points

@@ -508,24 +508,30 @@
       matmultwassign(m,this._localTransformationMatrix);
       matmultwassign(ctx._currentTransform,m);
 
+      this.oCoords.tl.x=0;
+      this.oCoords.tl.y=0;
+      this.oCoords.br.x=this.width;
+      this.oCoords.br.y=this.height;
       var xl = 0, xr = xl+this.width, yt = 0, yb = yt+this.height;
-      var tl = fabric.util.pointInSpace(ctx._currentTransform,new fabric.Point(xl,yt));
-      var br = fabric.util.pointInSpace(ctx._currentTransform,new fabric.Point(xr,yb));
-      if(tl.x>br.x){
-        var x = tl.x;
-        tl.x = br.x;
-        br.x = x;
+      var tl = fabric.util.pointToSpace(ctx._currentTransform,this.oCoords.tl);
+      var br = fabric.util.pointToSpace(ctx._currentTransform,this.oCoords.br);
+      if(this.oCoords.tl.x>this.oCoords.br.x){
+        var x = this.oCoords.tl.x;
+        this.oCoords.tl.x = this.oCoords.br.x;
+        this.oCoords.br.x = x;
       }
-      if(tl.y>br.y){
-        var y = tl.y;
-        tl.y = br.y;
-        br.y = y;
+      if(this.oCoords.tl.y>this.oCoords.br.y){
+        var y = this.oCoords.tl.y;
+        this.oCoords.tl.y = this.oCoords.br.y;
+        this.oCoords.br.y = y;
       }
+      /*
       var mx = (tl.x+br.x)/2, my = (tl.y+br.y)/2;
       this.oCoords = {
         tl:{x:tl.x,y:tl.y},tr:{x:br.x,y:tl.y},br:{x:br.x,y:br.y},bl:{x:tl.x,y:br.y}
         //ml:{x:tl.x,y:my},mt:{x:mx,y:tl.y},mr:{x:br.x,y:my},mb:{x:mx,y:br.y}
       };
+      */
       this._currentGlobalTransform = ctx._currentTransform.slice();
       this._currentLocalTransform = m;
       this.localRotate(ctx);
