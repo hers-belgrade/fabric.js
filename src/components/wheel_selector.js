@@ -13,7 +13,6 @@
 
 		if (svgobj.type === 'use') {
       fabric.DynamicUse(svgobj);
-			svgobj.setUsedObj (svgobj.getUsedObj());
 		}
 
 		var self = (svgobj.type === 'use') ? svgobj.getUsedObj() : svgobj;
@@ -52,6 +51,7 @@
 
 		var container = high[id+'_high_values'];
 		container.transformMatrix = container.transformMatrix || Matrix.UnityMatrix();
+    fabric.DynamicUse(container[getMeValIndexId(0)]);
 
 		ref_zero = container[getMeValIndexId(0)].getUsedObj();
 		ref_zero.transformMatrix = matrix_mult((ref_zero.transformMatrix || [1,0,0,1,0,0]), (container[getMeValIndexId(0)].transformMatrix || [1,0,0,1,0,0]));

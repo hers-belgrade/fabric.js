@@ -133,9 +133,11 @@
         }
         fordeletion.push(this[lmn]);
       }
+      /*
       for(var i in fordeletion){
         this.remove(fordeletion[i]);
       }
+      */
       this._apply_monitor();
       this.activated = true;
     },

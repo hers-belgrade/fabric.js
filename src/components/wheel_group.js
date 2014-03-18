@@ -5,6 +5,7 @@
 	fabric.Wheel = function (w, config) {
 		if (w.wheel_created) return w;
 		fabric.CanvasUser(w);
+    fabric.DynamicUse(w);
 		w.wheel_created = true;
 		var or = w.getUsedObj();
 		var dd = or[config.dims];
@@ -165,7 +166,6 @@
 					dims: config.dims,
 					wheel: config.wheel
 				});
-				
 			})(i);
 		}
 
