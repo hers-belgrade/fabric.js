@@ -391,6 +391,29 @@
     ];
   }
 
+  /**
+   * Multiply matrix A by matrix B to nest transformations
+   * @static
+   * @memberOf fabric.util
+   * @param  {Array} matrixA First transformMatrix
+   * @param  {Array} matrixB Second transformMatrix
+   * @return {Array} The product of the two transform matrices
+   */
+  function multiplyTransformMatricesWAssign(matrixA, matrixB) {
+    var a = matrixA[0]*matrixB[0]+matrixA[2]*matrixB[1],
+      b = matrixA[1]*matrixB[0]+matrixA[3]*matrixB[1],
+      c = matrixA[0]*matrixB[2]+matrixA[2]*matrixB[3],
+      d = matrixA[1]*matrixB[2]+matrixA[3]*matrixB[3],
+      e = matrixA[0]*matrixB[4]+matrixA[2]*matrixB[5]+matrixA[4],
+      f = matrixA[1]*matrixB[4]+matrixA[3]*matrixB[5]+matrixA[5];
+    matrixA[0] = a;
+    matrixA[1] = b;
+    matrixA[2] = c;
+    matrixA[3] = d;
+    matrixA[4] = e;
+    matrixA[5] = f;
+  }
+
   function matrixInverse(m){
     var k = (m[0]*m[3]-m[1]*m[2]);
     return [m[3]/k,-m[1]/k,-m[2]/k,m[0]/k,(-m[3]*m[4]+m[2]*m[5])/k,(m[1]*m[4]-m[0]*m[5])/k];
