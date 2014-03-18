@@ -374,6 +374,21 @@
   }
 
   /**
+   * Transforms point to space of transform matrix
+   * @static
+   * @memberOf fabric.util
+   * @param  {Array} matrix transformMatrix
+   * @param  {Point} point to be transformed into space
+   * @return void
+   */
+  function pointInSpace(matrix, point) {
+    var x = matrix[0]*point.x+matrix[2]*point.y+matrix[4],
+      y = matrix[1]*point.x+matrix[3]*point.y+matrix[5];
+    point.x = x;
+    point.y = y;
+  }
+
+  /**
    * Multiply matrix A by matrix B to nest transformations
    * @static
    * @memberOf fabric.util
