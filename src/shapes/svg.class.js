@@ -19,6 +19,7 @@
       this._image_cache = {};
       this._static_layer = options.static_layer;
     },
+
     loadImage: function () {
     },
     dropImageCache: function () {

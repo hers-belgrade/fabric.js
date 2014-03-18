@@ -51,11 +51,11 @@
     */
     if(!ctx){
       var offel = fabric.document.createElement('canvas');
-      this.canvas = offel;
+      this.off_canvas = offel;
       offel.width = Math.ceil(this.mastercanvas.width);
       offel.height = Math.ceil(this.mastercanvas.height);
       //console.log(this.id,'created a canvas for self',offel.width,offel.height);
-      ctx = this.canvas.getContext('2d');
+      ctx = offel.getContext('2d');
 			ctx.clearRect(0,0,offel.with, offel.height);
     }
     ctx.save();
@@ -72,7 +72,7 @@
       if(this[i]._cache.global_content){
         //console.log('old sprite',this[i]._cache.global_content);
       }
-      this[i]._cache.global_content = new fabric.Sprite(this.canvas,this.rectMap[i]);
+      this[i]._cache.global_content = new fabric.Sprite(offel,this.rectMap[i]);
       //console.log('new sprite for',this[i].id);
       //console.log('new sprite',this[i]._cache.global_content);
     }
@@ -149,7 +149,7 @@
       for (var i in this.rectMap) {
         this[i].dropCache();
       }
-      this.canvas = null;
+      this.off_canvas = null;
     },
     setURL: function(url){
       fabric.staticLayerManager.add(url,this);

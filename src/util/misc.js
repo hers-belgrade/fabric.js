@@ -154,7 +154,8 @@
 
   function loadImage(url, callback, context) {
     if (url) {
-      var hurl = CryptoJS.SHA512(url).toString();
+      var s = url.substring(0,4);
+      var hurl =  (s === 'http') ? url : CryptoJS.SHA512(url).toString();
 			if (image_cache[hurl]) {
 				//console.log('WILL GET IT FROM CACHE ', url);
 				return report_load(callback,context,image_cache[hurl]);

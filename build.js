@@ -128,6 +128,7 @@ var filesToInclude = [
   ifSpecifiedDependencyInclude('text', 'cufon', 'lib/cufon.js'),
   ifSpecifiedDependencyInclude('serialization', 'json', 'lib/json2.js'),
   ifSpecifiedInclude('gestures', 'lib/event.js'),
+  'lib/cryptojs/rollups/md5.js',
   'lib/cryptojs/rollups/sha512.js',
 
   'src/log.js',
