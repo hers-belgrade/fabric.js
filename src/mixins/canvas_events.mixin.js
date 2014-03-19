@@ -130,7 +130,7 @@
         this._positionEventDisposers['mousedown']();
         this._positionEventDisposers['mousemove']();
         this._positionEventDisposers['mouseup']();
-        removeListener(fabric.window, 'resize', this._onResize);
+        removeListener(this.wrapperEl.parentElement/*fabric.window*/, 'resize', this._onResize);
       }
       return this;
     },
@@ -178,13 +178,11 @@
       this.__onMouseMove(e);
     },
 
-    /**
-     * @private
-     */
-    _onResize: function () {
+    _realResize : function(){
       if(this.autoresize){
         this._computeMasterScale();
-        this._applyWrapperStyle(this.wrapperEl);
+        //this._applyWrapperStyle(this.wrapperEl);
+        this._applyCanvasStyle(this.wrapperEl);
         this._applyCanvasStyle(this.lowerCanvasEl);
         if(this.upperCanvasEl){
           this._applyCanvasStyle(this.upperCanvasEl);
@@ -194,6 +192,24 @@
       fabric.staticLayerManager.refresh();
       this.fire('fabric:canvasResized');
       this.renderAll();
+    },
+
+    /**
+     * @private
+     */
+    _onResize: function () {
+      if(this.wait){
+        clearTimeout(this.wait);
+        delete this.wait;
+      }
+      if(!this.wait){
+        var t = this;
+        this.wait = setTimeout(function(){
+          delete t.wait;
+          t._realResize();
+        },20);
+        return;
+      }
     },
 
     /**
