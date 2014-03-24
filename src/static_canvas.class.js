@@ -149,9 +149,16 @@
       var old = fabric.masterScale;
       var switchdimensions = ((typeof window.orientation==='number') && (window.orientation!=90) && (window.orientation!=-90));
 
+      /*
       var lce = {
         width: window.innerWidth,
         height: window.innerHeight
+      };
+      */
+      var parent = this.wrapperEl.parentElement || window;
+      var lce = {
+        width: parent.offsetWidth,
+        height: parent.offsetHeight
       };
 
       if(this.autoresize && ms&&

@@ -320,16 +320,16 @@
     _applyWrapperStyle: function(element){
       if(this.autoresize){
         fabric.util.setStyle(element, {
-          width: '100%',
-          height: '100%',
+          width: this.getWidth()+'px',//'100%',
+          height: this.getHeight()+'px',//'100%',
           left:'0px',
           top:'0px',
           position: 'absolute'
         });
       }else{
         fabric.util.setStyle(element, {
-          width: (this.getWidth()/fabric.backingScale) + 'px',
-          height: (this.getHeight()/fabric.backingScale) + 'px',
+          width: (this.width/fabric.backingScale) + 'px',
+          height: (this.height/fabric.backingScale) + 'px',
           position: 'relative'
         });
       }
