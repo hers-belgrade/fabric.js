@@ -75,7 +75,7 @@
         params.target.width, params.target.height
       );
 		}catch (e) {
-      console.log('.');
+      //console.log('.');
 			//console.log('!!!!!!!!!!!!!!!!!', params, image.width, image.height, e);
 		}
 	}
