@@ -151,12 +151,14 @@
     pending.svg = {};
 		for (var _i in resobj.svg) {
 			(function (o, i) {
-				pending.svg[o.name] = true;
-				_loadSVG(root+'/'+o.name+'.svg', function (el) {
-					delete pending.svg[o.name];
-					(isFunction(o.cb)) && o.cb.call(this, el, o.name);
-					check_pending();
-				});
+        setTimeout(function(){
+          pending.svg[o.name] = true;
+          _loadSVG(root+'/'+o.name+'.svg', function (el) {
+            delete pending.svg[o.name];
+            (isFunction(o.cb)) && o.cb.call(this, el, o.name);
+            check_pending();
+          });
+        }, 0);
 			})(resobj.svg[_i],_i);
 		}
 	}

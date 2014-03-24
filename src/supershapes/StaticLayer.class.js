@@ -42,40 +42,47 @@
     this.render();
   };
 
-  var renderStaticSubLayer = function(ctx){
-    /*
-    if (!this.group.activated){ 
-      console.log('rejected to render ...', this.group.group.id, this.group.activated);
+  var renderStaticSubLayer = function(){
+    //console.log('DA LI SE OVO IKAD DOGODILO?');
+    if (
+        !this.group.group._activated || 
+        this.id.substr(this.id.length-4,4) === '_map'
+     ) {
       return;
     }
-    */
-    if(!ctx){
-      var offel = fabric.document.createElement('canvas');
-      this.off_canvas = offel;
-      offel.width = Math.ceil(this.mastercanvas.width);
-      offel.height = Math.ceil(this.mastercanvas.height);
-      //console.log(this.id,'created a canvas for self',offel.width,offel.height);
-      ctx = offel.getContext('2d');
-			ctx.clearRect(0,0,offel.with, offel.height);
+
+    if (!this._cache_canvas) { 
+      console.log('will create _cache_canvas');
+      this._cache_canvas = this.group.group.produceCanvas();
     }
+    var offel = this._cache_canvas
+    offel.width = Math.ceil(this.mastercanvas.width);
+    offel.height = Math.ceil(this.mastercanvas.height);
+
+    var ctx = offel.getContext('2d');
     ctx.save();
-    //console.log('statics scaled by',fabric.masterScale);
+
     ctx.scale(fabric.masterScale,fabric.masterScale);
     ctx._currentTransform = [1,0,0,1,0,0];
-    for(var i in this.rectMap){
+    this.show();
+
+    var temp = {};
+    for (var i in this.rectMap) {
+      if (this[i]._cache.global_content) {
+        temp[i] = this[i]._cache.global_content;
+      }
+      else{
+        temp[i] = new fabric.Sprite(offel, this.rectMap[i]);
+      }
       this[i].dropCache();
     }
-    this.show();
     this.originalrender(ctx);
+
     for(var i in this.rectMap){
-      //console.log('rect',i,this.rectMap[i]);
-      if(this[i]._cache.global_content){
-        //console.log('old sprite',this[i]._cache.global_content);
-      }
-      this[i]._cache.global_content = new fabric.Sprite(offel,this.rectMap[i]);
-      //console.log('new sprite for',this[i].id);
-      //console.log('new sprite',this[i]._cache.global_content);
+      this[i]._cache.global_content = temp[i];
+      delete temp[i];
     }
+    temp = undefined;
     ctx.restore();
   };
 
@@ -84,17 +91,23 @@
       this.callSuper('initialize',objects,options);
       this.toMonitor = undefined;
 
+      // RAZMISLITI ...
       for(var i in this._objects){
         var o = this._objects[i];
         o.originalrender = this.render;
         o.render = renderStaticSubLayer;
         o.monitor = monitorCanvasElement;
       }
-      this.activated = false;
     },
 
-    activate: function () {
-      var ls = this._objects.slice();
+    _onSVG_Activated: function () {
+      var self = this;
+      self.forEachObject(function (v) {
+        if (v.id.substr(v.id.length-4,4) === '_map') return;
+        v.monitorCanvasElement = monitorCanvasElement;
+      });
+
+      var ls = self._objects.slice();
       console.log('sublayers',ls);
       if(ls.length%2){
         console.log( "Static layer cannot contain an odd number of sub-layers" );
@@ -104,7 +117,7 @@
       for(var i = 0; i<ls.length; i++){
         var l = ls[i];
         var lmn = l.id+'_map';
-        var lm = this[lmn];
+        var lm = self[lmn];
         if(!lm){
           continue;
         }
@@ -131,27 +144,20 @@
             console.log('on',l.id,'static',id,'has no rect');
           }
         }
-        fordeletion.push(this[lmn]);
+        fordeletion.push(self[lmn]);
       }
-      /*
-      for(var i in fordeletion){
-        this.remove(fordeletion[i]);
-      }
-      */
-      this._apply_monitor();
-      this.activated = true;
+      self._apply_monitor();
     },
-    deactivate: function () {
-      this.activated = false;
+
+    _onSVG_Deactivated: function () {
+      return;
+      //forEachObject
       for (var i in this._objects) {
         var o = this._objects[i];
+        if (o.id.substr(o.id.length-4,4) === '_map') continue;
         delete o.monitorCanvasElement;
+        o._onSVG_Deactivated && o._onSVG_Deactivated();
       }
-
-      for (var i in this.rectMap) {
-        this[i].dropCache();
-      }
-      this.off_canvas = null;
     },
     setURL: function(url){
       fabric.staticLayerManager.add(url,this);

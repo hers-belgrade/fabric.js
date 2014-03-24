@@ -2,7 +2,8 @@
 
   "use strict";
 
-  var extend = fabric.util.object.extend;
+  var extend = fabric.util.object.extend,
+    isRenderableElement = fabric.util.isRenderableElement;
 
   if (!global.fabric) {
     global.fabric = { };
@@ -41,21 +42,7 @@
       this.filters = [ ];
 
       this.callSuper('initialize', options);
-      this._initElement(element);
-      this._initConfig(options);
-
-      if (options.filters) {
-        this.filters = options.filters;
-        this.applyFilters();
-      }
-    },
-
-    /**
-     * Returns image element which this instance if based on
-     * @return {HTMLImageElement} Image element
-     */
-    getElement: function() {
-      return this._element;
+      this.setElement(element);
     },
 
     /**
@@ -67,20 +54,21 @@
      * @return {fabric.Image} thisArg
      * @chainable
      */
-    setElement: function(element, callback) {
-			if (this.id === 'image4978') {
-				element.onload = function () {
-					console.log('ETO JE I SLIKA ...');
-				}
-			}
-      this._element = element;
-      this._originalElement = element;
-      this._initConfig();
+    _initElement: function () {
+      if (!this._element) return;
+      if (!this.width) this.width = this._element.width;
+      if (!this.height) this.height = this._element.height;
+      fabric.util.addClass(this._element, fabric.Image.CSS_CANVAS);
+      this.applyFilters();
+    },
 
-      if (this.filters.length !== 0) {
-        this.applyFilters(callback);
+    setElement: function(element) {
+      if (isRenderableElement(element)) {
+        this._element = element;
+        this._initElement();
+      }else if ('string' === typeof(element)) {
+        this._elementURL = element;
       }
-
       return this;
     },
 
@@ -152,7 +140,7 @@
     toObject: function(propertiesToInclude) {
       return extend(this.callSuper('toObject', propertiesToInclude), {
         element: this._element,
-        src: this._originalElement.src || this._originalElement._src,
+        //src: this._originalElement.src || this._originalElement._src,
         filters: this.filters.map(function(filterObj) {
           return filterObj && filterObj.toObject();
         })
@@ -228,11 +216,10 @@
      * @return {fabric.Image} thisArg
      * @chainable
      */
-    applyFilters: function(callback) {
+    applyFilters: function() {
 
-      if (this.filters.length === 0) {
-        this._element = this._originalElement;
-        callback && callback();
+      ///TO CONSIDER this filter thing ...
+      if (!this.filters || this.filters.length === 0) {
         return;
       }
 
@@ -279,16 +266,12 @@
      * @param {CanvasRenderingContext2D} ctx Context to render on
      */
     _render: function(ctx) {
-			if (this.id === 'image4978') {
-				//console.log('IMAGE ', this._element, this._element.complete, this._element.src);
-				//console.log(this._element.toDataURL());
-			}
       ctx.drawImage(
         this._element,
-        0,//-this.width / 2,
-        0,//-this.height / 2,
-        this.width,
-        this.height
+        0,
+        0,
+        this._element.width,
+        this._element.height
       );
     },
 
@@ -303,27 +286,6 @@
     },
 
     /**
-     * The Image class's initialization method. This method is automatically
-     * called by the constructor.
-     * @private
-     * @param {HTMLImageElement|String} element The element representing the image
-     */
-    _initElement: function(element) {
-      this.setElement(fabric.util.getById(element));
-      fabric.util.addClass(this.getElement(), fabric.Image.CSS_CANVAS);
-    },
-
-    /**
-     * @private
-     * @param {Object} [options] Options object
-     */
-    _initConfig: function(options) {
-      options || (options = { });
-      this.setOptions(options);
-      this._setWidthHeight(options);
-    },
-
-    /**
      * @private
      * @param {Object} object Object with filters property
      * @param {Function} callback Callback to invoke when all fabric.Image.filters instances are created
@@ -331,28 +293,32 @@
     _initFilters: function(object) {
       return fabric.util.enlivenObjects(object.filters);
     },
-
-    /**
-     * @private
-     * @param {Object} [options] Object with width/height properties
-     */
-    _setWidthHeight: function(options) {
-      this.width = 'width' in options
-        ? options.width
-        : (this.getElement().width || 0);
-
-      this.height = 'height' in options
-        ? options.height
-        : (this.getElement().height || 0);
-    },
-
     /**
      * Returns complexity of an instance
      * @return {Number} complexity of this instance
      */
     complexity: function() {
       return 1;
+    },
+
+    /*
+    _onSVG_Deactivated: function () {
+      if (this._element) {
+        fabric.util.resetRenderable(this._element);
+        delete this._element;
+      }
+    },
+
+    _onSVG_Activated : function () {
+      var self = this;
+      var svg_el = this.getSvgEl();
+      if (svg_el && !this._element && this._elementURL)  {
+        var im = svg_el.getImage(this._elementURL);
+        self.setElement(im);
+      }
+      return;
     }
+    */
   });
 
   /**
@@ -390,13 +356,6 @@
    * @param {Object} [imgOptions] Options object
    */
 
-
-  fabric.Image.fromURL = function(url, callback, imgOptions) {
-    fabric.util.loadImage(url, function(img) {
-      callback(new fabric.Image(img, imgOptions));
-    });
-  };
-
   /* _FROM_SVG_START_ */
   /**
    * List of attribute names to account for when parsing SVG element (used by {@link fabric.Image.fromElement})
@@ -413,21 +372,13 @@
    * @param {Object} [options] Options object
    * @return {fabric.Image} Instance of fabric.Image
    */
-  fabric.Image.fromElement = function(element, callback, options) {
+  fabric.Image.fromElement = function(element, options) {
     var parsedAttributes = fabric.parseAttributes(element, fabric.Image.ATTRIBUTE_NAMES);
-
-    fabric.Image.fromURL(parsedAttributes['xlink:href'], callback,
-      extend((options ? fabric.util.object.clone(options) : { }), parsedAttributes));
+    var ref = parsedAttributes['xlink:href'];
+    return new fabric.Image(ref, extend((options ? fabric.util.object.clone(options) : { }), parsedAttributes));
   };
-  /* _FROM_SVG_END_ */
 
-  /**
-   * Indicates that instances of this type are async
-   * @static
-   * @type Boolean
-   * @default
-   */
-  fabric.Image.async = true;
+  /* _FROM_SVG_END_ */
 
   /**
    * Indicates compression level used when generating PNG under Node (in applyFilters). Any of 0-9

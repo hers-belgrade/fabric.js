@@ -359,6 +359,15 @@
     ctx.clip();
   }
 
+  function copyTransformMatrix(src,dest){
+    dest[0]=src[0];
+    dest[1]=src[1];
+    dest[2]=src[2];
+    dest[3]=src[3];
+    dest[4]=src[4];
+    dest[5]=src[5];
+  }
+
   /**
    * Point in space of transform matrix
    * @static
@@ -636,6 +645,7 @@
   fabric.util.clipContext = clipContext;
   fabric.util.pointInSpace = pointInSpace;
   fabric.util.pointToSpace = pointToSpace;
+  fabric.util.copyTransformMatrix = copyTransformMatrix;
   fabric.util.multiplyTransformMatrices = multiplyTransformMatrices;
   fabric.util.matrixInverse = matrixInverse;
   fabric.util.getFunctionBody = getFunctionBody;

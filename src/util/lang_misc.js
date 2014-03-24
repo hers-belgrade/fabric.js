@@ -50,6 +50,7 @@
 		if (!image) throw "No image";
 		params = params || {};
 		var ms = fabric.masterScale;
+    if (params.clip.width > image.width || params.clip.height > image.height) return;
 
 		for (var i in params.clip) params.clip[i]*=ms;
 		var c = reduce_dimension (params.clip, {width: image.width, height: image.height}); 
@@ -62,21 +63,17 @@
 			params.target.y -= c.y;
 			params.target.height -= c.y;
 		}
-
-		/*
-		reduce_dimension (params.target, {width: Math.floor(ctx.canvas.width/ms), height: Math.floor(ctx.canvas.height/ms)});
-		*/
 		try {
-
-		return ctx.drawImage (
-			image,
-			params.clip.x, params.clip.y,
-			params.clip.width, params.clip.height,
-			params.target.x, params.target.y,
-			params.target.width, params.target.height
-		);
+      return ctx.drawImage (
+        image,
+        params.clip.x, params.clip.y,
+        params.clip.width, params.clip.height,
+        params.target.x, params.target.y,
+        params.target.width, params.target.height
+      );
 		}catch (e) {
-			console.log('!!!!!!!!!!!!!!!!!', params, image.width, image.height);
+      console.log('.');
+			//console.log('!!!!!!!!!!!!!!!!!', params, image.width, image.height, e);
 		}
 	}
 

@@ -255,6 +255,26 @@
     }
   }
 
+  function isRenderableElement (o) {
+    return (o instanceof HTMLImageElement || o instanceof HTMLCanvasElement);
+  }
+  var DUMMY_PATH = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAACXBIWXMAAAsTAAALEwEAmpwYAAAADElEQVQI12P4//8/AAX+Av7czFnnAAAAAElFTkSuQmCC";
+
+  function resetRenderable (obj) {
+    if (!obj) return;
+    if (obj instanceof HTMLImageElement) {
+      obj.src = DUMMY_PATH;
+    }
+    if (obj instanceof HTMLCanvasElement) {
+      obj.width = obj.width;
+    }
+    obj.style.webkitTransform = '';
+  }
+
+  function enable3DGPU (obj) {
+    obj.style.webkitTransform = "translate3D(0,0,0)";
+  }
+
   fabric.util.getById = getById;
   fabric.util.toArray = toArray;
   fabric.util.makeElement = makeElement;
@@ -263,5 +283,9 @@
   fabric.util.getElementOffset = getElementOffset;
   fabric.util.getElementStyle = getElementStyle;
   fabric.util.prepareFonts = prepareFonts;
+  fabric.util.isRenderableElement = isRenderableElement;
+  fabric.util.resetRenderable = resetRenderable;
+  fabric.util.enable3DGPU = enable3DGPU;
+  fabric.util.DUMMY_PATH  = DUMMY_PATH;
 
 })();

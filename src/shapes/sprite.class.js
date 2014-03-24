@@ -20,7 +20,7 @@
    * @class fabric.Sprite
    * @extends fabric.Image
    */
-  fabric.Sprite = fabric.util.createClass(fabric.Image , {
+  fabric.Sprite = fabric.util.createClass(fabric.Object, {
     type : 'Sprite',
     initialize : function(element,options){
 			this._cnt = cnt;
@@ -31,8 +31,10 @@
 
 			options.area = fabric.util.object.extend({x: options.x, y:options.y, width:options.width, height:options.height},options.area);
 			options.repeat = fabric.util.object.extend({x:false, y:false}, options.repeat);
-      this.callSuper('initialize',element,options);
+      this.callSuper('initialize',options);
+      this._element = element;
     },
+
 		getRasterParams : function () {
 			return {area: this.area, repeat: this.repeat};
 		},
@@ -45,6 +47,11 @@
 		},
 
     _render : function(ctx){
+      if (this._old_width != this._element.width || this._old_height != this._element.height) {
+        //console.log('PROMENJENO, BRATE ...', this._element.toDataURL(), this._element._rrr.length);
+        this._old_width = this._element.width;
+        this._old_height = this._element.height;
+      }
 			////more work to be done ....
 			var bs = fabric.backingScale;
 			var ms = fabric.masterScale;

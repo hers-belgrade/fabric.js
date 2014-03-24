@@ -107,7 +107,6 @@
           this.width === 1 ? 0 : (xMult * -1 * this.width / 2),
           this.height === 1 ? 0 : (yMult * -1 * this.height / 2));
       }
-
     },
 
     _paint: function(ctx){

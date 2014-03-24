@@ -30,6 +30,15 @@
 
 		var or_show = svgelem.show;
 		var or_hide = svgelem.hide;
+    var or_set = svgelem.set;
+
+    svgelem.set = function () {
+      var args = arguments;
+      traverse(function (el) {
+        el.set.apply(el, args);
+      });
+      or_set.apply(svgelem, arguments);
+    }
 
 		svgelem.hide = function () {
 			var args = arguments;
