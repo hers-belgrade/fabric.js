@@ -50,7 +50,10 @@
 		if (!image) throw "No image";
 		params = params || {};
 		var ms = fabric.masterScale;
-    if (params.clip.width > image.width || params.clip.height > image.height) return;
+    if (Math.floor(params.clip.width * ms) > image.width || Math.floor(params.clip.height * ms) > image.height) {
+      //console.log('will cancel rendering ... ', params.clip, image.width, image.height);
+      return;
+    }
 
 		for (var i in params.clip) params.clip[i]*=ms;
 		var c = reduce_dimension (params.clip, {width: image.width, height: image.height}); 
