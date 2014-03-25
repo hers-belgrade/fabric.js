@@ -130,6 +130,7 @@
 					return (isFunction(done)) ? done.apply(this, arguments) : undefined;
 				}
 				if (index < 0) cb ({'err': 'invalid_index'});
+        if (!valid_raster) return;
 				valid_raster.animate({
 					'area.y': (1+index) * getMovementQuant()
 				}, {
