@@ -293,6 +293,9 @@
 		svgobj.getValue = function () {
 			return value;
 		}
+    svgobj.dropValueSet = function () {
+      local_value_set = [];
+    }
 
 		svgobj.setValueSet = function (vs) {
 			var temp = (vs) ? vs.slice() : [];
