@@ -1059,20 +1059,9 @@
    function loadSVGHierarchicalFromURL(url, callback, reviver) {
 
      url = url.replace(/^\n\s*/, '').trim();
-
-     svgCache.has(url, function (hasUrl) {
-       if (hasUrl) {
-         svgCache.get(url, function (value) {
-           var enlivedRecord = _enlivenCachedObject(value);
-           callback(enlivedRecord.objects, enlivedRecord.options);
-         });
-       }
-       else {
-         new fabric.util.request(url, {
-           method: 'get',
-           onComplete: onComplete
-         });
-       }
+     new fabric.util.request(url, {
+       method: 'get',
+       onComplete: onComplete
      });
 
      function onComplete(r) {
@@ -1088,10 +1077,6 @@
 
        console.log(xml.baseURI,'loaded');
        fabric.parseSVGDocumentHierarchical(xml.documentElement, function (results, options) {
-         svgCache.set(url, {
-           objects: fabric.util.array.invoke(results, 'toObject'),
-           options: options
-         });
          callback(results, options);
        }, reviver);
      }
