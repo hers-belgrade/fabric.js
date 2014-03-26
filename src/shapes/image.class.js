@@ -300,25 +300,6 @@
     complexity: function() {
       return 1;
     },
-
-    /*
-    _onSVG_Deactivated: function () {
-      if (this._element) {
-        fabric.util.resetRenderable(this._element);
-        delete this._element;
-      }
-    },
-
-    _onSVG_Activated : function () {
-      var self = this;
-      var svg_el = this.getSvgEl();
-      if (svg_el && !this._element && this._elementURL)  {
-        var im = svg_el.getImage(this._elementURL);
-        self.setElement(im);
-      }
-      return;
-    }
-    */
   });
 
   /**

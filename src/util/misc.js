@@ -298,10 +298,6 @@
   function createCanvasElement(canvasEl) {
     canvasEl || (canvasEl = fabric.document.createElement('canvas'));
     return canvasEl;
-    if (!canvasEl.getContext && typeof G_vmlCanvasManager !== 'undefined') {
-      G_vmlCanvasManager.initElement(canvasEl);
-    }
-    return canvasEl;
   }
 
   /**

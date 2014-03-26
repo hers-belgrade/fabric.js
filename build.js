@@ -206,6 +206,7 @@ var filesToInclude = [
 	'src/shapes/use.class.js',
 	'src/shapes/svg.class.js',
 
+	'src/supershapes/BackgroundLayer.class.js',
 	'src/supershapes/StaticLayer.class.js',
 
   ifSpecifiedInclude('object_straightening', 'src/mixins/object_straightening.mixin.js'),

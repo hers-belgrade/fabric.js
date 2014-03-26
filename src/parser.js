@@ -692,9 +692,10 @@
     ga.height = ga.height || options.height;
     resolveGradients(gelements);
     var group;
-
     if(g.id==='static'){
       group = new fabric.StaticLayer(gelements,ga);
+    }else if (g.id === 'background_layer') {
+      group = new fabric.BackgroundLayer(gelements, ga);
     }else{
       switch(g.tagName){
         case 'defs':

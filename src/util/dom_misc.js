@@ -73,6 +73,31 @@
     }
   }
 
+  function replaceClass(element, oldClassName, newClassName) {
+    if (!element || !element.className) return;
+    if (oldClassName) {
+      var r = new RegExp (oldClassName);
+      element.className = element.className.replace(r,newClassName);
+    }else{
+      /// are you sure this is true?
+      element.setAttribute('class', newClassName);
+    }
+  }
+
+  function removeClass(element, className) {
+    if (!element || !element.className) return;
+    replaceClass(element, className, '');
+  }
+
+  function createStyleRecord (selector, map) {
+    var ret = selector+" {\n";
+    for (var i in map) {
+      ret+= (i+':'+map[i]+";\n");
+    }
+    ret+="}\n";
+    return ret;
+  }
+
   /**
    * Wraps element with another element
    * @memberOf fabric.util
@@ -279,6 +304,10 @@
   fabric.util.toArray = toArray;
   fabric.util.makeElement = makeElement;
   fabric.util.addClass = addClass;
+  fabric.util.removeClass = removeClass;
+  fabric.util.replaceClass = replaceClass;
+  fabric.util.createStyleRecord = createStyleRecord;
+
   fabric.util.wrapElement = wrapElement;
   fabric.util.getElementOffset = getElementOffset;
   fabric.util.getElementStyle = getElementStyle;

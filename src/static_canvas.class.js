@@ -357,6 +357,7 @@
      */
     _createLowerCanvas: function (canvasEl) {
       this.lowerCanvasEl = fabric.util.getById(canvasEl) || this._createCanvasElement();
+      this.id = this.lowerCanvasEl.getAttribute('id');
       this._initCanvasElement(this.lowerCanvasEl);
 
       fabric.util.addClass(this.lowerCanvasEl, 'lower-canvas');

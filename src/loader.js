@@ -49,6 +49,11 @@
       if(svg.static){
         svg.static.setURL(resourcename);
       }
+
+      if (svg.background_layer) {
+        svg.background_layer.dispose(fabric.activeCanvasInstance);
+        delete svg.background_layer;
+      }
       loaded(svg);
     });
   };

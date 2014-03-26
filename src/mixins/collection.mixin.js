@@ -24,6 +24,7 @@ fabric.Collection = {
     objects.push.apply(objects, valid);
     for (var i = valid.length; i--; ) {
       this._onObjectAdded(valid[i]);
+      fabric.util.isFunction(valid[i]._onAddedToCollection) && valid[i]._onAddedToCollection(this);
     }
     this.renderOnAddRemove && this.renderAll();
     return this;

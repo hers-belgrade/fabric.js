@@ -48,7 +48,6 @@
 
     _render : function(ctx){
       if (this._old_width != this._element.width || this._old_height != this._element.height) {
-        //console.log('PROMENJENO, BRATE ...', this._element.toDataURL(), this._element._rrr.length);
         this._old_width = this._element.width;
         this._old_height = this._element.height;
       }
