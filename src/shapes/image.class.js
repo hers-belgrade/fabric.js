@@ -56,9 +56,9 @@
      */
     _initElement: function () {
       if (!this._element) return;
-      if (!this.width) this.width = this._element.width;
-      if (!this.height) this.height = this._element.height;
-      fabric.util.addClass(this._element, fabric.Image.CSS_CANVAS);
+      if (!this.width) this.width = this._element.width();
+      if (!this.height) this.height = this._element.height();
+      this._element.addClass(fabric.Image.CSS_CANVAS);
       this.applyFilters();
     },
 
@@ -266,13 +266,7 @@
      * @param {CanvasRenderingContext2D} ctx Context to render on
      */
     _render: function(ctx) {
-      ctx.drawImage(
-        this._element,
-        0,
-        0,
-        this._element.width,
-        this._element.height
-      );
+      this._element && this._element.render(ctx);
     },
 
     /**
@@ -280,7 +274,6 @@
      */
     _resetWidthHeight: function() {
       var element = this.getElement();
-
       this.set('width', element.width);
       this.set('height', element.height);
     },

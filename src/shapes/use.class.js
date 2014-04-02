@@ -90,10 +90,10 @@
 			if (!uo) return; //for now
 			return uo.rasterize(rasterize_params);
 		},
-		getRasteredImage: function () {
+		getRaster: function () {
 			var uo = this.getUsedObj();
 			if (!uo) return; //for now
-			return uo.getRasteredImage();
+			return uo.getRaster();
 		},
 		
 		branchConditionalEachObjectRecursive: function (cb) {

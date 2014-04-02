@@ -189,6 +189,7 @@ var filesToInclude = [
   // ifSpecifiedInclude('animation', 'src/mixins/animation.mixin.js'),
   'src/mixins/animation.mixin.js',
 
+  'src/interfaces/image.js',
   'src/shapes/line.class.js',
   'src/shapes/circle.class.js',
   'src/shapes/triangle.class.js',

@@ -2,6 +2,16 @@
 
   "use strict";
 
+  function remapDimensions (map) {
+    var ret = {};
+    ret.area = {};
+    ['x','y','width','height'].forEach(function(v) {
+      ret[v] = map[v];
+      ret.area[v] = fabric.masterScale*map[v];
+    });
+    return ret;
+  }
+
   function StaticLayerManager(){
     this.collection = {};
     this.lastSize = {};
@@ -44,8 +54,9 @@
 
   var renderStaticSubLayer = function(){
     //console.log('DA LI SE OVO IKAD DOGODILO?');
+    var svgelem = this.getSvgEl();
     if (
-        !this.group.group._activated || 
+        !svgelem._activated || 
         this.id.substr(this.id.length-4,4) === '_map'
      ) {
       return;
@@ -53,7 +64,7 @@
 
     if (!this._cache_canvas) { 
       console.log('will create _cache_canvas');
-      this._cache_canvas = this.group.group.produceCanvas();
+      this._cache_canvas = svgelem.produceCanvas();
     }
     var offel = this._cache_canvas
     offel.width = Math.ceil(this.mastercanvas.width);
@@ -69,10 +80,15 @@
     var temp = {};
     for (var i in this.rectMap) {
       if (this[i]._cache.global_content) {
+        var dims = remapDimensions(this.rectMap[i]);
         temp[i] = this[i]._cache.global_content;
+        temp[i].setRasterArea(dims.area);
+        delete dims.area;
+        temp[i].set(dims);
       }
       else{
-        temp[i] = new fabric.Sprite(offel, this.rectMap[i]);
+        var dims = remapDimensions(this.rectMap[i]);
+        temp[i] = new fabric.Sprite(new fabric.CanvasImage(this.getSvgEl(), offel), remapDimensions(this.rectMap[i]));
       }
       this[i].dropCache();
     }

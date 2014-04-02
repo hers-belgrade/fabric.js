@@ -363,8 +363,8 @@ fabric.Object = fabric.util.createClass(/** @lends fabric.Object.prototype */ {
     if (options) {
       this.setOptions(options);
     }
+    this.matrix_context = [];
   },
-
   /**
    * @private
    */
@@ -879,27 +879,52 @@ fabric.Object = fabric.util.createClass(/** @lends fabric.Object.prototype */ {
       ///TODO
     },
     _generateRaster : function (debug) {
-      //console.log('RERASTER PARAMS !! ', (this.shouldRasterize.area || {}).y);
-      var mult = fabric.util.multiplyTransformMatrices;
-      var inv = fabric.util.matrixInverse;
-      var bs = fabric.backingScale;
-      var ms = fabric.masterScale;
 
       var params = {};
 
       if (typeof(this.shouldRasterize) === 'object') {
         fabric.util.object.extend(params, this.shouldRasterize);
       }
+      var done = params.done;
+
+      delete params.done;
+      delete this.shouldRasterize;
+
+      var rc = this._raster && this._raster.content && true;
+      var action = (rc) ? 'changed' : 'created';
+      this._raster = {};
+
+      var rr = fabric.createRasterFromObject(this);
+
+      params.area = extend({width: rr.obj.width, height: rr.obj.height, x: 0, y: 0},params.area || {});
+      params.width = params.area.width;
+      params.height = params.area.height;
+      this._raster.content = new fabric.Sprite(rr.img,params);
+      this._raster.content.transformMatrix = rr.content_transformation;
+      this._raster.content.group = this;
+      fabric.util.isFunction(done) && done.call(this, action, this._raster.content); 
+      this.fire ('raster:'+action, this._raster.content);
+      ///RESIZE?
+
+      return;
+
+
+
+      //console.log('RERASTER PARAMS !! ', (this.shouldRasterize.area || {}).y);
+      var mult = fabric.util.multiplyTransformMatrices;
+      var inv = fabric.util.matrixInverse;
+      var bs = fabric.backingScale;
+      var ms = fabric.masterScale;
       var obj = this.getRasterizationObject();
 
       if (obj._currentGlobalTransform)  {
         ///delay this moment until obj get _currentTransform
-        delete this.shouldRasterize;
         var w = obj.get('width')*bs;
         var h = obj.get('height')*bs;
         //console.log('will rasterize, height ',h,'width', w, obj.id);
         if (!this._raster_offel) {
           this._raster_offel = this.getSvgEl().produceCanvas();
+          this._raster_obj_test = new fabric.Raster(this);
         }
 
         var offel = this._raster_offel;
@@ -925,6 +950,7 @@ fabric.Object = fabric.util.createClass(/** @lends fabric.Object.prototype */ {
         var done = params.done;
         delete this._raster.content;
         delete params.done;
+        //this._raster_obj_test.rasterize(params.area);
         this.render(lctx);
 
         params.area = extend({width: obj.width, height: obj.height, x: 0, y: 0},params.area || {});
@@ -974,6 +1000,10 @@ fabric.Object = fabric.util.createClass(/** @lends fabric.Object.prototype */ {
       //console.log(this.type,this.id,'starts render');
 
 
+      ctx.save();
+
+      this.transform(ctx); //there is a special ctx.save in this call
+
       if (this._raster.content && this.shouldRasterize) {
         var lc = this._raster.content;
         if ('object' !== typeof(this.shouldRasterize)) {
@@ -991,42 +1021,30 @@ fabric.Object = fabric.util.createClass(/** @lends fabric.Object.prototype */ {
         this._generateRaster();
       }
 
-      ctx.save();
-
-      this.transform(ctx); //there is a special ctx.save in this call
-
       if(topctx){
         this.drawBorderRect(topctx);
       }
 
-      //this._setShadow(ctx);
-      //this.clipTo && fabric.util.clipContext(this, ctx);
-
       if(this._raster.content){
-        ctx.transform.apply(ctx,this._raster.content_transformation);
         this._raster.content.render(ctx);
         ctx.restore();
       }else{
         this._render(ctx, topctx);
-        //this.clipTo && ctx.restore();
         ctx.restore();
         if(!ctx.suppressPaint){
           this._paint(ctx);
         }
         this._removeShadow(ctx);
+
       }
-
-      //var utstart = (new Date()).getTime();
       this.untransform(ctx,topctx);
-      //console.log('\t\t','untransform done in',(((new Date()).getTime()) - utstart));
-      //console.log('\t',this.type,this.id,'rendered in', (((new Date()).getTime()) - _render_start));
       this.finalizeRender(ctx);
-      this.shouldRasterize && this._generateRaster() && this.invokeOnCanvas('renderAll');
 
+      this.shouldRasterize && this._generateRaster() && this.invokeOnCanvas('renderAll');
     },
 
     accountForGradientTransform: function(p1,p2){},
-    getRasteredImage : function () {
+    getRaster: function () {
       return this._raster.content;
     },
     _paint : function(ctx){

@@ -114,7 +114,9 @@
 		}
 
 		function rasterValid(el) {
-			el.setRasterArea({y:before*getMovementQuant(), height: visible_elements*getMovementQuant()});
+      var hts = visible_elements*getMovementQuant();
+			el.setRasterArea({y:before*getMovementQuant(), height: hts});
+      el.set('height', hts);
 			if ('undefined' === typeof(value)) return;
 			valid_raster = el;
 
@@ -229,7 +231,9 @@
 
 			invalidRaster();
 			var raster_obj = container.getRasterizationObject();
-			raster_obj.set('height',Math.max(local_value_set.length + after + before, visible_elements) * getMovementQuant());
+      var hs = Math.max(local_value_set.length + after + before, visible_elements) * getMovementQuant();
+			raster_obj.set('height',hs);
+      raster_obj.setRasterArea({height:hs});
 			container.rasterize();
 		}
 

@@ -22,24 +22,31 @@
 		clone.rasterize({area:{width: dd.width, height:dd.height}, repeat: {y:true}});
 		clone.invokeOnCanvas('renderAll');
 
+    fabric.window.tester = w;
+    fabric.window.tester_y = 450;
+
+
 		w.do_test = function () {
-			var y = 0;
 			var t = w.getUsedObj();
-			ri = t.getRasteredImage();
-
+			ri = t.getRaster();
 			if (!ri) return;
-			console.log('!!!!', ri._cntr);
-
 			var interval = null;
-			//ri.setRasterArea({y:600});
+      fabric.window.tester_cntr = ri._cntr;
+
+      //console.log('WILL SET Y TO ', fabric.window.tester_y, ri._cntr);
+      ri.setRasterArea({y:fabric.window.tester_y});
+      fabric.window.tester_y+=1;
+
+      /*
 			interval = setInterval (function () {
-				ri.setRasterArea({y:y});
-				y+=20;
+				ri.setRasterArea({y:fabric.window.tester_y});
+				fabric.window.tester_y+=20;
 			}, 200);
+      */
 		}
 
     w.forceStop = function () {
-      this.invokeOnCanvas('forceFinishObjectsAnimations', w.getUsedObj().getRasteredImage());
+      this.invokeOnCanvas('forceFinishObjectsAnimations', w.getUsedObj().getRaster());
     }
 
     clone.on ('object:resizeRerasterRequested' , function () {
@@ -53,7 +60,7 @@
 			var ttm = objs[v]._currentLocalTransform;
 			var off = {x : ttm[4] - ztm[4], y : ttm[5] - ztm[5]};
 			///MORE WORK TO BE DONE ...
-			ri = t.getRasteredImage();
+			ri = t.getRaster();
 			var m = ri.getRasterModulo();
 			var animation_config = {};
 
@@ -87,7 +94,7 @@
 						{
 							easing: fabric.util.ease.easeOutElastic,
 							//easing: fabric.util.ease.Linear,
-							duration:local_config.duration, 
+							duration:local_config.duration,// * 4, 
 							onComplete: function () { 
 								this.sanitize();
 								('function' === typeof(done_cb)) && done_cb();

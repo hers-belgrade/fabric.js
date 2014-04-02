@@ -40,10 +40,9 @@
         var img = self._image_cache[key];
         img.onload = function () {
           self._path_cache[key] = true;
-          fabric.util.enable3DGPU(img);
           isCachedone.call(self, done);
         }
-        img.src = key;
+        img.setSrc(key);
       })(_i);
     }
   }
@@ -63,17 +62,17 @@
     getImage: function (p) {
       if (this._image_cache[p]) return this._image_cache[p];
       this._path_cache[p] = false;
-      var img = fabric.util.createImage();
+      var img = new fabric.StandardImage(this, fabric.util.createImage());
       var self = this;
 
       if (this._activated) {
         img.onload = function () {
           self._path_cache[p] = true;
         }
-        img.src = p;
+        img.setSrc(p);
       }
       else{
-        img.src = fabric.util.DUMMY_PATH;
+        img.clear();
       }
       this._image_cache[p] = img;
       return  img;
@@ -106,9 +105,9 @@
           var img = self._image_cache[p];
           img.onload = function () {
             isItDone(p);
-            img.onload = function () {};
+            delete img.onload;
           }
-          img.src = p;
+          img.setSrc(p);
         })(_i);
       }
     },
@@ -118,6 +117,11 @@
       fabric.util.enable3DGPU(ret);
       this._canvases.push(ret);
       return ret;
+    },
+    destroyCanvas: function (c) {
+      var index = this._canvases.indexOf(c);
+      if (index < 0) return;
+      this._canvases.splice(index,1);
     },
 
     activate: function(done){
@@ -133,8 +137,8 @@
       for (var i in this._path_cache) { 
         this._path_cache[i] = false;
         var o = this._image_cache[i];
-        this._image_cache[i].onload = function () {};
-        fabric.util.resetRenderable(o);
+        o.onload = function () {};
+        o.clear();
       }
       for(var i in this._canvases){
         var _c = this._canvases[i];
