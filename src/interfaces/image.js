@@ -44,6 +44,10 @@
   ImageInterface.prototype.setSrc = function () {}
   ImageInterface.prototype.clear = function () {}
 
+  ImageInterface.isImage = function (obj) {
+    return obj instanceof ImageInterface;
+  }
+
   function StandardImage (svg,dom_image_instance) {
     if (!arguments.length) return;
     ImageInterface.prototype.constructor.call(this, svg);
@@ -306,7 +310,7 @@
     }
   }
 
-
+  fabric.ImageInterface = ImageInterface;
   fabric.StandardImage = StandardImage;
   fabric.MultipartImage = MultipartImage;
   fabric.CanvasImage = CanvasImage;

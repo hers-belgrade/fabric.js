@@ -63,7 +63,7 @@
     },
 
     setElement: function(element) {
-      if (isRenderableElement(element)) {
+      if (fabric.ImageInterface.isImage(element)) {
         this._element = element;
         this._initElement();
       }else if ('string' === typeof(element)) {
