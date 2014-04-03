@@ -178,7 +178,17 @@
       this.__onMouseMove(e);
     },
 
+    _getParentDims : function () {
+      return {
+        width: window.innerWidth,
+        height:window.innerHeight
+      }
+    },
+
     _realResize : function(){
+      var pd = this._getParentDims();
+      if (this.width === pd.width  && this.height === pd.height) return;
+
       if(this.autoresize){
         this._computeMasterScale();
         //this._applyWrapperStyle(this.wrapperEl);
@@ -258,7 +268,7 @@
     }
   });
 
-  fabric.backingScale = 1;
+  fabric.backingScale = 1; 
   if ('devicePixelRatio' in window) {
     if (window.devicePixelRatio != 1) {
       fabric.backingScale = window.devicePixelRatio;

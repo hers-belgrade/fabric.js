@@ -131,6 +131,13 @@
 
   MultipartImage.prototype.width = function () {return this.width;}
   MultipartImage.prototype.height= function () {return this.height;}
+  MultipartImage.prototype.destroy = function () {
+    while (this.canvas_arr.length) {
+      var c = this.canvas_arr.shift();
+      this.svg.destroyCanvas(c);
+      c = null;
+    }
+  }
 
   MultipartImage.prototype.allocate = function (hq, wq) {
     this._wq = wq;
@@ -160,28 +167,29 @@
     return this.canvas_arr[this._wq * hq + wq];
   }
 
-  MultipartImage.prototype.render = function (ctx, cx, cy, cwidth, cheight, tx, ty, tw, th) {
+  MultipartImage.prototype.render = function (ctx, cx, cy, cw, ch, tx, ty, tw, th) {
+    var bs = fabric.backingScale;
     ctx.save();
-    cx = cx || 0;
-    cy = cy || 0;
+
+    cx = cx*bs || 0;
+    cy = cy*bs || 0;
 
     tx = tx || 0;
     ty = ty || 0;
 
-    cwidth = cwidth || this.width();
-    cheight= cheight|| this.height();
+    cw= cw*bs || this.width();
+    ch= ch*bs || this.height();
 
-    tw = tw || cwidth;
-    th = th || cheight;
+    tw = tw || cw;
+    th = th || ch;
 
-    var wfactor = (cwidth === tw) ? 1 : tw/cwidth;
-    var hfactor = (cheight === th) ? 1 : th/cheight;
+    var wfactor = (cw === tw) ? 1 : tw/cw;
+    var hfactor = (ch === th) ? 1 : th/ch;
     var spent_height = 0, h;
-
     var clip_y = 0;
-    var clipping_stared;
 
-    for (var i = 0; i < this._hq && spent_height < cheight; i++) {
+    for (var i = 0; i < this._hq && spent_height < ch; i++) {
+
       if (cy > i*this.step && cy < (i+1)*this.step) {
         clip_y = cy - i*this.step;
       }else{
@@ -190,22 +198,23 @@
       }
 
       var spent_width = 0;
-      for (var j = 0; j < this._wq && spent_width < cwidth; j++) {
+      for (var j = 0; j < this._wq && spent_width < cw; j++) {
         var c = this.at(i,j);
         if (j === 0) {
           h = c.height - clip_y;
-          if (spent_height + h > cheight) {
-            var reduction = spent_height + h - cheight;
-            h -= reduction;
+
+          if (spent_height + h > ch) {
+            h = ch - spent_height;
           }
         }
 
         var w = c.width;
-        if (spent_width + w > cwidth) {
-          var reduction = spent_width + w - cwidth;
-          w -= reduction;
+        if (spent_width + w > cw) {
+          w = cw - spent_width;
         }
-        ctx.drawImage(c, 0, clip_y, w, h, (tx+spent_width)*wfactor, (ty+spent_height)*hfactor, w*wfactor, h*hfactor);
+
+
+        ctx.drawImage(c, 0, clip_y, w, h, tx+(spent_width)*wfactor, ty+(spent_height)*hfactor, w*wfactor, h*hfactor);
 
         spent_width += w;
         if (j === 0) {
@@ -222,10 +231,11 @@
 
     var svg = obj.getSvgEl();
     var ro = obj.getRasterizationObject();
-    var max_dim = Math.min(fabric.window.innerHeight, fabric.window.innerWidth);
 
-    var w = Math.ceil(ro.get('width')); //oboe??
-    var h = Math.ceil(ro.get('height'));
+    var w = ro.width*bs;
+    var h = ro.height*bs;
+
+    var max_dim = Math.min(fabric.window.innerHeight, fabric.window.innerWidth)*bs;
 
     var off_matrix = matmult(inv(ro._currentGlobalTransform),obj._currentTransform);
 
@@ -239,6 +249,7 @@
 
     if (w <= max_dim && h <= max_dim) {
       //create CanvasImage if required
+      /////DISCUSS THIS ONE ...
 
       if (img && img instanceof MultipartImage) {
         img.destroy();
@@ -247,8 +258,8 @@
 
       var  canvas = img ? img._getCanvas() : svg.produceCanvas();
 
-      canvas.width = w*bs;
-      canvas.height= h*bs;
+      canvas.width = w;
+      canvas.height= h;
       var lctx = canvas.getContext('2d');
       lctx._currentTransform = obj._currentGlobalTransform.slice();
       lctx.transform.apply(lctx, off_matrix);
@@ -279,21 +290,20 @@
     }else{
       img = new MultipartImage(svg, max_dim);
       img.allocate(m,n);
-      img._width = ro.get('width');
-      img._height =ro.get('height');
+      img._width = w/bs;
+      img._height =h/bs;
     }
 
     console.log('should allocate ', m,'for height and ',n, 'for width and step is ', max_dim, 'and height', h, off_matrix);
 
     for (var i = m-1; i >= 0; i--){
       for (var j = n-1; j >= 0; j--) {
-        //pocni od krajnje tacke, pa vidi sta ces sa tim ...
         var c = img.at(i, j);
         var ctx = c.getContext('2d');
-        c.width = ((j === n-1) ? ro.width - max_dim*j : max_dim)*bs;
-        c.height = ((i === m-1) ?  ro.height - max_dim*i : max_dim)*bs;
+        c.width = ((j === n-1) ? w - max_dim*j : max_dim);
+        c.height = ((i === m-1) ?  h - max_dim*i : max_dim);
         var target = off_matrix.slice();
-        matmultwassign(target, [1,0,0,1,-j*max_dim, -i*max_dim]);
+        matmultwassign(target, matmult([bs,0,0,bs,0,0],[1,0,0,1,-j*max_dim/bs, -i*max_dim/bs]));
         ctx._currentTransform = target;
         ctx.transform.apply(ctx, target);
         obj.render(ctx);
@@ -316,21 +326,3 @@
   fabric.CanvasImage = CanvasImage;
   fabric.createRasterFromObject = createRasterFromObject;
 })(typeof exports !== 'undefined' ? exports : this);
-/*
- *
- * ovo sve od spolja mora da se pozove ...
-var off_matrix = [ms,0,0,ms,(Math.ceil(req_w)-req_w)/2,-(Math.ceil(req_h)-req_h)/2];
-
-if (ro.id != obj.id) {
-  matmultwassign(off_matrix, inv(ro._currentGlobalTransform));
-  matmultwassign(off_matrix, obj._currentTransform);
-  ret_transformation = ro._localTransformationMatrix;
-}else{
-  matmultwassign(off_matrix, inv(ro._currentGlobalTransform));
-  matmultwassign(off_matrix, obj._currentTransform);
-  ret_transformation = [1,0,0,1,0,0];
-}
-lctx.transform.apply(lctx,off_matrix);
-*/
-
-

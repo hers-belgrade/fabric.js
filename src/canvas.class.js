@@ -388,8 +388,10 @@
 					width = msz.width*ms/fabric.backingScale;
 					height = msz.height*ms/fabric.backingScale;
 				}else{
-					width = window.innerWidth;
-					height =window.innerHeight;
+          var pd = this._getParentDims();
+
+					width = pd.width
+					height =pd.height;
 				}
 			}else{
 				width = this.getWidth()/fabric.backingScale || element.width;

@@ -73,17 +73,17 @@
 				if (slice_from < 0) { 
 					slice_from = (x_axis) ? ((slice_from % element.width()) + element.width()) : ((slice_from % element.height()) + element.height());
 				}
-				var control = 0;
 				var render_height = self.area.height;
 				var render_width = self.area.width;
 				var max_dimension = (x_axis) ? self.area.width : self.area.height;
 				var element_dimension = (x_axis) ? element.width() : element.height();
 				var dynamic_dimension = 0;
+        var should_break = false; 
 
-				while (dynamic_dimension < max_dimension) {
+				while (dynamic_dimension < max_dimension && !should_break) {
 					var render_dimension = element_dimension - slice_from;
 					if (render_dimension <= 0) return;
-					var should_break = false;
+					should_break = false;
 
 					if (dynamic_dimension + render_dimension > max_dimension) {
 						render_dimension = max_dimension - dynamic_dimension;
@@ -92,21 +92,22 @@
 
           if (render_dimension) {
             if (x_axis) {
+              /*
+               * TODO
               if (self.repeat.y) {
                 repeat_axis('y', dynamic_dimension, self.area.y);
               }else{
                 self._element.render(ctx, slice_from, other_pos, dynamic_dimension, render_height, dynamic_dimension, other_pos, render_dimension, render_height);
               }
+              */
             }else{
               self._element.render(ctx, 0, slice_from, render_width, render_dimension, other_pos, dynamic_dimension, render_width, render_dimension);
             }
           }
 
 
-					dynamic_dimension += render_dimension;
 					slice_from = 0;
-					control += render_dimension;
-					if (should_break) break; /// just in case, if I get any weird float ...
+					dynamic_dimension += render_dimension;
 				}
 			}
 		
