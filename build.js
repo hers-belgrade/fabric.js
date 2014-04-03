@@ -189,6 +189,7 @@ var filesToInclude = [
   // ifSpecifiedInclude('animation', 'src/mixins/animation.mixin.js'),
   'src/mixins/animation.mixin.js',
 
+  'src/interfaces/image.js',
   'src/shapes/line.class.js',
   'src/shapes/circle.class.js',
   'src/shapes/triangle.class.js',
@@ -206,6 +207,7 @@ var filesToInclude = [
 	'src/shapes/use.class.js',
 	'src/shapes/svg.class.js',
 
+	'src/supershapes/BackgroundLayer.class.js',
 	'src/supershapes/StaticLayer.class.js',
 
   ifSpecifiedInclude('object_straightening', 'src/mixins/object_straightening.mixin.js'),

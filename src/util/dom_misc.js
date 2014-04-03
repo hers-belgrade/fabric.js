@@ -73,6 +73,31 @@
     }
   }
 
+  function replaceClass(element, oldClassName, newClassName) {
+    if (!element || !element.className) return;
+    if (oldClassName) {
+      var r = new RegExp (oldClassName);
+      element.className = element.className.replace(r,newClassName);
+    }else{
+      /// are you sure this is true?
+      element.setAttribute('class', newClassName);
+    }
+  }
+
+  function removeClass(element, className) {
+    if (!element || !element.className) return;
+    replaceClass(element, className, '');
+  }
+
+  function createStyleRecord (selector, map) {
+    var ret = selector+" {\n";
+    for (var i in map) {
+      ret+= (i+':'+map[i]+";\n");
+    }
+    ret+="}\n";
+    return ret;
+  }
+
   /**
    * Wraps element with another element
    * @memberOf fabric.util
@@ -255,13 +280,41 @@
     }
   }
 
+  function isRenderableElement (o) {
+    return (o instanceof HTMLImageElement || o instanceof HTMLCanvasElement);
+  }
+  var DUMMY_PATH = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAACXBIWXMAAAsTAAALEwEAmpwYAAAADElEQVQI12P4//8/AAX+Av7czFnnAAAAAElFTkSuQmCC";
+
+  function resetRenderable (obj) {
+    if (!obj) return;
+    if (obj instanceof HTMLImageElement) {
+      obj.src = DUMMY_PATH;
+    }
+    if (obj instanceof HTMLCanvasElement) {
+      obj.width = obj.width;
+    }
+    obj.style.webkitTransform = '';
+  }
+
+  function enable3DGPU (obj) {
+    obj.style.webkitTransform = "translate3D(0,0,0)";
+  }
+
   fabric.util.getById = getById;
   fabric.util.toArray = toArray;
   fabric.util.makeElement = makeElement;
   fabric.util.addClass = addClass;
+  fabric.util.removeClass = removeClass;
+  fabric.util.replaceClass = replaceClass;
+  fabric.util.createStyleRecord = createStyleRecord;
+
   fabric.util.wrapElement = wrapElement;
   fabric.util.getElementOffset = getElementOffset;
   fabric.util.getElementStyle = getElementStyle;
   fabric.util.prepareFonts = prepareFonts;
+  fabric.util.isRenderableElement = isRenderableElement;
+  fabric.util.resetRenderable = resetRenderable;
+  fabric.util.enable3DGPU = enable3DGPU;
+  fabric.util.DUMMY_PATH  = DUMMY_PATH;
 
 })();

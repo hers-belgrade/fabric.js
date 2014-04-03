@@ -90,10 +90,10 @@
 			if (!uo) return; //for now
 			return uo.rasterize(rasterize_params);
 		},
-		getRasteredImage: function () {
+		getRaster: function () {
 			var uo = this.getUsedObj();
 			if (!uo) return; //for now
-			return uo.getRasteredImage();
+			return uo.getRaster();
 		},
 		
 		branchConditionalEachObjectRecursive: function (cb) {
@@ -132,6 +132,13 @@
       }else{
         console.log(this.id,'has no usedObj',this);
       }
+    },
+    _onSVG_Activated : function () {
+      this.usedObj && this.usedObj._onSVG_Activated && this.usedObj._onSVG_Activated();
+    },
+    _onSVG_Deactivated: function () {
+      this.usedObj && this.usedObj._onSVG_Deactivated && this.usedObj._onSVG_Deactivated();
+      this.callSuper('_onSVG_Deactivated');
     }
   });
 

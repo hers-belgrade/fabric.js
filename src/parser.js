@@ -490,7 +490,7 @@
       var klass = fabric[capitalize(el.tagName)];
       if (klass && klass.fromElement) {
         try {
-          if (klass.async) {
+          if (false){//klass.async) {
             klass.fromElement(el, (function(index, el) {
               return function(obj) {
                 reviver && reviver(el, obj);
@@ -684,7 +684,6 @@
     };
   })();
 
-  var sttic = null;
   function produceGroup(g,gelements,options){
     var ga = fabric.parseAttributes(g,fabric.SHARED_ATTRIBUTES.concat(fontAttributes).concat(fillAttributes));
     ga.left = 0;
@@ -693,10 +692,10 @@
     ga.height = ga.height || options.height;
     resolveGradients(gelements);
     var group;
-
     if(g.id==='static'){
       group = new fabric.StaticLayer(gelements,ga);
-      sttic = group;
+    }else if (g.id === 'background_layer') {
+      group = new fabric.BackgroundLayer(gelements, ga);
     }else{
       switch(g.tagName){
         case 'defs':
@@ -710,7 +709,6 @@
           group = new fabric.Group(gelements, ga);
           break;
         case 'svg':
-          ga.static_layer = sttic;
           group = new fabric.Svg(gelements,ga);
           break;
         default:
@@ -832,8 +830,8 @@
     return;
   };
 
-  function linkUses(svgelement){
-    var uses = {};
+  function linkUses(svgelement,objcb){
+    var uses = {}, _ocb=objcb;
     svgelement.forEachObjectRecursive(function(obj){
       if(obj.type==='use'){
         var objlink = obj['xlink:href'];
@@ -851,6 +849,7 @@
           console.log(obj.id,'has no xlink:href');
         }
       }
+      objcb && objcb(obj);
     });
     svgelement.forEachObjectRecursive(function(obj){
       var ua = uses[obj.id];
@@ -863,6 +862,15 @@
       }
     });
   };
+
+  function elementURLResolver(_svg){
+    var svg = _svg;
+    return function (v){
+      if (!v._elementURL) return;
+      v._element = svg.getImage(v._elementURL);
+      delete v._elementURL;
+    };
+  }
 
   /**
    * Parses an SVG document, converts it to a object with fabric.* objects mapped to their corresponding id's within and passes it to a callback
@@ -942,6 +950,7 @@
       //prvi processGroup za ucitani svg ...
       ///za sad probaj ovako ...
       processGroup(doc,function(svg){
+        var meur = elementURLResolver(svg);
         var parsedone = new Date();
         fabric.documentParsingTime = parsedone - startTime;
         if(callback) {
@@ -951,14 +960,14 @@
             for(var i in seos){
               var seo = seos[i];
               if(seo.id.substr(-4)!=='_map'){
-                linkUses(seo);
+                linkUses(seo,meur);
                 seo.forEachObject(function(obj){
                   obj.nonIteratable=true;
                 });
               }
             }
           }
-          linkUses(svg);
+          linkUses(svg,meur);
           fabric.documentTraversingTime = new Date() - parsedone;
           console.log('Parsed in',fabric.documentParsingTime,'traversed in',fabric.documentTraversingTime);
           setTimeout(function(){callback(svg, options);},1);
@@ -970,37 +979,6 @@
 
 
    /**
-    * Used for caching SVG documents (loaded via `fabric.Canvas#loadSVGFromURL`)
-    * @namespace
-    */
-   var svgCache = {
-
-     /**
-      * @param {String} name
-      * @param {Function} callback
-      */
-     has: function (name, callback) {
-       callback(false);
-     },
-
-     /**
-      * @param {String} url
-      * @param {Function} callback
-      */
-     get: function () {
-       /* NOOP */
-     },
-
-     /**
-      * @param {String} url
-      * @param {Object} object
-      */
-     set: function () {
-       /* NOOP */
-     }
-   };
-
-   /**
     * Takes url corresponding to an SVG document, and parses it into a set of fabric objects. Note that SVG is fetched via XMLHttpRequest, so it needs to conform to SOP (Same Origin Policy)
     * @memberof fabric
     * @param {String} url
@@ -1010,20 +988,9 @@
    function loadSVGFromURL(url, callback, reviver) {
 
      url = url.replace(/^\n\s*/, '').trim();
-
-     svgCache.has(url, function (hasUrl) {
-       if (hasUrl) {
-         svgCache.get(url, function (value) {
-           var enlivedRecord = _enlivenCachedObject(value);
-           callback(enlivedRecord.objects, enlivedRecord.options);
-         });
-       }
-       else {
-         new fabric.util.request(url, {
-           method: 'get',
-           onComplete: onComplete
-         });
-       }
+     new fabric.util.request(url, {
+       method: 'get',
+         onComplete: onComplete
      });
 
      function onComplete(r) {
@@ -1038,10 +1005,6 @@
        if (!xml.documentElement) return;
 
        fabric.parseSVGDocument(xml.documentElement, function (results, options) {
-         svgCache.set(url, {
-           objects: fabric.util.array.invoke(results, 'toObject'),
-           options: options
-         });
          callback(results, options);
        }, reviver);
      }
@@ -1050,20 +1013,9 @@
    function loadSVGHierarchicalFromURL(url, callback, reviver) {
 
      url = url.replace(/^\n\s*/, '').trim();
-
-     svgCache.has(url, function (hasUrl) {
-       if (hasUrl) {
-         svgCache.get(url, function (value) {
-           var enlivedRecord = _enlivenCachedObject(value);
-           callback(enlivedRecord.objects, enlivedRecord.options);
-         });
-       }
-       else {
-         new fabric.util.request(url, {
-           method: 'get',
-           onComplete: onComplete
-         });
-       }
+     new fabric.util.request(url, {
+       method: 'get',
+       onComplete: onComplete
      });
 
      function onComplete(r) {
@@ -1079,10 +1031,6 @@
 
        console.log(xml.baseURI,'loaded');
        fabric.parseSVGDocumentHierarchical(xml.documentElement, function (results, options) {
-         svgCache.set(url, {
-           objects: fabric.util.array.invoke(results, 'toObject'),
-           options: options
-         });
          callback(results, options);
        }, reviver);
      }

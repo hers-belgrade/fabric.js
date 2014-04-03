@@ -1,532 +1,538 @@
 (function(global) {
 
-  "use strict";
+"use strict";
 
-  var fabric = global.fabric || (global.fabric = { }),
-      extend = fabric.util.object.extend,
-      toFixed = fabric.util.toFixed,
-      capitalize = fabric.util.string.capitalize,
-      matmultwassign = fabric.util.multiplyTransformMatricesWAssign,
-      degreesToRadians = fabric.util.degreesToRadians,
-      Matrix = fabric.util.Matrix,
-      supportsLineDash = fabric.StaticCanvas.supports('setLineDash');
+var fabric = global.fabric || (global.fabric = { }),
+    extend = fabric.util.object.extend,
+    toFixed = fabric.util.toFixed,
+    capitalize = fabric.util.string.capitalize,
+    matmultwassign = fabric.util.multiplyTransformMatricesWAssign,
+    degreesToRadians = fabric.util.degreesToRadians,
+    Matrix = fabric.util.Matrix,
+    supportsLineDash = fabric.StaticCanvas.supports('setLineDash');
 
-  if (fabric.Object) {
-    return;
-  }
+if (fabric.Object) {
+  return;
+}
 
-	var cntr = 1;
+var cntr = 1;
+
+/**
+ * Root object class from which all 2d shape classes inherit from
+ * @class fabric.Object
+ */
+fabric.Object = fabric.util.createClass(/** @lends fabric.Object.prototype */ {
 
   /**
-   * Root object class from which all 2d shape classes inherit from
-   * @class fabric.Object
+   * Type of an object (rect, circle, path, etc.)
+   * @type String
+   * @default
    */
-  fabric.Object = fabric.util.createClass(/** @lends fabric.Object.prototype */ {
-
-    /**
-     * Type of an object (rect, circle, path, etc.)
-     * @type String
-     * @default
-     */
-    type:                     'object',
+  type:                     'object',
 
 
-    /**
-     * Top position of an object. Note that by default it's relative to object center. You can change this by setting originY={top/center/bottom}
-     * @type Number
-     * @default
-     */
-    top:                      0,
+  /**
+   * Top position of an object. Note that by default it's relative to object center. You can change this by setting originY={top/center/bottom}
+   * @type Number
+   * @default
+   */
+  top:                      0,
 
-    /**
-     * Left position of an object. Note that by default it's relative to object center. You can change this by setting originX={left/center/right}
-     * @type Number
-     * @default
-     */
-    left:                     0,
+  /**
+   * Left position of an object. Note that by default it's relative to object center. You can change this by setting originX={left/center/right}
+   * @type Number
+   * @default
+   */
+  left:                     0,
 
-    /**
-     * Object width
-     * @type Number
-     * @default
-     */
-    width:                    0,
+  /**
+   * Object width
+   * @type Number
+   * @default
+   */
+  width:                    0,
 
-    /**
-     * Object height
-     * @type Number
-     * @default
-     */
-    height:                   0,
+  /**
+   * Object height
+   * @type Number
+   * @default
+   */
+  height:                   0,
 
-    /**
-     * Object scale factor (horizontal)
-     * @type Number
-     * @default
-     */
-    scaleX:                   1,
+  /**
+   * Object scale factor (horizontal)
+   * @type Number
+   * @default
+   */
+  scaleX:                   1,
 
-    /**
-     * Object scale factor (vertical)
-     * @type Number
-     * @default
-     */
-    scaleY:                   1,
+  /**
+   * Object scale factor (vertical)
+   * @type Number
+   * @default
+   */
+  scaleY:                   1,
 
-    /**
-     * When true, an object is rendered as flipped horizontally
-     * @type Boolean
-     * @default
-     */
-    flipX:                    false,
+  /**
+   * When true, an object is rendered as flipped horizontally
+   * @type Boolean
+   * @default
+   */
+  flipX:                    false,
 
-    /**
-     * When true, an object is rendered as flipped vertically
-     * @type Boolean
-     * @default
-     */
-    flipY:                    false,
+  /**
+   * When true, an object is rendered as flipped vertically
+   * @type Boolean
+   * @default
+   */
+  flipY:                    false,
 
-    /**
-     * Opacity of an object
-     * @type Number
-     * @default
-     */
-    opacity:                  1,
+  /**
+   * Opacity of an object
+   * @type Number
+   * @default
+   */
+  opacity:                  1,
 
-    /**
-     * Size of object's controlling corners (in pixels)
-     * @type Number
-     * @default
-     */
-    cornerSize:               12,
+  /**
+   * Size of object's controlling corners (in pixels)
+   * @type Number
+   * @default
+   */
+  cornerSize:               12,
 
-    /**
-     * When true, object's controlling corners are rendered as transparent inside (i.e. stroke instead of fill)
-     * @type Boolean
-     * @default
-     */
-    transparentCorners:       true,
+  /**
+   * When true, object's controlling corners are rendered as transparent inside (i.e. stroke instead of fill)
+   * @type Boolean
+   * @default
+   */
+  transparentCorners:       true,
 
-    /**
-     * Default cursor value used when hovering over this object on canvas
-     * @type String
-     * @default
-     */
-    hoverCursor:              null,
+  /**
+   * Default cursor value used when hovering over this object on canvas
+   * @type String
+   * @default
+   */
+  hoverCursor:              null,
 
-    /**
-     * Padding between object and its controlling borders (in pixels)
-     * @type Number
-     * @default
-     */
-    padding:                  0,
+  /**
+   * Padding between object and its controlling borders (in pixels)
+   * @type Number
+   * @default
+   */
+  padding:                  0,
 
-    /**
-     * Color of controlling borders of an object (when it's active)
-     * @type String
-     * @default
-     */
-    borderColor:              'rgba(102,153,255,0.75)',
+  /**
+   * Color of controlling borders of an object (when it's active)
+   * @type String
+   * @default
+   */
+  borderColor:              'rgba(102,153,255,0.75)',
 
-    /**
-     * Color of controlling corners of an object (when it's active)
-     * @type String
-     * @default
-     */
-    cornerColor:              'rgba(102,153,255,0.5)',
+  /**
+   * Color of controlling corners of an object (when it's active)
+   * @type String
+   * @default
+   */
+  cornerColor:              'rgba(102,153,255,0.5)',
 
-    /**
-     * When true, this object will use center point as the origin of transformation
-     * when being resized via the controls
-     * @type Boolean
-     */
-    centerTransform:          false,
+  /**
+   * When true, this object will use center point as the origin of transformation
+   * when being resized via the controls
+   * @type Boolean
+   */
+  centerTransform:          false,
 
-    /**
-     * Color of object's fill
-     * @type String
-     * @default
-     */
-    //fill:                     'rgb(0,0,0)',
+  /**
+   * Color of object's fill
+   * @type String
+   * @default
+   */
+  //fill:                     'rgb(0,0,0)',
 
-    /**
-     * Fill rule used to fill an object
-     * @type String
-     * @default
-     */
-    fillRule:                 'source-over',
+  /**
+   * Fill rule used to fill an object
+   * @type String
+   * @default
+   */
+  fillRule:                 'source-over',
 
-    /**
-     * Overlay fill (takes precedence over fill value)
-     * @type String
-     * @default
-     */
-    overlayFill:              null,
+  /**
+   * Overlay fill (takes precedence over fill value)
+   * @type String
+   * @default
+   */
+  overlayFill:              null,
 
-    /**
-     * When defined, an object is rendered via stroke and this property specifies its color
-     * @type String
-     * @default
-     */
-    //stroke:                   'none',
+  /**
+   * When defined, an object is rendered via stroke and this property specifies its color
+   * @type String
+   * @default
+   */
+  //stroke:                   'none',
 
-    /**
-     * Width of a stroke used to render this object
-     * @type Number
-     * @default
-     */
-    strokeWidth:              1,
+  /**
+   * Width of a stroke used to render this object
+   * @type Number
+   * @default
+   */
+  strokeWidth:              1,
 
-    /**
-     * Array specifying dash pattern of an object's stroke (stroke must be defined)
-     * @type Array
-     */
-    strokeDashArray:          null,
+  /**
+   * Array specifying dash pattern of an object's stroke (stroke must be defined)
+   * @type Array
+   */
+  strokeDashArray:          null,
 
-    /**
-     * Line endings style of an object's stroke (one of "butt", "round", "square")
-     * @type String
-     * @default
-     */
-    strokeLineCap:            'butt',
+  /**
+   * Line endings style of an object's stroke (one of "butt", "round", "square")
+   * @type String
+   * @default
+   */
+  strokeLineCap:            'butt',
 
-    /**
-     * Corner style of an object's stroke (one of "bevil", "round", "miter")
-     * @type String
-     * @default
-     */
-    strokeLineJoin:           'miter',
+  /**
+   * Corner style of an object's stroke (one of "bevil", "round", "miter")
+   * @type String
+   * @default
+   */
+  strokeLineJoin:           'miter',
 
-    /**
-     * Maximum miter length (used for strokeLineJoin = "miter") of an object's stroke
-     * @type Number
-     * @default
-     */
-    strokeMiterLimit:         10,
+  /**
+   * Maximum miter length (used for strokeLineJoin = "miter") of an object's stroke
+   * @type Number
+   * @default
+   */
+  strokeMiterLimit:         10,
 
-    /**
-     * Shadow object representing shadow of this shape
-     * @type fabric.Shadow
-     * @default
-     */
-    shadow:                   null,
+  /**
+   * Shadow object representing shadow of this shape
+   * @type fabric.Shadow
+   * @default
+   */
+  shadow:                   null,
 
-    /**
-     * Opacity of object's controlling borders when object is active and moving
-     * @type Number
-     * @default
-     */
-    borderOpacityWhenMoving:  0.4,
+  /**
+   * Opacity of object's controlling borders when object is active and moving
+   * @type Number
+   * @default
+   */
+  borderOpacityWhenMoving:  0.4,
 
-    /**
-     * Scale factor of object's controlling borders
-     * @type Number
-     * @default
-     */
-    borderScaleFactor:        1,
+  /**
+   * Scale factor of object's controlling borders
+   * @type Number
+   * @default
+   */
+  borderScaleFactor:        1,
 
-    /**
-     * Transform matrix (similar to SVG's transform matrix)
-     * @type Array
-     */
-    transformMatrix:          null,
+  /**
+   * Transform matrix (similar to SVG's transform matrix)
+   * @type Array
+   */
+  transformMatrix:          null,
 
-    /**
-     * Minimum allowed scale value of an object
-     * @type Number
-     * @default
-     */
-    minScaleLimit:            0.01,
+  /**
+   * Minimum allowed scale value of an object
+   * @type Number
+   * @default
+   */
+  minScaleLimit:            0.01,
 
-    /**
-     * When set to `false`, an object can not be selected for modification (using either point-click-based or group-based selection).
-     * All events propagate through it.
-     * @type Boolean
-     * @default
-     */
-    selectable:               true,
+  /**
+   * When set to `false`, an object can not be selected for modification (using either point-click-based or group-based selection).
+   * All events propagate through it.
+   * @type Boolean
+   * @default
+   */
+  selectable:               true,
 
-    /**
-     * When set to `false`, an object is not rendered on canvas
-     * @type Boolean
-     * @default
-     */
-    visible:                  true,
+  /**
+   * When set to `false`, an object is not rendered on canvas
+   * @type Boolean
+   * @default
+   */
+  visible:                  true,
 
-    /**
-     * When set to `false`, object's controls are not displayed and can not be used to manipulate object
-     * @type Boolean
-     * @default
-     */
-    hasControls:              true,
+  /**
+   * When set to `false`, object's controls are not displayed and can not be used to manipulate object
+   * @type Boolean
+   * @default
+   */
+  hasControls:              true,
 
-    /**
-     * When set to `false`, object's controlling borders are not rendered
-     * @type Boolean
-     * @default
-     */
-    hasBorders:               true,
+  /**
+   * When set to `false`, object's controlling borders are not rendered
+   * @type Boolean
+   * @default
+   */
+  hasBorders:               true,
 
-    /**
-     * When set to `false`, object's controlling rotating point will not be visible or selectable
-     * @type Boolean
-     * @default
-     */
-    hasRotatingPoint:         true,
+  /**
+   * When set to `false`, object's controlling rotating point will not be visible or selectable
+   * @type Boolean
+   * @default
+   */
+  hasRotatingPoint:         true,
 
-    /**
-     * Offset for object's controlling rotating point (when enabled via `hasRotatingPoint`)
-     * @type Number
-     * @default
-     */
-    rotatingPointOffset:      40,
+  /**
+   * Offset for object's controlling rotating point (when enabled via `hasRotatingPoint`)
+   * @type Number
+   * @default
+   */
+  rotatingPointOffset:      40,
 
-    /**
-     * When set to `true`, objects are "found" on canvas on per-pixel basis rather than according to bounding box
-     * @type Boolean
-     * @default
-     */
-    perPixelTargetFind:       false,
+  /**
+   * When set to `true`, objects are "found" on canvas on per-pixel basis rather than according to bounding box
+   * @type Boolean
+   * @default
+   */
+  perPixelTargetFind:       false,
 
-    /**
-     * When `false`, default object's values are not included in its serialization
-     * @type Boolean
-     * @default
-     */
-    includeDefaultValues:     true,
+  /**
+   * When `false`, default object's values are not included in its serialization
+   * @type Boolean
+   * @default
+   */
+  includeDefaultValues:     true,
 
-    /**
-     * Function that determines clipping of an object (context is passed as a first argument)
-     * @type Function
-     */
-    clipTo:                   null,
+  /**
+   * Function that determines clipping of an object (context is passed as a first argument)
+   * @type Function
+   */
+  clipTo:                   null,
 
-    /**
-     * When `true`, object horizontal movement is locked
-     * @type Boolean
-     * @default
-     */
-    lockMovementX:            false,
+  /**
+   * When `true`, object horizontal movement is locked
+   * @type Boolean
+   * @default
+   */
+  lockMovementX:            false,
 
-    /**
-     * When `true`, object vertical movement is locked
-     * @type Boolean
-     * @default
-     */
-    lockMovementY:            false,
+  /**
+   * When `true`, object vertical movement is locked
+   * @type Boolean
+   * @default
+   */
+  lockMovementY:            false,
 
-    /**
-     * When `true`, object rotation is locked
-     * @type Boolean
-     * @default
-     */
-    lockRotation:             false,
+  /**
+   * When `true`, object rotation is locked
+   * @type Boolean
+   * @default
+   */
+  lockRotation:             false,
 
-    /**
-     * When `true`, object horizontal scaling is locked
-     * @type Boolean
-     * @default
-     */
-    lockScalingX:             false,
+  /**
+   * When `true`, object horizontal scaling is locked
+   * @type Boolean
+   * @default
+   */
+  lockScalingX:             false,
 
-    /**
-     * When `true`, object vertical scaling is locked
-     * @type Boolean
-     * @default
-     */
-    lockScalingY:             false,
+  /**
+   * When `true`, object vertical scaling is locked
+   * @type Boolean
+   * @default
+   */
+  lockScalingY:             false,
 
-    /**
-     * When `true`, object non-uniform scaling is locked
-     * @type Boolean
-     * @default
-     */
-    lockUniScaling:           false,
+  /**
+   * When `true`, object non-uniform scaling is locked
+   * @type Boolean
+   * @default
+   */
+  lockUniScaling:           false,
 
-    borderRectColor:          '#000000',
+  borderRectColor:          '#000000',
 
 
-    /**
-     * Constructor
-     * @param {Object} [options] Options object
-     */
-    initialize: function(options) {
-			this._cntr = cntr;
-			cntr++;
-      this.oCoords = {tl:{x:0,y:0},tr:{x:0,y:0},br:{x:0,y:0},bl:{x:0,y:0}};
-      this._cache = {};
-			this._raster= {};
-			if (options) {
-        this.setOptions(options);
+  /**
+   * Constructor
+   * @param {Object} [options] Options object
+   */
+  initialize: function(options) {
+    this._cntr = cntr;
+    cntr++;
+    this.oCoords = {tl:{x:0,y:0},tr:{x:0,y:0},br:{x:0,y:0},bl:{x:0,y:0}};
+    this._currentTransform = [1,0,0,1,0,0];
+    this._currentLocalTransform = [1,0,0,1,0,0];
+    this._currentGlobalTransform = [1,0,0,1,0,0];
+    this._cache = {};
+    this._raster= {};
+    if (options) {
+      this.setOptions(options);
+    }
+    this.matrix_context = [];
+  },
+  /**
+   * @private
+   */
+  _initGradient: function(options,attributename) {
+    var optval = options[attributename];
+    if (optval && optval.colorStops && !(optval instanceof fabric.Gradient)) {
+      this.set(attributename, new fabric.Gradient(optval));
+    }
+  },
+
+  /**
+   * @private
+   */
+  _initPattern: function(options) {
+    if (options.fill && options.fill.source && !(options.fill instanceof fabric.Pattern)) {
+      this.set('fill', new fabric.Pattern(options.fill));
+    }
+    if (options.stroke && options.stroke.source && !(options.stroke instanceof fabric.Pattern)) {
+      this.set('stroke', new fabric.Pattern(options.stroke));
+    }
+  },
+
+  /**
+   * @private
+   */
+  _initClipping: function(options) {
+    if (!options.clipTo || typeof options.clipTo !== 'string') return;
+
+    var functionBody = fabric.util.getFunctionBody(options.clipTo);
+    if (typeof functionBody !== 'undefined') {
+      this.clipTo = new Function('ctx', functionBody);
+    }
+  },
+
+  /**
+   * @private
+   * returns the top svg element - root of the hierarchy
+   */
+  _svgElement: function() {
+    var ret = this;
+    while(ret.group){
+      ret = ret.group;
+    }
+    return ret;
+  },
+
+  getCanvas: function(){
+    var canvas = this.canvas;
+    if(!canvas){
+      var group = this.group;
+      while(group&&!canvas){
+        canvas = group.canvas;
+        group = group.group;
       }
-    },
+    }
+    return canvas;
+  },
 
-    /**
-     * @private
-     */
-    _initGradient: function(options,attributename) {
-      var optval = options[attributename];
-      if (optval && optval.colorStops && !(optval instanceof fabric.Gradient)) {
-        this.set(attributename, new fabric.Gradient(optval));
+  invokeOnCanvas: function(method){
+    var canvas = this.getCanvas();
+    if(canvas){
+      var m = canvas[method];
+      if(typeof m === 'function'){
+        var args = Array.prototype.slice.call(arguments,1);
+        m.apply(canvas,args);
+        return true;
       }
-    },
+    }
+  },
 
-    /**
-     * @private
-     */
-    _initPattern: function(options) {
-      if (options.fill && options.fill.source && !(options.fill instanceof fabric.Pattern)) {
-        this.set('fill', new fabric.Pattern(options.fill));
-      }
-      if (options.stroke && options.stroke.source && !(options.stroke instanceof fabric.Pattern)) {
-        this.set('stroke', new fabric.Pattern(options.stroke));
-      }
-    },
+  /**
+   * Sets object's properties from options
+   * @param {Object} [options] Options object
+   */
+  setOptions: function(options) {
+    for (var prop in options) {
+      this.set(prop, options[prop]);
+    }
+    this._initGradient(options,'fill');
+    this._initGradient(options,'stroke');
+    this._initPattern(options);
+    this._initClipping(options);
+  },
+  clearAllTransformations : function () {
+    var fields = {'top':0, 'left':0, 'transformMatrix':undefined, 'scaleX' : 1, 'scaleY': 1, 'angle': 0, 'flipX': false, 'flipY': false};
+    for (var i in fields) {
+      this[i] = fields[i];
+    }
+  },
 
-    /**
-     * @private
-     */
-    _initClipping: function(options) {
-      if (!options.clipTo || typeof options.clipTo !== 'string') return;
+  attachToCurve: function(curve,curvepercentage){
+    this.attachedToCurve=curve;
+    this.set({curvePercentage:curvepercentage||0});
+  },
 
-      var functionBody = fabric.util.getFunctionBody(options.clipTo);
-      if (typeof functionBody !== 'undefined') {
-        this.clipTo = new Function('ctx', functionBody);
-      }
-    },
+  /**
+   * Transforms context when rendering an object
+   * @param {CanvasRenderingContext2D} ctx Context
+   * @param {Boolean} fromLeft When true, context is transformed to object's top/left corner. This is used when rendering text on Node
+   */
+  transform: function(ctx) {
+    var clt = this._currentLocalTransform;
+    if (this.transformMatrix) {
+      ctx.transform.apply(ctx,this.transformMatrix);
+      fabric.util.copyTransformMatrix(this.transformMatrix,clt);
+    }else{
+      //console.log(this.id, 'no matrix');
+      clt[0] = 1; 
+      clt[1] = 0; 
+      clt[2] = 0; 
+      clt[3] = 1; 
+      clt[4] = 0; 
+      clt[5] = 0; 
+    }
+    fabric.util.copyTransformMatrix(ctx._currentTransform,this._currentTransform);
+    if(this.opacity!==1){
+      this.savedAlpha = ctx.globalAlpha;
+      ctx.globalAlpha = ctx.globalAlpha*this.opacity;
+      //ctx.globalAlpha = 1 - ((1-ctx.globalAlpha)+(1-this.opacity));
+    }
 
-    /**
-     * @private
-     * returns the top svg element - root of the hierarchy
-     */
-    _svgElement: function() {
-      var ret = this;
-      while(ret.group){
-        ret = ret.group;
-      }
-      return ret;
-    },
+    var em = this._extraTransformations();
+    if(em){
+      matmultwassign(clt,em);
+    }
 
-    getCanvas: function(){
-      var canvas = this.canvas;
-      if(!canvas){
-        var group = this.group;
-        while(group&&!canvas){
-          canvas = group.canvas;
-          group = group.group;
-        }
-      }
-      return canvas;
-    },
+    fabric.util.setStrokeToCanvas(ctx, this);
+    fabric.util.setFillToCanvas(ctx, this);
+    ctx.save();
 
-    invokeOnCanvas: function(method){
-      var canvas = this.getCanvas();
-      if(canvas){
-        var m = canvas[method];
-        if(typeof m === 'function'){
-          var args = Array.prototype.slice.call(arguments,1);
-          m.apply(canvas,args);
-          return true;
-        }
-      }
-    },
+    if(!this._localTransformationMatrix){
+      this._cacheLocalTransformMatrix();
+    }
+    ctx.transform.apply(ctx,this._localTransformationMatrix);
+    matmultwassign(clt,this._localTransformationMatrix);
+    matmultwassign(ctx._currentTransform,clt);
 
-    /**
-     * Sets object's properties from options
-     * @param {Object} [options] Options object
-     */
-    setOptions: function(options) {
-      for (var prop in options) {
-        this.set(prop, options[prop]);
-      }
-      this._initGradient(options,'fill');
-      this._initGradient(options,'stroke');
-      this._initPattern(options);
-      this._initClipping(options);
-    },
-    clearAllTransformations : function () {
-      var fields = {'top':0, 'left':0, 'transformMatrix':undefined, 'scaleX' : 1, 'scaleY': 1, 'angle': 0, 'flipX': false, 'flipY': false};
-      for (var i in fields) {
-        this[i] = fields[i];
-      }
-    },
-
-    attachToCurve: function(curve,curvepercentage){
-      this.attachedToCurve=curve;
-      this.set({curvePercentage:curvepercentage||0});
-    },
-
-    /**
-     * Transforms context when rendering an object
-     * @param {CanvasRenderingContext2D} ctx Context
-     * @param {Boolean} fromLeft When true, context is transformed to object's top/left corner. This is used when rendering text on Node
-     */
-    transform: function(ctx) {
-      var m = this.transformMatrix;
-      this._currentTransform = ctx._currentTransform.slice();
-      if (m) {
-        //console.log(this.id, 'matrix', m)
-        ctx.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
-        m = m.slice();
-      }else{
-        //console.log(this.id, 'no matrix');
-        m = [1,0,0,1,0,0];
-      }
-
-      if(this.opacity!==1){
-        this.savedAlpha = ctx.globalAlpha;
-        ctx.globalAlpha = ctx.globalAlpha*this.opacity;
-        //ctx.globalAlpha = 1 - ((1-ctx.globalAlpha)+(1-this.opacity));
-      }
-
-      var em = this._extraTransformations();
-      if(em){
-        matmultwassign(m,em);
-      }
-
-      fabric.util.setStrokeToCanvas(ctx, this);
-      fabric.util.setFillToCanvas(ctx, this);
-      ctx.save();
-
-      if(!this._localTransformationMatrix){
-        this._cacheLocalTransformMatrix();
-      }
-      ctx.transform.apply(ctx,this._localTransformationMatrix);
-      matmultwassign(m,this._localTransformationMatrix);
-      matmultwassign(ctx._currentTransform,m);
-
-      this.oCoords.tl.x=0;
-      this.oCoords.tl.y=0;
-      this.oCoords.br.x=this.width;
-      this.oCoords.br.y=this.height;
-      fabric.util.pointToSpace(ctx._currentTransform,this.oCoords.tl);
-      fabric.util.pointToSpace(ctx._currentTransform,this.oCoords.br);
-      if(this.oCoords.tl.x>this.oCoords.br.x){
-        var x = this.oCoords.tl.x;
-        this.oCoords.tl.x = this.oCoords.br.x;
-        this.oCoords.br.x = x;
-      }
-      if(this.oCoords.tl.y>this.oCoords.br.y){
-        var y = this.oCoords.tl.y;
-        this.oCoords.tl.y = this.oCoords.br.y;
-        this.oCoords.br.y = y;
-      }
-      this.oCoords.tr.x=this.oCoords.br.x;
-      this.oCoords.tr.y=this.oCoords.tl.y;
-      this.oCoords.bl.x=this.oCoords.tl.x;
-      this.oCoords.bl.y=this.oCoords.br.y;
-      /*
-      var mx = (tl.x+br.x)/2, my = (tl.y+br.y)/2;
-      this.oCoords = {
-        tl:{x:tl.x,y:tl.y},tr:{x:br.x,y:tl.y},br:{x:br.x,y:br.y},bl:{x:tl.x,y:br.y}
-        //ml:{x:tl.x,y:my},mt:{x:mx,y:tl.y},mr:{x:br.x,y:my},mb:{x:mx,y:br.y}
-      };
-      */
-      this._currentGlobalTransform = ctx._currentTransform.slice();
-      this._currentLocalTransform = m;
-      this.localRotate(ctx);
-    },
+    this.oCoords.tl.x=0;
+    this.oCoords.tl.y=0;
+    this.oCoords.br.x=this.width;
+    this.oCoords.br.y=this.height;
+    fabric.util.pointToSpace(ctx._currentTransform,this.oCoords.tl);
+    fabric.util.pointToSpace(ctx._currentTransform,this.oCoords.br);
+    if(this.oCoords.tl.x>this.oCoords.br.x){
+      var x = this.oCoords.tl.x;
+      this.oCoords.tl.x = this.oCoords.br.x;
+      this.oCoords.br.x = x;
+    }
+    if(this.oCoords.tl.y>this.oCoords.br.y){
+      var y = this.oCoords.tl.y;
+      this.oCoords.tl.y = this.oCoords.br.y;
+      this.oCoords.br.y = y;
+    }
+    this.oCoords.tr.x=this.oCoords.br.x;
+    this.oCoords.tr.y=this.oCoords.tl.y;
+    this.oCoords.bl.x=this.oCoords.tl.x;
+    this.oCoords.bl.y=this.oCoords.br.y;
+    /*
+    var mx = (tl.x+br.x)/2, my = (tl.y+br.y)/2;
+    this.oCoords = {
+      tl:{x:tl.x,y:tl.y},tr:{x:br.x,y:tl.y},br:{x:br.x,y:br.y},bl:{x:tl.x,y:br.y}
+      //ml:{x:tl.x,y:my},mt:{x:mx,y:tl.y},mr:{x:br.x,y:my},mb:{x:mx,y:br.y}
+    };
+    */
+    fabric.util.copyTransformMatrix(ctx._currentTransform,this._currentGlobalTransform);
+    fabric.util.copyTransformMatrix(clt,this._currentLocalTransform);
+    this.localRotate(ctx);
+  },
 
     _extraTransformations : function(ctx){
     },
@@ -535,7 +541,7 @@
     },
 
     untransform: function(ctx,topctx){
-      ctx._currentTransform = this._currentTransform;
+      fabric.util.copyTransformMatrix(this._currentTransform,ctx._currentTransform);
       if(typeof this.savedAlpha !== 'undefined'){
         ctx.globalAlpha = this.savedAlpha;
       }
@@ -869,74 +875,111 @@
         console.log('invalid border rect',this.oCoords.tl,this.oCoords.br);
       }
     },
-		dropRaster: function () {
-			///TODO
-		},
-		_generateRaster : function (debug) {
-			//console.log('RERASTER PARAMS !! ', (this.shouldRasterize.area || {}).y);
-			var mult = fabric.util.multiplyTransformMatrices;
-			var inv = fabric.util.matrixInverse;
-			var bs = fabric.backingScale;
-			var ms = fabric.masterScale;
+    dropRaster: function () {
+      ///TODO
+    },
+    _generateRaster : function (debug) {
 
-			var params = {};
+      var params = {};
 
-			if (typeof(this.shouldRasterize) === 'object') {
-				fabric.util.object.extend(params, this.shouldRasterize);
-			}
-			var obj = this.getRasterizationObject();
+      if (typeof(this.shouldRasterize) === 'object') {
+        fabric.util.object.extend(params, this.shouldRasterize);
+      }
+      var done = params.done;
 
-			if (obj._currentGlobalTransform)  {
-				///delay this moment until obj get _currentTransform
-				delete this.shouldRasterize;
-				var w = obj.get('width')*bs;
-				var h = obj.get('height')*bs;
-				//console.log('will rasterize, height ',h,'width', w, obj.id);
+      delete params.done;
+      delete this.shouldRasterize;
 
-				var offel = fabric.document.createElement('canvas');
+      var rc = this._raster && this._raster.content && true;
+      var action = (rc) ? 'changed' : 'created';
+      this._raster = {};
 
-				offel.width = Math.ceil(w*ms/bs);
-				offel.height = Math.ceil(h*ms/bs);
+      var rr = fabric.createRasterFromObject(this);
 
-				var lctx = offel.getContext('2d');
-				lctx._currentTransform = this._currentGlobalTransform; //-> ovde je velika razlika?
-				var off_matrix = mult(Matrix.ScaleMatrix(ms),[1,0,0,1,(Math.ceil(w)-w)/2,-(Math.ceil(h)-h)/2]);
+      params.area = extend({width: rr.obj.width, height: rr.obj.height, x: 0, y: 0},params.area || {});
+      params.width = params.area.width;
+      params.height = params.area.height;
+      this._raster.content = new fabric.Sprite(rr.img,params);
+      this._raster.content.transformMatrix = rr.content_transformation;
+      this._raster.content.group = this;
+      fabric.util.isFunction(done) && done.call(this, action, this._raster.content); 
+      this.fire ('raster:'+action, this._raster.content);
+      ///RESIZE?
 
-				if (obj.id != this.id) {
-					off_matrix = mult(off_matrix, inv(obj._currentGlobalTransform));
-					off_matrix = mult(off_matrix, this._currentTransform);
-					this._raster.content_transformation = obj._localTransformationMatrix;
-				}else{
-					off_matrix = mult(off_matrix, inv(this._currentGlobalTransform));
-					off_matrix = mult(off_matrix, this._currentTransform);
-					this._raster.content_transformation = [1,0,0,1,0,0];
-				}
+      return;
 
-				lctx.transform.apply(lctx,off_matrix);
-				var rc = !this._raster.content;
-				var done = params.done;
-				delete this._raster.content;
-				delete params.done;
-				this.render(lctx);
 
-				params.area = extend({width: obj.width, height: obj.height, x: 0, y: 0},params.area || {});
-				this._raster.content = new fabric.Sprite(offel,fabric.util.object.extend({x:0, y:0, width:offel.width, height:offel.height},params));
-				this._raster.content.group = this;
 
-				('function' === typeof(done)) && done.call(this, (rc) ? 'created':'changed', this._raster.content); 
-				rc ? this.fire ('raster:created', this._raster.content) : this.fire ('raster:changed', this._raster.content);
-				this._raster.content.calculated_on_ms = ms;
-				var self = this;
-				if (!this._raster.canvas_resized) {
-					this._raster.canvas_resized = function () {
-						self.fire('object:resizeRerasterRequested');
-						self.rasterize();
-					}
-					this.getCanvas().on('fabric:canvasResized', this._raster.canvas_resized);
-				}
-				return true;
-			}
-		},
+      //console.log('RERASTER PARAMS !! ', (this.shouldRasterize.area || {}).y);
+      var mult = fabric.util.multiplyTransformMatrices;
+      var inv = fabric.util.matrixInverse;
+      var bs = fabric.backingScale;
+      var ms = fabric.masterScale;
+      var obj = this.getRasterizationObject();
+
+      if (obj._currentGlobalTransform)  {
+        ///delay this moment until obj get _currentTransform
+        var w = obj.get('width')*bs;
+        var h = obj.get('height')*bs;
+        //console.log('will rasterize, height ',h,'width', w, obj.id);
+        if (!this._raster_offel) {
+          this._raster_offel = this.getSvgEl().produceCanvas();
+          this._raster_obj_test = new fabric.Raster(this);
+        }
+
+        var offel = this._raster_offel;
+        offel.width = Math.ceil(w*ms/bs);
+        offel.height = Math.ceil(h*ms/bs);
+
+        var lctx = offel.getContext('2d');
+        lctx._currentTransform = this._currentGlobalTransform.slice();
+        var off_matrix = [ms,0,0,ms,(Math.ceil(w)-w)/2,-(Math.ceil(h)-h)/2];
+
+        if (obj.id != this.id) {
+          matmultwassign(off_matrix, inv(obj._currentGlobalTransform));
+          matmultwassign(off_matrix, this._currentTransform);
+          this._raster.content_transformation = obj._localTransformationMatrix;
+        }else{
+          matmultwassign(off_matrix, inv(this._currentGlobalTransform));
+          matmultwassign(off_matrix, this._currentTransform);
+          this._raster.content_transformation = [1,0,0,1,0,0];
+        }
+
+        lctx.transform.apply(lctx,off_matrix);
+        var rc = !this._raster.content;
+        var done = params.done;
+        delete this._raster.content;
+        delete params.done;
+        //this._raster_obj_test.rasterize(params.area);
+        this.render(lctx);
+
+        params.area = extend({width: obj.width, height: obj.height, x: 0, y: 0},params.area || {});
+        var sett = fabric.util.object.extend({x:0, y:0, width:offel.width, height:offel.height},params);
+
+        if (!this._raster.content) {
+          ///create new sprite only if needed ...
+          this._raster.content = new fabric.Sprite(offel,sett);
+          this._raster.content.group = this;
+        }else{
+          this._raster.content.set(sett);
+        }
+
+        ('function' === typeof(done)) && done.call(this, (rc) ? 'created':'changed', this._raster.content); 
+        rc ? this.fire ('raster:created', this._raster.content) : this.fire ('raster:changed', this._raster.content);
+        this._raster.content.calculated_on_ms = ms;
+        var self = this;
+        if (!this._raster.canvas_resized) {
+          this._raster.canvas_resized = function () {
+            self.fire('object:resizeRerasterRequested');
+            self.rasterize();
+          }
+          this.getCanvas().on('fabric:canvasResized', this._raster.canvas_resized);
+        }
+        return true;
+      }else{
+        console.log('no global transform');
+      }
+    },
 
     /**
      * Renders an object on a specified context
@@ -957,61 +1000,53 @@
       //console.log(this.type,this.id,'starts render');
 
 
-			if (this._raster.content && this.shouldRasterize) {
-				var lc = this._raster.content;
-				if ('object' !== typeof(this.shouldRasterize)) {
-					this.shouldRasterize = lc.getRasterParams();
-				}else{
-					var rp = lc.getRasterParams();
-					var ol = this.shouldRasterize;
-
-					this.shouldRasterize = {
-						area: extend(rp.area, ol.area),
-						repeat: extend (rp.repeat, ol.repeat),
-						done: ('function' === typeof(ol.done)) ? ol.done : rp.done
-					}
-				}
-				this._generateRaster();
-			}
-
       ctx.save();
 
       this.transform(ctx); //there is a special ctx.save in this call
+
+      if (this._raster.content && this.shouldRasterize) {
+        var lc = this._raster.content;
+        if ('object' !== typeof(this.shouldRasterize)) {
+          this.shouldRasterize = lc.getRasterParams();
+        }else{
+          var rp = lc.getRasterParams();
+          var ol = this.shouldRasterize;
+
+          this.shouldRasterize = {
+            area: extend(rp.area, ol.area),
+            repeat: extend (rp.repeat, ol.repeat),
+            done: ('function' === typeof(ol.done)) ? ol.done : rp.done
+          }
+        }
+        this._generateRaster();
+      }
 
       if(topctx){
         this.drawBorderRect(topctx);
       }
 
-      //this._setShadow(ctx);
-      //this.clipTo && fabric.util.clipContext(this, ctx);
-
       if(this._raster.content){
-				ctx.transform.apply(ctx,this._raster.content_transformation);
         this._raster.content.render(ctx);
-				ctx.restore();
-			}else{
-				this._render(ctx, topctx);
-				//this.clipTo && ctx.restore();
-				ctx.restore();
-				if(!ctx.suppressPaint){
-					this._paint(ctx);
-				}
-				this._removeShadow(ctx);
-			}
+        ctx.restore();
+      }else{
+        this._render(ctx, topctx);
+        ctx.restore();
+        if(!ctx.suppressPaint){
+          this._paint(ctx);
+        }
+        this._removeShadow(ctx);
 
-      //var utstart = (new Date()).getTime();
+      }
       this.untransform(ctx,topctx);
-      //console.log('\t\t','untransform done in',(((new Date()).getTime()) - utstart));
-      //console.log('\t',this.type,this.id,'rendered in', (((new Date()).getTime()) - _render_start));
       this.finalizeRender(ctx);
-			this.shouldRasterize && this._generateRaster() && this.invokeOnCanvas('renderAll');
 
+      this.shouldRasterize && this._generateRaster() && this.invokeOnCanvas('renderAll');
     },
 
     accountForGradientTransform: function(p1,p2){},
-		getRasteredImage : function () {
-			return this._raster.content;
-		},
+    getRaster: function () {
+      return this._raster.content;
+    },
     _paint : function(ctx){
     },
 
@@ -1371,12 +1406,12 @@
       return this;
     },
     isVisible: function(){
-			var iam_visible = this.opacity>0 && this.display!=='none' && this.visible;
-			return iam_visible;
-			/*
-			if (!this.group || !iam_visible) return iam_visible;
-			return this.group.isVisible();
-			*/
+      var iam_visible = this.opacity>0 && this.display!=='none' && this.visible;
+      return iam_visible;
+      /*
+      if (!this.group || !iam_visible) return iam_visible;
+      return this.group.isVisible();
+      */
     },
     /**
      * Shows an object and fires shown event
@@ -1415,49 +1450,53 @@
       return this;
     },
 
-		/** Get object to be rasterized once rasterize method is called 
-		 * @return {fabric.Object}
-		 * @chainable
-		**/
-		getRasterizationObject : function () {
-			return this;
-		},
+    /** Get object to be rasterized once rasterize method is called 
+     * @return {fabric.Object}
+     * @chainable
+    **/
+    getRasterizationObject : function () {
+      return this;
+    },
 
-		rasterize : function (rasterize_params) {
-			this.shouldRasterize = rasterize_params || true;
-			this.invokeOnCanvas('renderAll');
-		},
+    rasterize : function (rasterize_params) {
+      this.shouldRasterize = rasterize_params || true;
+      this.invokeOnCanvas('renderAll');
+    },
 
-		setRasterArea : function (area_params, lc_props) {
-			if (!this._raster.content) return;
-			this._raster.content.setRasterArea(area_params, lc_props);
-			this.invokeOnCanvas('renderAll');
-		},
+    setRasterArea : function (area_params, lc_props) {
+      if (!this._raster.content) return;
+      this._raster.content.setRasterArea(area_params, lc_props);
+      this.invokeOnCanvas('renderAll');
+    },
 
-		getTreeMatrix: function () {
-			//var to_mult = [this.transformMatrix];
-			var to_mult = [];
-			var g = this.group;
-			while (g) {
-				g.transformMatrix && to_mult.unshift(g.transformMatrix);
-				g = g.group;
-			}
+    getTreeMatrix: function () {
+      //var to_mult = [this.transformMatrix];
+      var to_mult = [];
+      var g = this.group;
+      while (g) {
+        g.transformMatrix && to_mult.unshift(g.transformMatrix);
+        g = g.group;
+      }
 
-			var ret = new Matrix();
-			ret.mult.apply(ret, to_mult);
-			return ret.val;
-		}, 
-		dropCache: function () {
+      var ret = new Matrix();
+      ret.mult.apply(ret, to_mult);
+      return ret.val;
+    }, 
+    dropCache: function () {
       for (var i in this._cache) {
+        this._cache[i]._onSVG_Deactivated && this._cache[i]._onSVG_Deactivated();
         delete this._cache[i];
       }
-		},
+    },
     getSvgEl : function () {
       if (this._svg_el) return this._svg_el;
       if (this.group) {
         this._svg_el = this.group.getSvgEl();
       }
       return this._svg_el;
+    },
+    _onSVG_Deactivated: function () {
+      this.dropCache();
     }
   });
   /**

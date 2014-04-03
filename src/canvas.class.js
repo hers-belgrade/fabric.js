@@ -29,6 +29,7 @@
       for(var i in options){
         this[i] = options[i];
       }
+      this.id = ('string' === typeof(el)) ? el : fabric.document.getElementById(el).getAttribute('id');
 
       this._initStatic(el, options);
       this._initInteractive();
@@ -157,6 +158,7 @@
       this._currentTransform = null;
       this._initWrapperElement();
       this._createUpperCanvas();
+      this._createDOMBackgroundSupport();
       this._initEvents();
     },
 
@@ -287,6 +289,40 @@
       };
     },
 
+    reportBackgroundImage : function (name, content) {
+      if (!this._dom_background_style) return;
+      console.log('will create record', this.id, name);
+      this._dom_background_style.innerHTML = this._dom_background_style.innerHTML+fabric.util.createStyleRecord(".fabric_"+this.id+"_"+name, {'background-image':"url("+content+")"});
+    },
+
+    setBackground : function (name) {
+      var class_name = 'fabric_'+this.id+'_'+name;
+      fabric.util.replaceClass(this.lowerCanvasEl, this._dom_background_current_class, class_name);
+      this._dom_background_current_class = class_name;
+    },
+
+    removeBackground : function () {
+      fabric.util.removeClass(this.lowerCanvasEl, this._dom_background_current_class);
+      delete this._dom_background_current_class;
+    },
+
+    _createDOMBackgroundSupport : function () {
+      var style_id = this.id+'_dom_background_style';
+      var style = fabric.document.getElementById(style_id);
+      if (!style) {
+        style = fabric.document.createElement('style');
+        style.setAttribute('id', style_id);
+        fabric.document.getElementsByTagName('body')[0].appendChild(style);
+        style.innerHTML = ".fabric_no_image {background-image: none;}\n";
+      }
+
+      fabric.util.setStyle(this.lowerCanvasEl, {
+        'background-size': '100% 100%',
+        'background-repeat':'none'
+      });
+      this._dom_background_style = style;
+    },
+
     /**
      * @private
      * @param {HTMLElement|String} canvasEl Canvas element
@@ -359,19 +395,17 @@
 				width = this.getWidth()/fabric.backingScale || element.width;
 				height= this.getHeight()/fabric.backingScale|| element.height;
 			}
-      fabric.util.setStyle(element, {
+      var ss = {
         position: 'absolute',
         width: width + 'px',
         height: height + 'px',
         left: 0,
         top: 0
-      });
+      };
+      fabric.util.setStyle(element, ss);
 
       this.width = element.width = width*fabric.backingScale;
       this.height = element.height = height*fabric.backingScale;
-
-			//this.width = width*fabric.backingScale;
-			//this.height = height*fabric.backingScale;
       fabric.util.makeElementUnselectable(element);
       console.log('now it is',element.width,element.height,element.style.width,element.style.height);
     },

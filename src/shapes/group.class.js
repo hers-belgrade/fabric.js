@@ -48,10 +48,8 @@
      * @return {Object} thisArg
      */
     initialize: function(objects, options) {
-      options = options || { };
-
+      options = options || {};
       this._objects = objects || [];
-
       this._objects.forEach(function(o){
         if(!o){
           console.log('no object at',i,'in',this._objects);
@@ -370,8 +368,18 @@
 
 		hideAllChildren : function () {
 			this._objects.forEach(function (v) {v.hide();});
-		}
+		},
 
+    _onSVG_Activated: function () {
+      this.forEachObject(function(o) {
+        o._onSVG_Activated && o._onSVG_Activated();
+      })
+    },
+    _onSVG_Deactivated: function () {
+      this.forEachObject(function(o) {
+        o._onSVG_Deactivated && o._onSVG_Deactivated();
+      });
+    }
   });
 
   /**

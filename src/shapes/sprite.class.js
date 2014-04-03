@@ -2,8 +2,7 @@
 
   "use strict";
 
-  var extend = fabric.util.object.extend,
-		safeDrawImage = fabric.util.safeDrawImage;
+  var extend = fabric.util.object.extend;
 
   if (!global.fabric) {
     global.fabric = { };
@@ -20,7 +19,7 @@
    * @class fabric.Sprite
    * @extends fabric.Image
    */
-  fabric.Sprite = fabric.util.createClass(fabric.Image , {
+  fabric.Sprite = fabric.util.createClass(fabric.Object, {
     type : 'Sprite',
     initialize : function(element,options){
 			this._cnt = cnt;
@@ -31,8 +30,10 @@
 
 			options.area = fabric.util.object.extend({x: options.x, y:options.y, width:options.width, height:options.height},options.area);
 			options.repeat = fabric.util.object.extend({x:false, y:false}, options.repeat);
-      this.callSuper('initialize',element,options);
+      this.callSuper('initialize',options);
+      this._element = element;
     },
+
 		getRasterParams : function () {
 			return {area: this.area, repeat: this.repeat};
 		},
@@ -45,36 +46,38 @@
 		},
 
     _render : function(ctx){
+      if (this._old_width != this._element.width() || this._old_height != this._element.height()) {
+        this._old_width = this._element.width();
+        this._old_height = this._element.height();
+      }
 			////more work to be done ....
-			var bs = fabric.backingScale;
 			var ms = fabric.masterScale;
 
-			var elw = this._element.width/(ms);
-			var elh = this._element.height/(ms);
+      var element = this._element;
+			var elw = this._element.width()/(ms);
+			var elh = this._element.height()/(ms);
 
-			var area_x = this.area.x % elw;
-			var area_y = this.area.y % elh;
-			//console.log('====', elh, area_y);
+			var area_x = this.area.x % element.width();
+			var area_y = this.area.y % element.height();
+			//console.log('====', this._element.height(), area_y);
 
 			var should_repeat = {
-				x : this.repeat.x && (area_x < 0 || area_x+this.area.width > elw),
-				y : this.repeat.y && (area_y < 0 || area_y+this.area.height > elh)
+				x : this.repeat.x && (area_x < 0 || area_x+this.area.width > this._element.width()),
+				y : this.repeat.y && (area_y < 0 || area_y+this.area.height > this._element.height())
 			}
-
 
 			var self = this;
 
 			function repeat_axis (axis, other_pos, slice_from) {
 				var x_axis = (axis === 'x');
 				if (slice_from < 0) { 
-					slice_from = (x_axis) ? ((slice_from % elw) + elw) : ((slice_from % elh) + elh);
-
+					slice_from = (x_axis) ? ((slice_from % element.width()) + element.width()) : ((slice_from % element.height()) + element.height());
 				}
 				var control = 0;
 				var render_height = self.area.height;
 				var render_width = self.area.width;
 				var max_dimension = (x_axis) ? self.area.width : self.area.height;
-				var element_dimension = (x_axis) ? elw : elh;
+				var element_dimension = (x_axis) ? element.width() : element.height();
 				var dynamic_dimension = 0;
 
 				while (dynamic_dimension < max_dimension) {
@@ -82,55 +85,28 @@
 					if (render_dimension <= 0) return;
 					var should_break = false;
 
-					if (dynamic_dimension +render_dimension > max_dimension) {
+					if (dynamic_dimension + render_dimension > max_dimension) {
 						render_dimension = max_dimension - dynamic_dimension;
 						should_break = true;
 					}
 
-
-					if (x_axis) {
-						if (self.repeat.y) {
-							repeat_axis('y', dynamic_dimension, self.area.y);
-						}else{
-
-							safeDrawImage (ctx, self._element, {
-								clip : {
-									x : slice_from,
-									y : other_pos,
-									width: dynamic_dimension,
-									height: render_height,
-								},
-								target : {
-									x : dynamic_dimension*bs,
-									y : other_pos*bs,
-									width: render_dimension*bs,
-									height:render_height*bs
-								}
-							});
-						}
-					}else{
-						safeDrawImage (ctx, self._element, {
-							clip : {
-								x : 0,
-								y : slice_from,
-								width: render_width,
-								height: render_dimension,
-							},
-							target: {
-								x : other_pos,
-								y : dynamic_dimension,
-								width : render_width,
-								height: render_dimension
-							}
-						});
-					}
+          if (render_dimension) {
+            if (x_axis) {
+              if (self.repeat.y) {
+                repeat_axis('y', dynamic_dimension, self.area.y);
+              }else{
+                self._element.render(ctx, slice_from, other_pos, dynamic_dimension, render_height, dynamic_dimension, other_pos, render_dimension, render_height);
+              }
+            }else{
+              self._element.render(ctx, 0, slice_from, render_width, render_dimension, other_pos, dynamic_dimension, render_width, render_dimension);
+            }
+          }
 
 
 					dynamic_dimension += render_dimension;
 					slice_from = 0;
 					control += render_dimension;
 					if (should_break) break; /// just in case, if I get any weird float ...
-
 				}
 			}
 		
@@ -141,6 +117,7 @@
 			function repeat_y (other_pos, slice_from) {
 				return repeat_axis('y', other_pos, slice_from);
 			}
+
 			if (should_repeat.x) {
 				///this will cover both x and y repeat if needed :D
 				return repeat_x (this.y, area_x);
@@ -149,27 +126,11 @@
 			if (should_repeat.y) {
 				return repeat_y(this.x,area_y);
 			}
-
-			safeDrawImage (ctx, this._element, {
-				clip : {
-					x: area_x,
-					y: area_y,
-					width: this.area.width,
-					height:this.area.height
-				},
-				target: {
-					x : this.x,
-					y : this.y,
-					width:  this.area.width,
-					height: this.area.height
-				}
-			});
+      this._element.render(ctx, area_x, area_y, this.area.width, this.area.height, this.x, this.y, this.width, this.height);
     },
 		getRasterModulo : function () {
-			var bs = fabric.backingScale;
 			var ms = fabric.masterScale;
-			//return {width: this._element.width/bs, height: this._element.height/bs};
-			return {width: this.width/(bs*ms), height: this.height/(bs*ms)};
+			return {width: this._element.width(), height: this._element.height()}
 		},
 		sanitize: function () {
 			var m = this.getRasterModulo();

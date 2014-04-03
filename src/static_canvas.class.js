@@ -155,11 +155,17 @@
         height: window.innerHeight
       };
       */
-      var parent = this.wrapperEl.parentElement || window;
-      var lce = {
+
+      //var parent = this.wrapperEl.parentElement||window;
+      var parent = window;
+
+      var lce = (parent !== window) ? {//(this.wrapperEl.parentElement) ? {
         width: parent.offsetWidth,
         height: parent.offsetHeight
-      };
+      }:{
+        width: parent.innerWidth,
+        height:parent.innerHeight
+      }
 
       if(this.autoresize && ms&&
         (ms.width!==lce.width||
@@ -351,6 +357,7 @@
      */
     _createLowerCanvas: function (canvasEl) {
       this.lowerCanvasEl = fabric.util.getById(canvasEl) || this._createCanvasElement();
+      this.id = this.lowerCanvasEl.getAttribute('id');
       this._initCanvasElement(this.lowerCanvasEl);
 
       fabric.util.addClass(this.lowerCanvasEl, 'lower-canvas');

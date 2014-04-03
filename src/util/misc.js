@@ -298,10 +298,6 @@
   function createCanvasElement(canvasEl) {
     canvasEl || (canvasEl = fabric.document.createElement('canvas'));
     return canvasEl;
-    if (!canvasEl.getContext && typeof G_vmlCanvasManager !== 'undefined') {
-      G_vmlCanvasManager.initElement(canvasEl);
-    }
-    return canvasEl;
   }
 
   /**
@@ -357,6 +353,15 @@
     ctx.beginPath();
     receiver.clipTo(ctx);
     ctx.clip();
+  }
+
+  function copyTransformMatrix(src,dest){
+    dest[0]=src[0];
+    dest[1]=src[1];
+    dest[2]=src[2];
+    dest[3]=src[3];
+    dest[4]=src[4];
+    dest[5]=src[5];
   }
 
   /**
@@ -636,6 +641,7 @@
   fabric.util.clipContext = clipContext;
   fabric.util.pointInSpace = pointInSpace;
   fabric.util.pointToSpace = pointToSpace;
+  fabric.util.copyTransformMatrix = copyTransformMatrix;
   fabric.util.multiplyTransformMatrices = multiplyTransformMatrices;
   fabric.util.matrixInverse = matrixInverse;
   fabric.util.getFunctionBody = getFunctionBody;

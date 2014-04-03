@@ -154,20 +154,38 @@
      * @return {fabric.Text} thisArg
      */
     initialize: function(text, options) {
+      if (options) {
+        var tspans = options.tspans;
+        delete options.tspans;
+        if (tspans && tspans.length) {
+          options.tspans = [];
+          var self = this;
+          fabric.parseElements(tspans,function(instances){
+            for(var i in instances){
+              instances[i].textParent = self;
+            }
+            options.tspans[i] = instances[i];
+          },fabric.util.object.clone(options));
+        }
+      }
       this.callSuper('initialize',options);
 			this.textLines = [text];
 			this.text = text;
-      this.setCoords();
+      this._should_adapt_to_text = true;
     },
 
     setOptions: function (options) {
       var tspans = options.tspans;
       delete options.tspans;
       this.callSuper('setOptions', options);
+
+
       if (!tspans) return;
-      this.tspans = [];
-      for (var i in tspans) {
-        this.tspans.push (new fabric.Tspan(tspans[i].text, clone(tspans[i])));
+      if (!this.tspans) this.tspans = [];
+      this.tspans.push.apply(this.tspans, tspans);
+      if (options.text && this.tspans.length > 0) {
+        this.text = '';
+        this.tspans[0].set('text', options.text);
       }
     },
 
@@ -211,7 +229,12 @@
     },
 
     adaptToText: function (t, span) {
+
+      if (!this._should_adapt_to_text) return;
+      this._should_adapt_to_text = false;
+
       t = (typeof(t) === 'undefined') ? this.text+'' : t+'';
+
       if (!this.tspans){
         var canvasEl = fabric.util.createCanvasElement();
         var ctx = canvasEl.getContext('2d');
@@ -229,25 +252,13 @@
           });
         }
         this.textLines = textLines||[];
+        this.height = this._getTextHeight(this.textLines);
+
         if(this.text !== t){
           delete this._cache.localContents;
         }
-        return;
       }
-
-      if (this.tspans.length == 0) {
-        this.tspans[0].set('text',t);
-        return;
-      }
-
-      if (this.tspans.length == 1) {
-        this.tspans[0].set('text', t);
-        return;
-      }
-
-      for (var i in this.tspans) {
-        if (this.tspans[i].id == span) {this.tspans[i].set('text', t);return;}
-      }
+      this.setCoords();
     },
 
     _extraTransformations: function(){
@@ -268,7 +279,7 @@
           break;
         }
         case 'top':{
-          ty = this.height/2;
+          ty = -this.height/2;
           break;
         }
         case 'bottom':{
@@ -281,10 +292,21 @@
 
     transform: function(ctx){
       this._setTextStyles(ctx);
-      this.width = this._getTextWidth(ctx, this.textLines);
-      this.height = this._getTextHeight(ctx, this.textLines);
-      //console.log('TEXT WIDTH ', this.width, 'TEXT HEIGHT', this.height);
+      this.adaptToText();
       this.callSuper('transform',ctx);
+
+      /*
+      if (this.textLines && this.textLines.length < 2) return;
+      switch(this.vAlign) {
+        case 'center' : return;
+        case 'top': {
+          ctx.transform(1,0,0,1,0, this.height);break;
+        }
+        case 'bottom': {
+          ctx.transform(1,0,0,1,0,this.height/2);break;
+        }
+      }
+      */
     },
 
     /**
@@ -292,7 +314,6 @@
      * @param {CanvasRenderingContext2D} ctx Context to render on
      */
     _render: function(ctx) {
-
       /*
       var isInPathGroup = this.group && this.group.type !== 'group';
       if (isInPathGroup && !this.transformMatrix) {
@@ -317,8 +338,11 @@
      * @param {CanvasRenderingContext2D} ctx Context to render on
      */
     _renderViaNative: function(ctx) {
-      if(!(this.width&&this.height)){
-        return;
+
+      if (!this.tspans || this.tspans.length === 0) {
+        if(!(this.width&&this.height)){
+          return;
+        }
       }
       ctx.save();
       this._renderTextBackground(ctx, this.textLines);
@@ -328,9 +352,7 @@
       this._renderTextStroke(ctx, this.textLines);
       this._removeShadow(ctx);
       ctx.restore();
-
       this._renderTextDecoration(ctx, this.textLines);
-
       this._totalLineHeight = 0;
       ctx.restore();
       return;
@@ -341,7 +363,6 @@
      * @param {CanvasRenderingContext2D} ctx Context to render on
      */
     _setTextStyles: function(ctx) {
-      //fabric.util.setTextFillAndStroke(ctx, this);
       ctx.textBaseline = 'alphabetic';
       ctx.textAlign = this.textAlign;
       this.font_params = fabric.util.setFontDeclaration(ctx, this);
@@ -356,7 +377,7 @@
      * @param {Array} textLines Array of all text lines
      * @return {Number} Height of fabric.Text object
      */
-    _getTextHeight: function(ctx, textLines) {
+    _getTextHeight: function(textLines) {
       return this._getFontSize() * textLines.length * this.lineHeight;
     },
 
@@ -462,9 +483,9 @@
     _getTopOffset: function() {
       if (this.textLines.length < 2) return -this.height;
       switch (this.vAlign) {
-        case 'center': return -this.height;
+        case 'center': return 0;
         case 'top':return -this.height/2;
-        case 'bottom':return 0;
+        case 'bottom':return this.height;
       }
     },
 
@@ -657,7 +678,7 @@
       if (!this.textDecoration) return;
 
       // var halfOfVerticalBox = this.originY === 'top' ? 0 : this._getTextHeight(ctx, textLines) / 2;
-      var halfOfVerticalBox = this._getTextHeight(ctx, textLines) / 2;
+      var halfOfVerticalBox = this._getTextHeight(textLines) / 2;
       var _this = this;
 
       /** @ignore */
@@ -911,13 +932,11 @@
       }
 
       if (key === 'text') {
-        this.adaptToText(value);
+        this._should_adapt_to_text = true;
       }
       this.callSuper('_set', key, value);
-
       if (key in this._dimensionAffectingProps) {
-        this.adaptToText();
-        this.setCoords();
+        this._should_adapt_to_text = true;
       }
     },
 
@@ -991,20 +1010,8 @@
       tspans.push(cn);
     }
 
-    var text = new fabric.Text(tspans.length ? '' : element.textContent, options);
-
-    if(tspans.length){
-      text.tspans = [];
-      fabric.parseElements(tspans,function(instances){
-        for(var i in instances){
-          var inst = instances[i];
-          inst.textParent = text;
-        }
-        text.tspans = instances.slice();
-      },fabric.util.object.clone(options));
-    }
-
-    return text;
+    options.tspans = tspans;
+    return new fabric.Text(tspans.length ? '' : element.textContent, options);
   };
   /* _FROM_SVG_END_ */
 
