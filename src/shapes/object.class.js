@@ -1026,7 +1026,9 @@ fabric.Object = fabric.util.createClass(/** @lends fabric.Object.prototype */ {
       }
 
       if(this._raster.content){
+        ctx.save();
         this._raster.content.render(ctx);
+        ctx.restore();
         ctx.restore();
       }else{
         this._render(ctx, topctx);
@@ -1134,7 +1136,6 @@ fabric.Object = fabric.util.createClass(/** @lends fabric.Object.prototype */ {
         new fabric.Object(this.toObject(propertiesToInclude));
       }
     },
-
     /**
      * Creates an instance of fabric.Image out of an object
      * @param callback {Function} callback, invoked with an instance as a first argument

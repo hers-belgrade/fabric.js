@@ -70,7 +70,6 @@
     if (arguments.length === 5) {
       return (this.image && cw && ch) ? ctx.drawImage(this.image, cx, cy, cw, ch) : undefined;
     }
-    //this._r_cntr && console.log('====>', this._r_cntr);
     (this.image && cw && ch && tw && th) && ctx.drawImage(this.image, cx, cy, cw, ch, tx, ty, tw, th);
   }
 
@@ -168,23 +167,23 @@
   }
 
   MultipartImage.prototype.render = function (ctx, cx, cy, cw, ch, tx, ty, tw, th) {
-    var bs = fabric.backingScale;
-    ctx.save();
 
-    cx = cx*bs || 0;
-    cy = cy*bs || 0;
+    var bs = fabric.backingScale;
+    cx = cx || 0;
+    cy = cy || 0;
 
     tx = tx || 0;
     ty = ty || 0;
 
-    cw= cw*bs || this.width();
-    ch= ch*bs || this.height();
+    cw= cw || this.width();
+    ch= ch || this.height();
 
     tw = tw || cw;
     th = th || ch;
 
-    var wfactor = (cw === tw) ? 1 : tw/cw;
-    var hfactor = (ch === th) ? 1 : th/ch;
+
+    var wfactor = ((cw === tw) ? 1 : tw/cw);
+    var hfactor = ((ch === th) ? 1 : th/ch);
     var spent_height = 0, h;
     var clip_y = 0;
 
@@ -213,29 +212,25 @@
           w = cw - spent_width;
         }
 
-
         ctx.drawImage(c, 0, clip_y, w, h, tx+(spent_width)*wfactor, ty+(spent_height)*hfactor, w*wfactor, h*hfactor);
 
         spent_width += w;
-        if (j === 0) {
-          spent_height+= h;
-        }
       }
+      spent_height+= h;
     }
-    ctx.restore();
   }
 
   function createRasterFromObject(obj) {
-    var bs = fabric.backingScale;
+    var bs = 1;//fabric.backingScale;
     var img = obj.getRaster();
 
     var svg = obj.getSvgEl();
     var ro = obj.getRasterizationObject();
 
-    var w = ro.width*bs;
-    var h = ro.height*bs;
+    var w = ro.width;
+    var h = ro.height;
 
-    var max_dim = Math.min(fabric.window.innerHeight, fabric.window.innerWidth)*bs;
+    var max_dim = Math.min(fabric.window.innerHeight, fabric.window.innerWidth);
 
     var off_matrix = matmult(inv(ro._currentGlobalTransform),obj._currentTransform);
 
@@ -290,23 +285,26 @@
     }else{
       img = new MultipartImage(svg, max_dim);
       img.allocate(m,n);
-      img._width = w/bs;
-      img._height =h/bs;
+      img._width = w;
+      img._height =h;
     }
 
     console.log('should allocate ', m,'for height and ',n, 'for width and step is ', max_dim, 'and height', h, off_matrix);
 
     for (var i = m-1; i >= 0; i--){
       for (var j = n-1; j >= 0; j--) {
+        var _w = ((j === n-1) ? w - max_dim*j : max_dim),
+          _h = ((i === m-1) ?  h - max_dim*i : max_dim);
         var c = img.at(i, j);
         var ctx = c.getContext('2d');
-        c.width = ((j === n-1) ? w - max_dim*j : max_dim);
-        c.height = ((i === m-1) ?  h - max_dim*i : max_dim);
-        var target = off_matrix.slice();
-        matmultwassign(target, matmult([bs,0,0,bs,0,0],[1,0,0,1,-j*max_dim/bs, -i*max_dim/bs]));
-        ctx._currentTransform = target;
-        ctx.transform.apply(ctx, target);
+        c.width = _w*bs;
+        c.height = _h*bs;
+        ctx.scale(bs,bs);
+        ctx.transform.apply(ctx,off_matrix);
+        ctx.translate(-j*max_dim, -i*max_dim);
+        ctx._currentTransform = [1,0,0,1,0,0]; //optimize this
         obj.render(ctx);
+        console.log(c.toDataURL());
       }
     }
     ro._currentGlobalTransform = tt;

@@ -66,7 +66,7 @@
       console.log('will create _cache_canvas');
       this._cache_canvas = svgelem.produceCanvas();
     }
-    var offel = this._cache_canvas
+    var offel = this._cache_canvas;
     offel.width = Math.ceil(this.mastercanvas.width);
     offel.height = Math.ceil(this.mastercanvas.height);
 

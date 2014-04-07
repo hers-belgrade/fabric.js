@@ -112,9 +112,13 @@
       }
     },
 
-    produceCanvas: function(){
+    createCanvasRaw: function(){
       var ret = fabric.document.createElement('canvas');
       fabric.util.enable3DGPU(ret);
+      return ret;
+    },
+    produceCanvas: function(){
+      var ret = this.createCanvasRaw();
       this._canvases.push(ret);
       return ret;
     },

@@ -45,37 +45,15 @@
 			this.invokeOnCanvas('renderAll');
 		},
 
-    _render : function(ctx){
-      if (this._old_width != this._element.width() || this._old_height != this._element.height()) {
-        this._old_width = this._element.width();
-        this._old_height = this._element.height();
-      }
-			////more work to be done ....
-			var ms = fabric.masterScale;
-
-      var element = this._element;
-			var elw = this._element.width()/(ms);
-			var elh = this._element.height()/(ms);
-
-			var area_x = this.area.x % element.width();
-			var area_y = this.area.y % element.height();
-			//console.log('====', this._element.height(), area_y);
-
-			var should_repeat = {
-				x : this.repeat.x && (area_x < 0 || area_x+this.area.width > this._element.width()),
-				y : this.repeat.y && (area_y < 0 || area_y+this.area.height > this._element.height())
-			}
-
-			var self = this;
-
-			function repeat_axis (axis, other_pos, slice_from) {
+    _repeat_axis : function(ctx, axis, other_pos, slice_from) {
+        var element = this._element;
 				var x_axis = (axis === 'x');
 				if (slice_from < 0) { 
 					slice_from = (x_axis) ? ((slice_from % element.width()) + element.width()) : ((slice_from % element.height()) + element.height());
 				}
-				var render_height = self.area.height;
-				var render_width = self.area.width;
-				var max_dimension = (x_axis) ? self.area.width : self.area.height;
+				var render_height = this.area.height;
+				var render_width = this.area.width;
+				var max_dimension = (x_axis) ? this.area.width : this.area.height;
 				var element_dimension = (x_axis) ? element.width() : element.height();
 				var dynamic_dimension = 0;
         var should_break = false; 
@@ -94,38 +72,51 @@
             if (x_axis) {
               /*
                * TODO
-              if (self.repeat.y) {
-                repeat_axis('y', dynamic_dimension, self.area.y);
+              if (this.repeat.y) {
+                repeat_axis('y', dynamic_dimension, this.area.y);
               }else{
-                self._element.render(ctx, slice_from, other_pos, dynamic_dimension, render_height, dynamic_dimension, other_pos, render_dimension, render_height);
+                this._element.render(ctx, slice_from, other_pos, dynamic_dimension, render_height, dynamic_dimension, other_pos, render_dimension, render_height);
               }
               */
             }else{
-              self._element.render(ctx, 0, slice_from, render_width, render_dimension, other_pos, dynamic_dimension, render_width, render_dimension);
+              element.render(ctx, 0, slice_from, render_width, render_dimension, other_pos, dynamic_dimension, render_width, render_dimension);
             }
           }
-
-
 					slice_from = 0;
 					dynamic_dimension += render_dimension;
 				}
-			}
-		
-			function repeat_x (other_pos, slice_from) {
-				return repeat_axis('x', other_pos, slice_from);
-			}
+			},
 
-			function repeat_y (other_pos, slice_from) {
-				return repeat_axis('y', other_pos, slice_from);
+    _repeat_x : function(ctx, other_pos, slice_from) {
+				return this._repeat_axis(ctx, 'x', other_pos, slice_from);
+			},
+
+    _repeat_y : function (ctx, other_pos, slice_from) {
+				return this._repeat_axis(ctx, 'y', other_pos, slice_from);
+			},
+
+    _render : function(ctx){
+      if (this._old_width != this._element.width() || this._old_height != this._element.height()) {
+        this._old_width = this._element.width();
+        this._old_height = this._element.height();
+      }
+      var element = this._element;
+			var area_x = this.area.x % element.width();
+			var area_y = this.area.y % element.height();
+			//console.log('====', this._element.height(), area_y);
+
+			var should_repeat = {
+				x : this.repeat.x && (area_x < 0 || area_x+this.area.width > this._element.width()),
+				y : this.repeat.y && (area_y < 0 || area_y+this.area.height > this._element.height())
 			}
 
 			if (should_repeat.x) {
 				///this will cover both x and y repeat if needed :D
-				return repeat_x (this.y, area_x);
+				return this._repeat_x (ctx, this.y, area_x);
 			}
 
 			if (should_repeat.y) {
-				return repeat_y(this.x,area_y);
+				return this._repeat_y(ctx, this.x,area_y);
 			}
       this._element.render(ctx, area_x, area_y, this.area.width, this.area.height, this.x, this.y, this.width, this.height);
     },
