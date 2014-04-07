@@ -91,6 +91,7 @@
       };
 
       addListener(fabric.window, 'resize', this._onResize);
+      addListener(document,'layoutChanged',this._onResize);
 
       if (fabric.isTouchSupported) {
         canvasPositionEventListener(this,'touchstart','mouse:down');
