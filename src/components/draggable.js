@@ -172,7 +172,7 @@
       var stepr = step*ratio;
       var v = s.min;
       var y = maxpoint.y;
-      console.log('filling',steps);
+      //console.log('filling',steps);
       while(v<=s.max){
         steps.push({mark:y,val:v});
         console.log('unshifted',v);
@@ -183,7 +183,7 @@
         console.log('unshifted',s.max);
         steps.push({mark:lasty,val:s.max});
       }
-      console.log('steps',steps);
+      //console.log('steps',steps);
     } : function(){
       steps = [];
       var lastx = maxpoint.x-handlehotspot.width/handlescale.x;

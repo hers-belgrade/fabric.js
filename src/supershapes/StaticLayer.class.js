@@ -124,7 +124,7 @@
       });
 
       var ls = self._objects.slice();
-      console.log('sublayers',ls);
+      console.log('sublayers',this.group.id, ls);
       if(ls.length%2){
         console.log( "Static layer cannot contain an odd number of sub-layers" );
         throw "Static layer cannot contain an odd number of sub-layers";

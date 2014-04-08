@@ -35,6 +35,11 @@
 
   function load_cache (done) {
     var self = this;
+    if (!Object.keys(this._path_cache).length) {
+      isCachedone.call(self, done);
+      return;
+    }
+
     for (var _i in this._path_cache) {
       (function (key) {
         var img = self._image_cache[key];
@@ -133,6 +138,7 @@
       this._activated = true;
       for (var i in this._path_cache) this._path_cache[i] = false;
       load_cache.call(this, done);
+      this.fire('svg:activated');
     },
     deactivate: function(){
       if (!this._activated) return;
@@ -149,6 +155,7 @@
         _c.width = 1;
         _c.height = 1;
       }
+      this.fire('svg:deactivated');
     },
     getBackgroundName : function (oid) {
       /////TODO: za sad neka ga ovako, ali ovaj deo bi morao da se uozbilji da bi se izbeglo preklapanje imena css class-ova ...

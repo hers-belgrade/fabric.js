@@ -522,13 +522,6 @@ fabric.Object = fabric.util.createClass(/** @lends fabric.Object.prototype */ {
     this.oCoords.tr.y=this.oCoords.tl.y;
     this.oCoords.bl.x=this.oCoords.tl.x;
     this.oCoords.bl.y=this.oCoords.br.y;
-    /*
-    var mx = (tl.x+br.x)/2, my = (tl.y+br.y)/2;
-    this.oCoords = {
-      tl:{x:tl.x,y:tl.y},tr:{x:br.x,y:tl.y},br:{x:br.x,y:br.y},bl:{x:tl.x,y:br.y}
-      //ml:{x:tl.x,y:my},mt:{x:mx,y:tl.y},mr:{x:br.x,y:my},mb:{x:mx,y:br.y}
-    };
-    */
     fabric.util.copyTransformMatrix(ctx._currentTransform,this._currentGlobalTransform);
     fabric.util.copyTransformMatrix(clt,this._currentLocalTransform);
     this.localRotate(ctx);
