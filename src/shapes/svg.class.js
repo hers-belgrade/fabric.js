@@ -157,9 +157,12 @@
       }
       this.fire('svg:deactivated');
     },
-    getBackgroundName : function (oid) {
-      /////TODO: za sad neka ga ovako, ali ovaj deo bi morao da se uozbilji da bi se izbeglo preklapanje imena css class-ova ...
-      return oid;
+    setBackground: function (name, canvas) {
+      if (!canvas) return;
+      canvas.setBackground(this.resource_name, name);
+    },
+    setResourceName : function (rn) {
+      this.resource_name = rn;
     }
   });
 

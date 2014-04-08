@@ -289,7 +289,7 @@
       img._height =h;
     }
 
-    console.log('should allocate ', m,'for height and ',n, 'for width and step is ', max_dim, 'and height', h, off_matrix);
+    //console.log('should allocate ', m,'for height and ',n, 'for width and step is ', max_dim, 'and height', h, off_matrix);
 
     for (var i = m-1; i >= 0; i--){
       for (var j = n-1; j >= 0; j--) {
@@ -304,7 +304,7 @@
         ctx.translate(-j*max_dim, -i*max_dim);
         ctx._currentTransform = [1,0,0,1,0,0]; //optimize this
         obj.render(ctx);
-        console.log(c.toDataURL());
+        //console.log(c.toDataURL());
       }
     }
     ro._currentGlobalTransform = tt;

@@ -7,7 +7,7 @@
     initialize: function (objects, options) {
       this.callSuper('initialize', objects, options);
     },
-    dispose: function (canvas) {
+    dispose: function (canvas, resourcename) {
       ///ok, first, you should load requiered images despite SVG is not activated yet ...
 
       var pl = [];
@@ -31,7 +31,7 @@
           var o = self._objects[i];
           o.show();
           o.render(context);
-          canvas.reportBackgroundImage(svg.getBackgroundName(o.id), offel.toDataURL());
+          canvas.reportBackgroundImage(o.id, offel.toDataURL(), resourcename);
           offel.width = offel.width;
         }
       });

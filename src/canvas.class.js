@@ -289,21 +289,21 @@
       };
     },
 
-    reportBackgroundImage : function (name, content) {
+    reportBackgroundImage : function (name, content, resource_name) {
+      //console.log('=====>', name, content, resource_name);
       if (!this._dom_background_style) return;
-      console.log('will create record', this.id, name);
-      this._dom_background_style.innerHTML = this._dom_background_style.innerHTML+fabric.util.createStyleRecord(".fabric_"+this.id+"_"+name, {'background-image':"url("+content+")"});
+      this._dom_background_style.innerHTML = this._dom_background_style.innerHTML+fabric.util.createStyleRecord(".fabric_"+this.id+"_"+resource_name+"_"+name, {'background-image':"url("+content+")"})+"\n";
     },
 
-    setBackground : function (name) {
-      var class_name = 'fabric_'+this.id+'_'+name;
-      fabric.util.replaceClass(this.lowerCanvasEl, this._dom_background_current_class, class_name);
-      this._dom_background_current_class = class_name;
+    setBackground : function (resource_name, name) {
+      var class_name = 'fabric_'+this.id+'_'+resource_name+'_'+name;
+      fabric.util.replaceClass(this.lowerCanvasEl, this._dom_background_lower_current_class, class_name);
+      this._dom_background_lower_current_class = class_name;
     },
 
     removeBackground : function () {
-      fabric.util.removeClass(this.lowerCanvasEl, this._dom_background_current_class);
-      delete this._dom_background_current_class;
+      fabric.util.removeClass(this.lowerCanvasEl, this._dom_background_lower_current_class);
+      delete this._dom_background_lower_current_class;
     },
 
     _createDOMBackgroundSupport : function () {
