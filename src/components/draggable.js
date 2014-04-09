@@ -175,12 +175,10 @@
       //console.log('filling',steps);
       while(v<=s.max){
         steps.push({mark:y,val:v});
-        console.log('unshifted',v);
         v+=step;
         y-=stepr;
       }
       if(v-step<s.max){
-        console.log('unshifted',s.max);
         steps.push({mark:lasty,val:s.max});
       }
       //console.log('steps',steps);
