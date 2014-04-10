@@ -1021,6 +1021,12 @@
         this.discardActiveObject();
         this.fire('selection:cleared');
       }
+      for (var i in this.animationTickers) {
+        var itm = this.animationTickers[i];
+        if (itm.obj === object) {
+          this.animationTickers.splice(i, 1);
+        }
+      }
 
       return fabric.Collection.remove.call(this, object);
     },
