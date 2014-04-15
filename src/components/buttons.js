@@ -27,6 +27,12 @@
   };
 
   fabric.ResourceButton = function(svgelem,config){
+
+    ///should I consider some destroy method in order to do nice clean-up and avoid 'total recall' : multiple responses to a single click?
+    if (svgelem._resource_button_inited) return svgelem;
+    svgelem._resource_button_inited = true;
+
+
 		if ('undefined' === typeof(config.stopPropagation)) config.stopPropagation = true;
 
     var renderables= {
