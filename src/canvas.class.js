@@ -355,6 +355,7 @@
 
     _applyWrapperStyle: function(element){
       if(this.autoresize){
+        console.log('aws autoresize',this.getWidth(),this.getHeight());
         fabric.util.setStyle(element, {
           width: this.getWidth()+'px',//'100%',
           height: this.getHeight()+'px',//'100%',
@@ -363,6 +364,7 @@
           position: 'absolute'
         });
       }else{
+        console.log('aws',this.width,this.height);
         fabric.util.setStyle(element, {
           width: (this.width/fabric.backingScale) + 'px',
           height: (this.height/fabric.backingScale) + 'px',

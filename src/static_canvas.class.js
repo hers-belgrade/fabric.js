@@ -156,8 +156,8 @@
       };
       */
 
-      //var parent = this.wrapperEl.parentElement||window;
-      var parent = window;
+      var parent = this.wrapperEl.parentElement||window;
+      //var parent = window;
 
       var lce = (parent !== window) ? {//(this.wrapperEl.parentElement) ? {
         width: parent.offsetWidth,
@@ -181,6 +181,7 @@
         if (isUndefined(old)) {
           this._applyCanvasStyle(this.lowerCanvasEl);
           this._applyCanvasStyle(this.upperCanvasEl);
+          this._applyWrapperStyle(this.wrapperEl);
         }
       }else{
         fabric.masterScale = fabric.backingScale;
