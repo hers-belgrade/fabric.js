@@ -346,7 +346,6 @@ fabric.Object = fabric.util.createClass(/** @lends fabric.Object.prototype */ {
 
   borderRectColor:          '#000000',
 
-
   /**
    * Constructor
    * @param {Object} [options] Options object
@@ -354,7 +353,7 @@ fabric.Object = fabric.util.createClass(/** @lends fabric.Object.prototype */ {
   initialize: function(options) {
     this._cntr = cntr;
     cntr++;
-    this.oCoords = {tl:{x:0,y:0},tr:{x:0,y:0},br:{x:0,y:0},bl:{x:0,y:0}};
+    //this.oCoords = {tl:{x:0,y:0},tr:{x:0,y:0},br:{x:0,y:0},bl:{x:0,y:0}};
     this._currentTransform = [1,0,0,1,0,0];
     this._currentLocalTransform = [1,0,0,1,0,0];
     this._currentGlobalTransform = [1,0,0,1,0,0];
@@ -974,6 +973,27 @@ fabric.Object = fabric.util.createClass(/** @lends fabric.Object.prototype */ {
       }
     },
 
+    notify_on_geometry_ready : function (cb) {
+      if (!fabric.util.isFunction(cb)) return;
+
+      if (this.oCoords) {
+        cb.call(this);
+        return;
+      }
+      if (!this.oCoords) {
+        if (!this._gm_requesters) this._gm_requesters = [];
+        this._gm_requesters.push (cb);
+        return;
+      }
+    },
+
+    _fire_geometry_ready: function () {
+      for (var i in this._gm_requesters) {
+        this._gm_requesters[i].call(this);
+      }
+      delete this._gm_requesters;
+    },
+
     /**
      * Renders an object on a specified context
      * @param {CanvasRenderingContext2D} ctx context to render on
@@ -989,6 +1009,15 @@ fabric.Object = fabric.util.createClass(/** @lends fabric.Object.prototype */ {
         this._cache.global_content.render(ctx);
         return;
       }
+      var fire_gm = false;
+      if (!this.oCoords) {
+        this.oCoords={tl:{x:0,y:0},tr:{x:0,y:0},br:{x:0,y:0},bl:{x:0,y:0}};
+        fire_gm = this._gm_requesters;
+      }
+
+
+
+
       //var _render_start = (new Date()).getTime();
       //console.log(this.type,this.id,'starts render');
 
@@ -1036,6 +1065,7 @@ fabric.Object = fabric.util.createClass(/** @lends fabric.Object.prototype */ {
       this.finalizeRender(ctx);
 
       this.shouldRasterize && this._generateRaster() && this.invokeOnCanvas('renderAll');
+      fire_gm && this._fire_geometry_ready();
     },
 
     accountForGradientTransform: function(p1,p2){},
