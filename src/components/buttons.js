@@ -22,15 +22,6 @@
     return svgelem;
   };
 
-  fabric.ResourceButtonNormalHovered = function(svgelem,config){
-    var hovered = svgelem.getObjectById(svgelem.id+'_hovered');
-    var normal = svgelem.getObjectById(svgelem.id+'_normal');
-    var clickconfig = {ctx:config.ctx||svgelem,clickcb:config.clickcb};
-    fabric.Clickable(fabric.Hoverable(normal,{ctx:svgelem,overcb:function(){hovered.show();normal.hide();this.invokeOnCanvas('renderAll');}}),clickconfig);
-    fabric.Clickable(fabric.Hoverable(hovered,{ctx:svgelem,outcb:function(){normal.show();hovered.hide();this.invokeOnCanvas('renderAll');}}),clickconfig);
-    return svgelem;
-  };
-
   var resourceButtonStateToOuterEventMapping = {
     pressed:'down'
   };
@@ -39,20 +30,23 @@
 		if ('undefined' === typeof(config.stopPropagation)) config.stopPropagation = true;
 
     var renderables= {
-      enabled : svgelem.getObjectById(svgelem.id+'_enabled'),
-      disabled : svgelem.getObjectById(svgelem.id+'_disabled'),
-      hovered : svgelem.getObjectById(svgelem.id+'_hovered'),
-      pressed : svgelem.getObjectById(svgelem.id+'_pressed')
+      enabled : svgelem.getObjectById(svgelem.id+'_enabled')
     };
+
+
+    renderables.disabled = svgelem.getObjectById(svgelem.id+'_disabled') || renderables.enabled;
+    renderables.hovered = svgelem.getObjectById(svgelem.id+'_hovered') || renderables.enabled;
+    renderables.pressed = svgelem.getObjectById(svgelem.id+'_pressed') || renderables.enabled;
+
+
     function ra(){svgelem.invokeOnCanvas('renderAll');};
     function renderState(state){
       for(var i in renderables){
-        if(i===state){
-          renderables[i] && renderables[i].show();
-        }else{
+        if(i!==state){
           renderables[i] && renderables[i].hide();
         }
       }
+      renderables[state] && renderables[state].show();
       ra();
     };
     function processState(state){

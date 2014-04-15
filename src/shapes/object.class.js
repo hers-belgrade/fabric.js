@@ -522,13 +522,6 @@ fabric.Object = fabric.util.createClass(/** @lends fabric.Object.prototype */ {
     this.oCoords.tr.y=this.oCoords.tl.y;
     this.oCoords.bl.x=this.oCoords.tl.x;
     this.oCoords.bl.y=this.oCoords.br.y;
-    /*
-    var mx = (tl.x+br.x)/2, my = (tl.y+br.y)/2;
-    this.oCoords = {
-      tl:{x:tl.x,y:tl.y},tr:{x:br.x,y:tl.y},br:{x:br.x,y:br.y},bl:{x:tl.x,y:br.y}
-      //ml:{x:tl.x,y:my},mt:{x:mx,y:tl.y},mr:{x:br.x,y:my},mb:{x:mx,y:br.y}
-    };
-    */
     fabric.util.copyTransformMatrix(ctx._currentTransform,this._currentGlobalTransform);
     fabric.util.copyTransformMatrix(clt,this._currentLocalTransform);
     this.localRotate(ctx);
@@ -1026,7 +1019,9 @@ fabric.Object = fabric.util.createClass(/** @lends fabric.Object.prototype */ {
       }
 
       if(this._raster.content){
+        ctx.save();
         this._raster.content.render(ctx);
+        ctx.restore();
         ctx.restore();
       }else{
         this._render(ctx, topctx);
@@ -1134,7 +1129,6 @@ fabric.Object = fabric.util.createClass(/** @lends fabric.Object.prototype */ {
         new fabric.Object(this.toObject(propertiesToInclude));
       }
     },
-
     /**
      * Creates an instance of fabric.Image out of an object
      * @param callback {Function} callback, invoked with an instance as a first argument

@@ -66,7 +66,7 @@
       console.log('will create _cache_canvas');
       this._cache_canvas = svgelem.produceCanvas();
     }
-    var offel = this._cache_canvas
+    var offel = this._cache_canvas;
     offel.width = Math.ceil(this.mastercanvas.width);
     offel.height = Math.ceil(this.mastercanvas.height);
 
@@ -124,7 +124,7 @@
       });
 
       var ls = self._objects.slice();
-      console.log('sublayers',ls);
+      console.log('sublayers',this.group.id, ls);
       if(ls.length%2){
         console.log( "Static layer cannot contain an odd number of sub-layers" );
         throw "Static layer cannot contain an odd number of sub-layers";
