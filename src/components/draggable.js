@@ -1,7 +1,7 @@
 (function(global) {
 
   var fabric = global.fabric || (global.fabric = { });
-	var isFunction = fabric.util.isFunction;
+	var extend = fabric.util.object.extend, Easings = fabric.util.ease, isFunction = fabric.util.isFunction;
 
   if(fabric.Draggable){return;}
 
@@ -112,67 +112,208 @@
     return svgelem;
   };
 
-  fabric.ResourceSlider = function(svgelem,config){
-    var changecb = config.changecb;
-    var area = config&&config.area ? svgelem.getObjectById(config.area) : svgelem;
-    var handleconfig = config.handle;
-    var handle = svgelem.getObjectById(handleconfig.id);
-    var corr;
-    var handlehotspot = handle.getObjectById(handle.id+'_hotspot');
-    var setupdone = false,lastvalue,laststepindex=0;
-    var handlescale,areascale,minpoint,maxpoint,zerohandlepoint;
-    var setPoints = function(){
-      minpoint = area.localToGlobal(new fabric.Point(0,0));
-      maxpoint = area.localToGlobal(new fabric.Point(area.width,area.height));
-    };
-    function initScales(){
-      if(!handlescale){
-        zerohandlepoint=new fabric.Point(handle.left,handle.top);
-        handlescale=handle.globalScale();
-        areascale=area.globalScale();
-        setPoints();
-      }
-      if(!setupdone){
-        var s = svgelem.sliderSetup;
-        if(s){
-          makeSteps();
+
+  RSP = function (config) {
+    if (!arguments.length) return;
+    this._config = config;
+  }
+
+  RSP.prototype.setup = function (obj) {
+    this._setup = obj;
+  }
+
+  RSP.prototype.first_render = function (data) {
+    this.minpoint = data.minpoint;
+    this.maxpoint = data.maxpoint;
+    this.zerohandlepoint = data.zerohandlepoint;
+    this.handlescale = data.handlescale;
+    this.areascale = data.areascale;
+    this.handlehotspot = data.handlehotspot;
+    this.area = data.area;
+  }
+
+  RSP.prototype.posToValue = function (point) {
+    throw "Not implemented";
+  }
+  RSP.prototype.valueToPos = function (val) {
+    throw "Not implemented";
+  }
+
+  RSP.prototype.createPoints = function () {
+    throw "Not implemented";
+  }
+
+  RSP.prototype.upAllowed = function () {
+    throw "Not implemented";
+  }
+  RSP.prototype.downAllowed = function () {
+    throw "Not implemented";
+  }
+
+  RSP_Discrete = function (config) {
+    RSP.prototype.constructor.apply(this, arguments);
+  }
+
+  RSP_Discrete.prototype = new RSP();
+  RSP_Discrete.prototype.constructor = RSP_Discrete;
+
+  RSP_Discrete.prototype.setup = function (obj) {
+    if (!obj || !(obj.steps instanceof Array)) return;
+    RSP.prototype.setup.call(this, obj);
+    return true;
+  }
+
+  RSP_Discrete.prototype.posToValue = function (point) {
+    var config = this._config;
+    if (config.vertical){
+      var m = this._markOfPoint(point);
+      var s;
+      for(var i = this._steps.length-1; i>=0; i--){
+        s = this._steps[i];
+        if(s.mark>=m){
+          //console.log('posToValue',m,steps,s.val);
+          this.laststepindex=i;
+          return s.val;
         }
-        setupdone=true;
+      }
+      this.laststepindex=i;
+      return s.val
+    }else{
+      var m = this._markOfPoint(point);
+      var s;
+      for(var i = 0; i < this._steps.length; i++){
+        s = this._steps[i];
+        if(s.mark>=m){
+          //console.log('posToValue',m,steps,s.val);
+          this.laststepindex=i;
+          return s.val;
+        }
+      }
+      this.laststepindex=i;
+      return s.val;
+    };
+  }
+
+  RSP_Discrete.prototype.getMarks = function () {
+    return this._steps.map(function (v) {return v.mark;});
+  }
+
+  RSP_Discrete.prototype._currentPointOfMark = function () {
+    return this._pointOfMark(this._steps[this.laststepindex].mark);
+  }
+
+  RSP_Discrete.prototype.inc = function () {
+    if (!this.upAllowed()) return;
+    this.laststepindex++;
+    return this._currentPointOfMark();
+  }
+  RSP_Discrete.prototype.dec = function () {
+    if (!this.downAllowed()) return;
+    this.laststepindex--;
+    return this._currentPointOfMark();
+  }
+  RSP_Discrete.prototype.min = function () {
+    this.laststepindex = 0;
+    return this._currentPointOfMark();
+  }
+  RSP_Discrete.prototype.max = function () {
+    this.laststepindex=this._steps.length-1;
+    return this._currentPointOfMark();
+  }
+
+  RSP_Discrete.prototype.index = function (i) {
+    this.laststepindex = i;
+    return this._currentPointOfMark();
+  }
+
+  RSP_Discrete.prototype.upAllowed = function () {
+    return this.laststepindex < this._steps.length;
+  }
+
+  RSP_Discrete.prototype.downAllowed= function () {
+    return this.laststepindex >= 0;
+  }
+
+
+  RSP_Discrete.prototype._pointOfMark = function (mark) {
+    return this._config.vertical ? {x:this.minpoint.x,y:mark}: {x:mark,y:this.maxpoint.y};
+  }
+  RSP_Discrete.prototype._markOfPoint = function (point) {
+    return this._config.vertical ? point.y : point.x;
+  }
+
+  RSP_Discrete.prototype.valueToPos = function (val) {
+    var s;
+    for(var i in this._steps){
+      s = this._steps[i];
+      if(val<=s.val){
+        //console.log('valueToPos',val,steps,s.mark);
+        return this._pointOfMark(s.mark);
       }
     }
-    var calccorr = config.vertical ? function(){return {x:0,y:handlehotspot.height/handlescale.y/2};} : function(){return {x:handlehotspot.width/handlescale.x/2,y:0};};
-    function downHandler(e){
-      var hp = handlehotspot.localToGlobal(new fabric.Point(0,0));
-      corr = {x:e.e.x-hp.x,y:e.e.y-hp.y};
-    };
-    handleconfig.downcb = function(e){
-      svgelem.dragActive=true;
-      initScales();
-      downHandler(e);
-    };
-    handleconfig.clickcb = function(e){
-      delete svgelem.dragActive;
-    };
-    delete handleconfig.ctx;
-    fabric.ResourceButton(svgelem.getObjectById(handleconfig.id),handleconfig);
-    var setHandlePos = config.vertical ? function(val){
-      handle.set({left:zerohandlepoint.x,top:val});
-    } : function(val){
-      handle.set({left:val,top:zerohandlepoint.y});
-    };
-    var steps = [];
-    var makeSteps = config.vertical ? function(){
+    return this._pointOfMark(s.mark);
+  }
+
+  RSP_Discrete.prototype.updateSetup = function () {
+    var config  = this._config;
+    this.laststepindex = 0;
+    var vals = this._setup.steps;
+    var stps = this._setup.steps.slice();
+    var m = stps[0];
+    
+    var max_point = config.vertical ? this.maxpoint.y : this.maxpoint.x;
+    var min_point = config.vertical ? this.minpoint.y : this.minpoint.x;
+
+    var delta = (max_point - min_point)/(stps[stps.length-1] - m);
+
+    this._steps = [];
+    for (var i = 0 ; i < stps.length ; i++) {
+      this._steps.push ({
+        mark : min_point+delta * (stps[i] - m),
+        val : i
+      });
+    }
+  }
+  
+  RSP_Step = function (config) {
+    RSP_Discrete.prototype.constructor.apply(this, arguments);
+  }
+
+  RSP_Step.prototype = new RSP_Discrete();
+  RSP_Step.prototype.constructor = RSP_Step;
+
+  RSP_Step.prototype.setup = function (obj) {
+    RSP.prototype.setup.call(this, obj);
+    if(typeof obj.min === 'undefined' || typeof obj.max === 'undefined' || typeof obj.step === 'undefined'){
+      return false;
+    } 
+    this.laststepindex = 0;
+    return true;
+  }
+
+  RSP_Step.prototype.updateSetup = function (s) {
+    if (!this.setup(s)) return;
+    this.laststepindex = 0;
+
+    var config = this._config;
+    var handlehotspot = this.handlehotspot,
+        minpoint = this.minpoint,
+        maxpoint = this.maxpoint,
+        handlescale = this.handlescale;
+
+    var s = this._setup;
+    var min_point = config.vertical ? this.minpoint.y : this.minpoint.x;
+
+    if (config.vertical) {
       steps = [];
       var lasty = minpoint.y+handlehotspot.height/handlescale.y;
       var len = maxpoint.y-lasty;
       //console.log('active length',len);
-      var s = svgelem.sliderSetup;
       var ratio = len/(s.max-s.min);
       var step = s.step || 1;
       var stepr = step*ratio;
       var v = s.min;
       var y = maxpoint.y;
-      //console.log('filling',steps);
       while(v<=s.max){
         steps.push({mark:y,val:v});
         v+=step;
@@ -181,13 +322,11 @@
       if(v-step<s.max){
         steps.push({mark:lasty,val:s.max});
       }
-      //console.log('steps',steps);
-    } : function(){
+    }else{
       steps = [];
       var lastx = maxpoint.x-handlehotspot.width/handlescale.x;
       var len = lastx-minpoint.x;
       //console.log('active length',len,maxpoint.x,minpoint.x,handlehotspot.width,handlescale.x);
-      var s = svgelem.sliderSetup;
       var ratio = len/(s.max-s.min);
       var step = s.step || 1;
       var stepr = step*ratio;
@@ -202,59 +341,109 @@
         steps.pop();
       }
       steps.push({mark:lastx,val:s.max});
+    }
+    this._steps = steps;
+  }
+
+  ///KRPEZ AKO MENE PITAS ...
+  RSP_Step.prototype.mouseClick_correction = function () {
+    return this._config.vertical ?  {x:0,y:this.handlehotspot.height/this.handlescale.y/2} : {x:this.handlehotspot.width/this.handlescale.x/2,y:0};
+  }
+  RSP_Discrete.prototype.mouseClick_correction = function() {
+    return this._config.vertical ? {x:0,y:this.handlehotspot.height/this.handlescale.y/2 + this.area.top} : {x:this.handlehotspot.width/this.handlescale.x/2 + this.area.left,y:0};
+  }
+
+  ///TODO
+  RSP_Cont = function () {
+  }
+  RSP_Cont.prototype = new RSP();
+  RSP_Cont.prototype.constructor = RSP_Cont;
+
+
+  function PluginFactory (type, config) {
+    switch (type) {
+      case 'step' : return new RSP_Step(config);
+      case 'discrete': return new RSP_Discrete(config);
+    }
+    return undefined;
+  }
+
+  fabric.ResourceSlider = function(svgelem,config){
+    var changecb = config.changecb;
+    var area = config&&config.area ? svgelem.getObjectById(config.area) : svgelem;
+    var handleconfig = config.handle;
+    var handle = svgelem.getObjectById(config.handle.id)
+
+    var handlehotspot = svgelem.getObjectById(handle.id+'_hotspot');
+    var setupdone = false,lastvalue;
+    var handlescale,areascale,zerohandlepoint;
+
+    var Plugin = PluginFactory(config.type || 'step', config);
+
+
+
+    function initScales(){
+      if(!handlescale){
+        handlescale = handle.globalScale();
+        Plugin.first_render({
+          minpoint : area.localToGlobal(new fabric.Point(0,0)),
+          maxpoint : area.localToGlobal(new fabric.Point(area.width,area.height)),
+          zerohandlepoint: new fabric.Point(handle.left,handle.top),
+          handlescale:handlescale,
+          areascale:area.globalScale(),
+          handlehotspot: handlehotspot,
+          area: area
+        });
+
+      }
+
+      if(!setupdone){
+        var s = svgelem.sliderSetup;
+        s && Plugin.updateSetup(s);
+        setupdone=true;
+      }
+    }
+
+    function downHandler(e){
+      var hp = handlehotspot.localToGlobal(new fabric.Point(0,0));
+      corr = {x:e.e.x-hp.x,y:e.e.y-hp.y};
     };
-    var pointOfMark = config.vertical ? function(mark){return {x:minpoint.x,y:mark};} : function(mark){return {x:mark,y:maxpoint.y};};
-    var markOfPoint = config.vertical ? function(point){return point.y;} : function(point){return point.x;};
-    var valueToPos = function(val){
-      var s;
-      for(var i in steps){
-        s = steps[i];
-        if(val<=s.val){
-          //console.log('valueToPos',val,steps,s.mark);
-          return pointOfMark(s.mark);
-        }
-      }
-      return pointOfMark(s.mark);
+    handleconfig.downcb = function(e){
+      svgelem.dragActive=true;
+      //initScales();
+      downHandler(e);
     };
-    var posToValue = config.vertical ? function(point){
-      var m = markOfPoint(point);
-      var s;
-      for(var i = steps.length-1; i>=0; i--){
-        s = steps[i];
-        if(s.mark>=m){
-          //console.log('posToValue',m,steps,s.val);
-          laststepindex=i;
-          return s.val;
-        }
-      }
-      laststepindex=i;
-      return s.val;
-    } : function(point){
-      var m = markOfPoint(point);
-      var s;
-      for(var i in steps){
-        s = steps[i];
-        if(s.mark>=m){
-          //console.log('posToValue',m,steps,s.val);
-          laststepindex=i;
-          return s.val;
-        }
-      }
-      laststepindex=i;
-      return s.val;
+    handleconfig.clickcb = function(e){
+      delete svgelem.dragActive;
+    };
+    delete handleconfig.ctx;
+
+    fabric.ResourceButton(svgelem.getObjectById(handleconfig.id),handleconfig);
+
+    var setHandlePos = config.vertical ? function(val){
+      handle.set({left:Plugin.zerohandlepoint.x,top:val});
+    } : function(val){
+      handle.set({left:val,top:Plugin.zerohandlepoint.y});
     };
     var posToHandlePos = function(pos){
-      return {left:zerohandlepoint.x+(pos.x-minpoint.x)*handlescale.x,top:zerohandlepoint.y+(pos.y-maxpoint.y)*handlescale.y};
+      return {
+        left:Plugin.zerohandlepoint.x+(pos.x-Plugin.minpoint.x)*Plugin.handlescale.x,
+        top:Plugin.zerohandlepoint.y+(pos.y-Plugin.maxpoint.y)*Plugin.handlescale.y
+      };
     };
-    var placeHandle = function(p){
+    var placeHandle = function(p, animation_params){
+      ///TODO: do not place if not changed ...
       //console.log('mouse',p.x,p.y);
       p.x-=corr.x;
       p.y-=corr.y;
-      var val = posToValue(p);
-      var pos = valueToPos(val);
+      var val = Plugin.posToValue(p);
+      var pos = Plugin.valueToPos(val);
       var pthp = posToHandlePos(pos);
-      //console.log('point',p.x,p.y,'=> value',val,'=> pos',pos.x,pos.y,'=> handle pos',pthp.left,pthp.top);
-      handle.set(pthp);
+      if (animation_params && animation_params.duration) {
+        handle.animate (pthp, extend (animation_params, {easing:Easings.easeLinear}));
+      }else{
+        handle.set(pthp);
+      }
       if(lastvalue!==val){
         lastvalue=val;
         changecb && changecb.call(svgelem,val);
@@ -263,53 +452,72 @@
     };
     area.on('mouse:move',function(e){
       if(svgelem.dragActive){
+        corr = Plugin.mouseClick_correction();
         placeHandle(e.e);
       }
     });
     fabric.Clickable(area,{clickcb:function(e){
-      initScales();
-      corr=calccorr();
+      corr = Plugin.mouseClick_correction();
       placeHandle(e.e);
     }});
-    svgelem.setup = function(obj){
+
+    svgelem.getMarks = function () {
+      return Plugin.getMarks();
+    }
+
+    svgelem.setup = function(obj, cb){
+      if (!Plugin.setup(obj)) return;
       setupdone = false;
-      if(typeof obj.min === 'undefined' || typeof obj.max === 'undefined' || typeof obj.step === 'undefined'){
-       return;
-      } 
       this.sliderSetup = obj;
-      if(zerohandlepoint){
+      handle.notify_on_geometry_ready (function () {
         initScales();
-        //handle.set({left:zerohandlepoint.x});
+        setHandlePos(0);
+        fabric.util.isFunction (cb) && cb();
+      });
+      return;
+
+
+
+
+      if(Plugin.zerohandlepoint){
+        //initScales();
         setHandlePos(0);
         svgelem.invokeOnCanvas('renderAll');
       }
     };
-    svgelem.stepUp = function(){
-      initScales();
-      if(laststepindex>=steps.length-1){return;}
-      laststepindex++;
+
+    svgelem.stepUp = function(animation_params){
+      //initScales();
+      if (!Plugin.upAllowed()) { return; }
       corr={x:0,y:0};
-      placeHandle(pointOfMark(steps[laststepindex].mark));
+      placeHandle(Plugin.inc(), animation_params);
     };
-    svgelem.stepDown = function(){
-      initScales();
-      if(laststepindex<1){return;}
-      laststepindex--;
+
+    svgelem.stepDown = function(animation_params){
+      //initScales();
+      if (!Plugin.downAllowed) return;
       corr={x:0,y:0};
-      placeHandle(pointOfMark(steps[laststepindex].mark));
+      placeHandle(Plugin.dec(), animation_params);
     };
-    svgelem.setMin = function(){
-      initScales();
-      laststepindex=0;
+
+    svgelem.setMin = function(animation_params){
+      //initScales();
       corr={x:0,y:0};
-      placeHandle(pointOfMark(steps[laststepindex].mark));
+      placeHandle(Plugin.min(), animation_params);
     };
-    svgelem.setMax = function(){
-      initScales();
-      laststepindex=steps.length-1;
+
+    svgelem.setMax = function(animation_params){
+      //initScales();
       corr={x:0,y:0};
-      placeHandle(pointOfMark(steps[laststepindex].mark));
+      placeHandle(Plugin.max(), animation_params);
     };
+
+
+    svgelem.setIndex = function (i, animation_params) {
+      //initScales();
+      corr={x:0,y:0};
+      placeHandle(Plugin.index(i), animation_params);
+    }
     return svgelem;
   };
 
