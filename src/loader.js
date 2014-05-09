@@ -53,10 +53,13 @@
       var df_rn = resourcename.replace(/\//g,'_').replace('\.svg','');
       svg.setResourceName (df_rn);
       if (svg.background_layer) {
-        svg.background_layer.dispose(fabric.activeCanvasInstance, df_rn);
-        delete svg.background_layer;
+        svg.background_layer.dispose(fabric.activeCanvasInstance, df_rn, function () {
+          delete svg.background_layer;
+          loaded(svg);
+        });
+      }else{
+        loaded(svg);
       }
-      loaded(svg);
     });
   };
 

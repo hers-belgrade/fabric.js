@@ -7,7 +7,7 @@
     initialize: function (objects, options) {
       this.callSuper('initialize', objects, options);
     },
-    dispose: function (canvas, resourcename) {
+    dispose: function (canvas, resourcename, done) {
       ///ok, first, you should load requiered images despite SVG is not activated yet ...
 
       var pl = [];
@@ -34,6 +34,7 @@
           canvas.reportBackgroundImage(o.id, offel.toDataURL(), resourcename);
           offel.width = offel.width;
         }
+        fabric.util.isFunction(done) && done();
       });
     }
   });
