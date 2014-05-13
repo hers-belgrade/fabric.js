@@ -11,6 +11,9 @@
 		// 2.allow drag on this element ...
 		// 3.remove need for additional, external transform matrices ....
 
+    if (svgobj._ws_initialized) return svgobj;
+    svgobj._ws_initialized = true;
+
 		if (svgobj.type === 'use') {
       fabric.DynamicUse(svgobj);
 		}
