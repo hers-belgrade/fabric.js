@@ -54,6 +54,10 @@
 		return _register_to_list.call(this, list, cb, ctx);
 	}
 
+  StateManager.prototype.unregisterAll = function () {
+    this.registrants = {};
+  }
+
 	StateManager.prototype.unregister = function (id_map) {
 		for (var i in id_map) {
 			this.registrants[i][id_map[i]] = undefined;
@@ -65,9 +69,11 @@
 
 	StateManager.prototype.setState = function (s) {
 		if (this.state === s) return undefined;
+    //console.log('will set state on',s, this.svgelem.id);
 
 		var old = this.state;
 		this.state = s;
+    //console.log('registrants: old', (this.registrants[old] || []).length, 'new:', (this.registrants[s] || []).length);
 
 		for (var i in this.registrants[old]) {
 			_execute.call(this, this.registrants[old][i], 'out', old);

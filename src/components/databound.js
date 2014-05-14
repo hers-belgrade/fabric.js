@@ -39,6 +39,7 @@
 			//console.log('conditions said no', svgelem.id, value, svgelem._conditions.conditions);
 			return;
 		}
+    //console.log('conditions said ok', svgelem.id, value);
 		if (isFunction(svgelem._db.formula)) value = svgelem._db.formula(value);
     if(typeof svgelem.setScalar === 'function'){
       svgelem.setScalar(value);
@@ -48,10 +49,15 @@
   };
 
 	function prepareValue (svgelem, config, init_val) {
+    if (svgelem._ct) {
+      svgelem.off('conditions:true', svgelem._ct);
+      delete svgelem._ct;
+    }
 		svgelem._db = { formula : (isFunction(config.calc)) ? config.calc : undefined };
 		setScalar(svgelem, init_val);
 		if (config.conditions) {
-			svgelem.on ('conditions:true' , function () { setScalar(svgelem, svgelem._readScalar()); });
+      svgelem._ct = function () { setScalar(svgelem, svgelem._readScalar()); };
+			svgelem.on ('conditions:true' , svgelem._ct);
 			svgelem._conditions = new ConditionHandler(svgelem, config);
 		}
 	}
@@ -62,6 +68,7 @@
         this._startFollowers();
       }
     });
+
 		svgelem._readScalar = function () {
 			return config.follower.scalars[config.scalarname];
 		}
