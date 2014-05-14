@@ -21,7 +21,10 @@
 
 	ConditionHandler.prototype.isAllowed = function () {
 		for (var i in this.conditions) {
-			if (!this.conditions[i]) return false;
+			if (!this.conditions[i]) {
+        //console.log(i, 'is false');
+        return false;
+      }
 		}
 		return true;
 	}

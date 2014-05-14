@@ -59,6 +59,9 @@
 			this.registrants[i][id_map[i]] = undefined;
 		}
 	}
+  StateManager.prototype.dropState = function () {
+    delete this.state;
+  }
 
 	StateManager.prototype.setState = function (s) {
 		if (this.state === s) return undefined;
@@ -78,7 +81,11 @@
 
 
 	fabric.Stateable = function (svgelem, config) {
-		svgelem._stateable = new StateManager(svgelem, config.states);
+    if (svgelem._stateable) {
+      svgelem._stateable.dropState();
+    }else{
+		  svgelem._stateable = new StateManager(svgelem, config.states);
+    }
 		return svgelem;
 	}
 })(typeof exports !== 'undefined' ? exports : this);
