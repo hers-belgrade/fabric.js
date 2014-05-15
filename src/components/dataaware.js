@@ -51,6 +51,13 @@
       }
       setDataAwareListener.call(this,'scalars',this.follower.listenToScalars(this,listenerpack));
     };
+
+    svgelem.listenToCollection = function (name, listenerpack) {
+      if(!this.follower){
+        return;
+      }
+      setDataAwareListener.call(this,'collection',this.follower.listenToCollection(this,name,listenerpack));
+    }
     svgelem.listenToCollections = function(listenerpack){
       if(!this.follower){
         return;
@@ -58,6 +65,7 @@
       setDataAwareListener.call(this,'collections',this.follower.listenToCollections(this,listenerpack));
     };
     svgelem.unfollow = function(){
+      //console.log('svgelem ' ,svgelem.id,' will dump ',Object.keys(this.dataListeners).length);
       for(var i in this.dataListeners){
         this.dataListeners[i].destroy();
       }

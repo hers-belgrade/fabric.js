@@ -288,11 +288,19 @@
         y: pointer.y - this._offset.top
       };
     },
-
-    reportBackgroundImage : function (name, content, resource_name) {
-      //console.log('=====>', name, content, resource_name);
+    reportBackgroundImages : function (map, resource_name) {
       if (!this._dom_background_style) return;
-      this._dom_background_style.innerHTML = this._dom_background_style.innerHTML+fabric.util.createStyleRecord(".fabric_"+this.id+"_"+resource_name+"_"+name, {'background-image':"url("+content+")"})+"\n";
+      for (var name in map) {
+        var selector = "fabric_"+this.id+"_"+resource_name+"_"+name;
+        var s = fabric.document.getElementById('fabric_style_el_'+selector);
+        if (!s) {
+          s = fabric.document.createElement('style');
+          s.setAttribute('id', selector);
+          this._dom_background_style.appendChild(s);
+        }
+
+        s.sheet.insertRule("."+selector+" { background-image: url("+map[name]+"); }",0);
+      }
     },
 
     setBackground : function (resource_name, name) {
@@ -310,10 +318,13 @@
       var style_id = this.id+'_dom_background_style';
       var style = fabric.document.getElementById(style_id);
       if (!style) {
-        style = fabric.document.createElement('style');
+        style = fabric.document.createElement('div');
         style.setAttribute('id', style_id);
         fabric.document.getElementsByTagName('body')[0].appendChild(style);
-        style.innerHTML = ".fabric_no_image {background-image: none;}\n";
+
+        var nm = fabric.document.createElement('style');
+        nm.innerHTML = ".fabric_no_image {background-image: none;}\n";
+        style.appendChild(nm);
       }
 
       fabric.util.setStyle(this.lowerCanvasEl, {

@@ -30,6 +30,14 @@
 
     ///should I consider some destroy method in order to do nice clean-up and avoid 'total recall' : multiple responses to a single click?
     if (svgelem._resource_button_inited) return svgelem;
+
+    function clicked(e){
+      if(!svgelem.enabled){return;}
+      renderState('enabled');
+      config.clickcb.call(config.ctx, e);
+			if (config.stopPropagation) e.e.propagationStopped = true;
+    };
+
     svgelem._resource_button_inited = true;
 
 
@@ -62,12 +70,6 @@
       var outercb = config[cbname];
       outercb && outercb.apply(config.ctx,Array.prototype.slice.call(arguments,1));
       ra();
-    };
-    function clicked(e){
-      if(!svgelem.enabled){return;}
-      renderState('enabled');
-      config.clickcb.call(config.ctx, e);
-			if (config.stopPropagation) e.e.propagationStopped = true;
     };
 
 		var old_hide = svgelem.hide;

@@ -94,11 +94,17 @@
         }
       }
       var self = this;
+
+      var started = (new Date()).getTime();
+      console.log('loadAndForget issued', this.id);
+
+
       var isItDone = function (p) {
         delete map[p];
         delete self._image_cache[p];
         delete self._path_cache[p];
         if (Object.keys(map).length > 0) return;
+        console.log('loading images completely done in', (new Date()).getTime() - started);
         done();
       }
 
@@ -109,6 +115,7 @@
           map[p] = true;
           var img = self._image_cache[p];
           img.onload = function () {
+            console.log('image done within', (new Date()).getTime() - started);
             isItDone(p);
             delete img.onload;
           }
@@ -136,8 +143,12 @@
     activate: function(done){
       if (this._activated) return;
       this._activated = true;
+      var started = (new Date()).getTime();
       for (var i in this._path_cache) this._path_cache[i] = false;
-      load_cache.call(this, done);
+      load_cache.call(this, function () {
+        console.log('svg activation process done in', (new Date()).getTime() - started);
+        fabric.util.isFunction(done) && done.apply(this, arguments);
+      });
       this.fire('svg:activated');
     },
     deactivate: function(){
