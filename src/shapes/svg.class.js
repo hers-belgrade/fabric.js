@@ -141,13 +141,14 @@
     },
 
     activate: function(done){
+      var self = this;
       if (this._activated) return;
       this._activated = true;
       var started = (new Date()).getTime();
       for (var i in this._path_cache) this._path_cache[i] = false;
       load_cache.call(this, function () {
-        console.log('svg activation process done in', (new Date()).getTime() - started);
         fabric.util.isFunction(done) && done.apply(this, arguments);
+        self.fire('svg:activated_and_loaded');
       });
       this.fire('svg:activated');
     },
