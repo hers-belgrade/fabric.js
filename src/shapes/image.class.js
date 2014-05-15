@@ -69,6 +69,11 @@
       }else if ('string' === typeof(element)) {
         this._elementURL = element;
       }
+      if(this.srcToSet){
+        var sts = this.srcToSet;
+        delete this.srcToSet;
+        this.setSrc(sts);
+      }
       return this;
     },
 
@@ -191,6 +196,41 @@
      */
     getSrc: function() {
       return this.getElement().src || this.getElement()._src;
+    },
+
+    setSrc: function(url) {
+      if(!url){
+        var oe = this.originalElement;
+        delete this.originalElement;
+        this.setElement(oe);
+        return;
+      }
+      var w,h;
+      if(this._element && this._element.image){
+        w = this._element.image.width;
+        h = this._element.image.height;
+        if(!(w&&h)){
+          setTimeout((function(t,url){
+            return function(){
+              t.setSrc(url)
+            };
+          })(this,url),5);
+          return;
+        }
+      }else{
+        this.srcToSet = url;
+      }
+      fabric.util.loadImage(url,function(img){
+        if(!this.originalElement){
+          this.originalElement=this._element;
+        }
+        img.width=w+'';
+        img.height=h+'';
+        //img.width='50';
+        //img.height='60';
+        var ni = new fabric.StandardImage(this.getSvgEl(),img);
+        this.setElement(ni);
+      },this);
     },
 
     /**
