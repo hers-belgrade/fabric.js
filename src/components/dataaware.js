@@ -65,7 +65,7 @@
       setDataAwareListener.call(this,'collections',this.follower.listenToCollections(this,listenerpack));
     };
     svgelem.unfollow = function(){
-      console.log('svgelem ' ,svgelem.id,' will dump ',Object.keys(this.dataListeners).length);
+      //console.log('svgelem ' ,svgelem.id,' will dump ',Object.keys(this.dataListeners).length);
       for(var i in this.dataListeners){
         this.dataListeners[i].destroy();
       }
