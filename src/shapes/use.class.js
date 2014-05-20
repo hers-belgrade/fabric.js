@@ -31,29 +31,32 @@
       return obj;
     },
     setUsedObj: function(object) {
-			var self = this;
+      if(!this._rasterHandlers){
+        var self = this;
+        this._rasterHandlers = {
+          create: function (sprite) {
+            self.fire('raster:created', sprite);
+          },
+          changed: function (sprite) {
+            self.fire('raster:changed', sprite);
+          }
+        }
+      }
 
-			if (this.usedObj) {
-				this.usedObj.off('raster:created', this._rasterHandlers.create);
-				this.usedObj.off('raster:changed', this._rasterHandlers.changed);
-				delete this._rasterHandlers;
-			}
 
+      if (this.usedObj) {
+        this.usedObj.off('raster:created', this._rasterHandlers.create);
+        this.usedObj.off('raster:changed', this._rasterHandlers.changed);
+        //delete this._rasterHandlers;
+        delete this.usedObj;
+      }
 
-			this._rasterHandlers = {
-				create: function (sprite) {
-					self.fire('raster:created', sprite);
-				},
-				changed: function (sprite) {
-					self.fire('raster:changed', sprite);
-				}
-			}
 
       //this.usedObj = object.clone();
       this.usedObj = this._prepareUsedObj(object);
       this.usedObj.group = this;
-			this.usedObj.on('raster:created', this._rasterHandlers.create);
-			this.usedObj.on('raster:changed', this._rasterHandlers.changed);
+      this.usedObj.on('raster:created', this._rasterHandlers.create);
+      this.usedObj.on('raster:changed', this._rasterHandlers.changed);
       delete this['xlink:href'];
     },
     toObject: function (propertiesToInclude) {
@@ -80,29 +83,29 @@
       }
       return this.usedObj;
     },
-		setRasterArea: function (area_params, lc_props) {
-			var uo = this.getUsedObj();
-			if (!uo) return;
-			return uo.setRasterArea(area_params, lc_props);
-		},
-		rasterize: function (rasterize_params) {
-			var uo = this.getUsedObj();
-			if (!uo) return; //for now
-			return uo.rasterize(rasterize_params);
-		},
-		getRaster: function () {
-			var uo = this.getUsedObj();
-			if (!uo) return; //for now
-			return uo.getRaster();
-		},
-		
-		branchConditionalEachObjectRecursive: function (cb) {
-			var uo = this.getUsedObj();
-			if(uo){
-				!uo.nonIteratable && uo.branchConditionalEachObjectRecursive && uo.branchConditionalEachObjectRecursive(cb);
-				cb(uo);
-			}
-		},
+    setRasterArea: function (area_params, lc_props) {
+      var uo = this.getUsedObj();
+      if (!uo) return;
+      return uo.setRasterArea(area_params, lc_props);
+    },
+    rasterize: function (rasterize_params) {
+      var uo = this.getUsedObj();
+      if (!uo) return; //for now
+      return uo.rasterize(rasterize_params);
+    },
+    getRaster: function () {
+      var uo = this.getUsedObj();
+      if (!uo) return; //for now
+      return uo.getRaster();
+    },
+    
+    branchConditionalEachObjectRecursive: function (cb) {
+      var uo = this.getUsedObj();
+      if(uo){
+        !uo.nonIteratable && uo.branchConditionalEachObjectRecursive && uo.branchConditionalEachObjectRecursive(cb);
+        cb(uo);
+      }
+    },
 
     forEachObjectRecursive: function(cb){
       var uo = this.getUsedObj();
