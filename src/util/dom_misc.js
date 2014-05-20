@@ -74,13 +74,16 @@
   }
 
   function replaceClass(element, oldClassName, newClassName) {
-    if (!element || !element.className) return;
+    if (!element) return;
+    if (!element.className) {
+      addClass(element, className);
+      return;
+    }
     if (oldClassName) {
       var r = new RegExp (oldClassName);
       element.className = element.className.replace(r,newClassName);
     }else{
-      /// are you sure this is true?
-      element.setAttribute('class', newClassName);
+      addClass(element, newClassName);
     }
   }
 
