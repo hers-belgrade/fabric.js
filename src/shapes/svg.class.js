@@ -96,7 +96,7 @@
       var self = this;
 
       var started = (new Date()).getTime();
-      console.log('loadAndForget issued', this.id);
+      //console.log('loadAndForget issued', this.id);
 
 
       var isItDone = function (p) {
@@ -104,7 +104,7 @@
         delete self._image_cache[p];
         delete self._path_cache[p];
         if (Object.keys(map).length > 0) return;
-        console.log('loading images completely done in', (new Date()).getTime() - started);
+        //console.log('loading images completely done in', (new Date()).getTime() - started);
         done();
       }
 
@@ -115,7 +115,7 @@
           map[p] = true;
           var img = self._image_cache[p];
           img.onload = function () {
-            console.log('image done within', (new Date()).getTime() - started);
+            //console.log('image done within', (new Date()).getTime() - started);
             isItDone(p);
             delete img.onload;
           }

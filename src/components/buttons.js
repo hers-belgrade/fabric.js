@@ -31,13 +31,14 @@
     ///should I consider some destroy method in order to do nice clean-up and avoid 'total recall' : multiple responses to a single click?
     if (svgelem._resource_button_inited) return svgelem;
 
-    function clicked(e){
-      if(!svgelem.enabled){return;}
-      renderState('enabled');
-      config.clickcb.call(config.ctx, e);
-			if (config.stopPropagation) e.e.propagationStopped = true;
-    };
-
+    svgelem._clicked_cb = (function (_config) {
+        return function (e){
+          if(!svgelem.enabled){return;}
+          renderState('enabled');
+          _config.clickcb.call(_config.ctx, e);
+          if (_config.stopPropagation) e.e.propagationStopped = true;
+        };
+    })(config);
     svgelem._resource_button_inited = true;
 
 
@@ -94,7 +95,7 @@
 			return this;
 		};
 
-    var clickconfig = {ctx:config.ctx||svgelem,clickcb:clicked,downcb:function(e){processState('pressed',e);}};
+    var clickconfig = {ctx:config.ctx||svgelem,clickcb:svgelem._clicked_cb,downcb:function(e){processState('pressed',e);}};
     fabric.Clickable(fabric.Hoverable(target,{outcb:function(e){processState('enabled',e);},overcb:function(e){processState('hovered',e);}}),clickconfig);
     if(config.initialState==='enabled'){
       svgelem.enable();

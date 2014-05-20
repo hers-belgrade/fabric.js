@@ -53,10 +53,10 @@
       var df_rn = resourcename.replace(/\//g,'_').replace('\.svg','');
       svg.setResourceName (df_rn);
       var btmr = new Date();
-      console.log('preparing background layer');
+      //console.log('preparing background layer');
       if (svg.background_layer) {
         svg.background_layer.dispose(fabric.activeCanvasInstance, df_rn, function () {
-          console.log('background layer ready. Processing backgrounds took', (new Date()).getTime() - btmr.getTime(),'ms');
+          //console.log('background layer ready. Processing backgrounds took', (new Date()).getTime() - btmr.getTime(),'ms');
           delete svg.background_layer;
           loaded(svg);
         });

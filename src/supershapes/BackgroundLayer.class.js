@@ -16,19 +16,19 @@
       });
       var self = this;
       this.getSvgEl().loadAndForget(pl, function () {
-        console.log('images loading done');
+        //console.log('images loading done');
         var started = (new Date()).getTime();
         var offel = fabric.util.createCanvasElement();
         offel.width = fabric.masterSize.width;
         offel.height = fabric.masterSize.height;
-        console.log('offel created in', (new Date()).getTime() - started);
+        //console.log('offel created in', (new Date()).getTime() - started);
 
         self.show();
         var context = offel.getContext('2d');
         context._currentTransform = [];
         var unit = [1,0,0,1,0,0];
         var svg = self.getSvgEl();
-        console.log('render started in', (new Date()).getTime() - started);
+        //console.log('render started in', (new Date()).getTime() - started);
 
         var to_report = {};
 
@@ -37,10 +37,10 @@
           var o = self._objects[i];
           o.show();
           o.render(context);
-          console.log('render',o.id,' done in', (new Date()).getTime() - started, 'resource name is',resourcename.length, resourcename);
+          //console.log('render',o.id,' done in', (new Date()).getTime() - started, 'resource name is',resourcename.length, resourcename);
           to_report[o.id] = offel.toDataURL();
           //canvas.reportBackgroundImage(o.id, offel.toDataURL(), resourcename);
-          console.log('report',o.id,' done in', (new Date()).getTime() - started);
+          //console.log('report',o.id,' done in', (new Date()).getTime() - started);
           offel.width = offel.width;
         }
         canvas.reportBackgroundImages(to_report, resourcename);
