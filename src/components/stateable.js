@@ -69,7 +69,8 @@
 
 	StateManager.prototype.setState = function (s) {
 		if (this.state === s) return undefined;
-    //console.log('will set state on',s, this.svgelem.id);
+    (this.svgelem.id === 'double_up_screen') && console.log(' ===> will set state on',s, this.svgelem.id, this.registrants[s].length);
+
 
 		var old = this.state;
 		this.state = s;
