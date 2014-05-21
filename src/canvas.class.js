@@ -289,6 +289,16 @@
       };
     },
     reportBackgroundImages : function (map, resource_name) {
+      if (!this._backgrounds) this._backgrounds = {};
+      for (var name in map) {
+        var selector = "fabric_"+this.id+"_"+resource_name+"_"+name;
+        var img = new fabric.StandardImage(null, (new Image()));
+        img.setSrc(map[name]);
+        this._backgrounds[selector] = new fabric.Image(img);
+      }
+      return;
+
+
       if (!this._dom_background_style) return;
       for (var name in map) {
         var selector = "fabric_"+this.id+"_"+resource_name+"_"+name;
@@ -304,17 +314,23 @@
     },
 
     setBackground : function (resource_name, name) {
+      if (!this._backgrounds) return;
+      this._active_background = this._backgrounds['fabric_'+this.id+'_'+resource_name+'_'+name];
+      return;
       var class_name = 'fabric_'+this.id+'_'+resource_name+'_'+name;
       fabric.util.replaceClass(this.lowerCanvasEl, this._dom_background_lower_current_class, class_name);
       this._dom_background_lower_current_class = class_name;
     },
 
     removeBackground : function () {
+      delete this._active_background;
+      return;
       fabric.util.removeClass(this.lowerCanvasEl, this._dom_background_lower_current_class);
       delete this._dom_background_lower_current_class;
     },
 
     _createDOMBackgroundSupport : function () {
+      return;
       var style_id = this.id+'_dom_background_style';
       var style = fabric.document.getElementById(style_id);
       if (!style) {

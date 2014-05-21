@@ -737,6 +737,10 @@
 
       ctxToDrawOn._currentTransform = [1,0,0,1,0,0];
       var debugctx = this.debug ? this.contextTop : null;
+
+      if (this._active_background) {
+        this._active_background.render(ctxToDrawOn, debugctx);
+      }
       for(var i = 0; i< this._objects.length; i++){
         this._objects[i].render(ctxToDrawOn,debugctx);
       }
