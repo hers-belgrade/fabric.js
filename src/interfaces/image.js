@@ -70,7 +70,10 @@
     if (arguments.length === 5) {
       return (this.image && cw && ch) ? ctx.drawImage(this.image, cx, cy, cw, ch) : undefined;
     }
-    (this.image && cw && ch && tw && th) && ctx.drawImage(this.image, cx, cy, cw, ch, tx, ty, tw, th);
+    try {
+      (this.image && cw && ch && tw && th) && ctx.drawImage(this.image, cx, cy, cw, ch, tx, ty, tw, th);
+    }catch (e) {
+    }
   }
 
   StandardImage.prototype.width = function () {return this.image ? this.image.width : 0;}
