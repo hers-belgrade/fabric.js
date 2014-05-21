@@ -99,7 +99,7 @@
           _lf(index+1);
         };
         var rn = root+'/'+picname+'.'+type;
-        console.log('loading',fabric.workingDirectory,picname,type,rn);
+        //console.log('loading',fabric.workingDirectory,picname,type,rn);
         switch(type){
           case 'png':
             return fabric.Image.fromURL(rn,resourceloaded);

@@ -52,6 +52,7 @@
     'transform':        'transformMatrix',
     'gradientTransform':'gradientTransformMatrix',
     'text-align':       'textAlign',
+    'text-anchor':      'textAnchor'
   };
 
   var colorAttributes = {
@@ -100,8 +101,7 @@
     
     isArray = Object.prototype.toString.call(value) === '[object Array]';
 
-    // TODO: need to normalize em, %, pt, etc. to px (!)
-    var parsed = isArray ? value.map(parseFloat) : parseFloat(value);
+    var parsed = isArray ? value.map(parseFloat) : ((isNaN(value)) ? value : parseFloat(value));
 
     return (!isArray && isNaN(parsed) ? value : parsed);
   }
@@ -365,9 +365,11 @@
     if(typeof value !== 'string'){return;}
 
     // TODO: support non-px font size
-    var match = value.match(/(normal|italic)?\s*(normal|small-caps)?\s*(normal|bold|bolder|lighter|100|200|300|400|500|600|700|800|900)?\s*(\d+)px(?:\/(normal|[\d\.]+))?\s+(.*)/);
+    var match = value.match(/(normal|italic)?\s*(normal|small-caps)?\s*(normal|bold|bolder|lighter|100|200|300|400|500|600|700|800|900)?\s*([\d\.]+)px(?:\/)(normal|[\d\.]+\%)?\s*(.*)/);
 
-    if (!match) return;
+    if (!match) {
+      return;
+    }
 
     var fontStyle = match[1];
     // Font variant is not used
@@ -390,6 +392,9 @@
       oStyle.fontFamily = fontFamily;
     }
     if (lineHeight) {
+      if (lineHeight.charAt(lineHeight.length-1) === '%') {
+        lineHeight = parseFloat(lineHeight)/100;
+      }
       oStyle.lineHeight = lineHeight === 'normal' ? 1 : lineHeight;
     }
   }
@@ -407,6 +412,7 @@
         attr, value;
 
     if (!style) return oStyle;
+    var moj_style = style;
 
     if (typeof style === 'string') {
       style.replace(/;$/, '').split(';').forEach(function (chunk) {
@@ -439,6 +445,16 @@
           oStyle[attr] = value;
         }
       }
+    }
+
+    if ('undefined' === typeof(oStyle.textAlign) && 'undefined' !== typeof(oStyle.textAnchor)) {
+      switch(oStyle.textAnchor) {
+        case 'start': oStyle.textAlign = 'left';break;
+        case 'end' : oStyle.textAlign = 'right';break;
+      }
+    }
+    if (oStyle.fontFamily === 'Digital-7') {
+      console.log(JSON.stringify(oStyle), JSON.stringify(moj_style));
     }
 
     return oStyle;

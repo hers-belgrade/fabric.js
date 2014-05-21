@@ -272,11 +272,11 @@
     fabric.util.getScript = getScript;
   })();
 
-  function prepareFonts (fonts) {
-    var offel = fabric.document.createElement('canvas');
-    offel.width = 200;
-    offel.height= 200;
-    var ctx = offel.getContext('2d');
+  function prepareFonts (fonts, el) {
+    el = el ? el : fabric.document.createElement('canvas');
+    el.width = 200;
+    el.height= 200;
+    var ctx = el.getContext('2d');
     for (var i in fonts) {
       ctx.font = '30px '+fonts[i];
       ctx.fillText('TESTME', 0,0);

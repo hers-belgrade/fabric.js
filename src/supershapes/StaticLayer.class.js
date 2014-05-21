@@ -63,7 +63,7 @@
     }
 
     if (!this._cache_canvas) { 
-      console.log('will create _cache_canvas');
+      //console.log('will create _cache_canvas');
       this._cache_canvas = svgelem.produceCanvas();
     }
     var offel = this._cache_canvas;
@@ -124,9 +124,9 @@
       });
 
       var ls = self._objects.slice();
-      console.log('sublayers',this.group.id, ls);
+      //console.log('sublayers',this.group.id, ls);
       if(ls.length%2){
-        console.log( "Static layer cannot contain an odd number of sub-layers" );
+        console.warn( "Static layer cannot contain an odd number of sub-layers" );
         throw "Static layer cannot contain an odd number of sub-layers";
       }
       var fordeletion = [];
@@ -141,7 +141,7 @@
         for(var j in lm._objects){
           var r = lm._objects[j];
           if(r.type !== 'rect'){
-            console.log( "Only rects allowed on map sub-layer of the static layer. "+j+" is not a rect on sub-layer "+lmn );
+            console.warn( "Only rects allowed on map sub-layer of the static layer. "+j+" is not a rect on sub-layer "+lmn );
             throw "Only rects allowed on map sub-layer of the static layer. "+j+" is not a rect on sub-layer "+lmn;
           }
           if(!r.id){
@@ -157,7 +157,7 @@
         for(var j in l._objects){
           var id = l._objects[j].id;
           if(!l.rectMap[id]){
-            console.log('on',l.id,'static',id,'has no rect');
+            console.warn('on',l.id,'static',id,'has no rect');
           }
         }
         fordeletion.push(self[lmn]);
