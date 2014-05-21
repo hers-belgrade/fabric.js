@@ -453,10 +453,6 @@
         case 'end' : oStyle.textAlign = 'right';break;
       }
     }
-    if (oStyle.fontFamily === 'Digital-7') {
-      console.log(JSON.stringify(oStyle), JSON.stringify(moj_style));
-    }
-
     return oStyle;
   }
 

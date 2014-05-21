@@ -30,7 +30,7 @@
     _prepareUsedObj: function (obj){
       return obj;
     },
-    setUsedObj: function(object) {
+    setUsedObj: function(obj) {
       if(!this._rasterHandlers){
         var self = this;
         this._rasterHandlers = {
@@ -42,9 +42,10 @@
           }
         }
       }
-
-
       if (this.usedObj) {
+        if(this.usedObj===obj){
+          //return;
+        }
         this.usedObj.off('raster:created', this._rasterHandlers.create);
         this.usedObj.off('raster:changed', this._rasterHandlers.changed);
         //delete this._rasterHandlers;
@@ -52,8 +53,8 @@
       }
 
 
-      //this.usedObj = object.clone();
-      this.usedObj = this._prepareUsedObj(object);
+      //this.usedObj = obj.clone();
+      this.usedObj = this._prepareUsedObj(obj);
       this.usedObj.group = this;
       this.usedObj.on('raster:created', this._rasterHandlers.create);
       this.usedObj.on('raster:changed', this._rasterHandlers.changed);
