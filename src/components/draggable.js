@@ -195,7 +195,11 @@
   }
 
   RSP_Discrete.prototype.getMarks = function () {
-    return this._steps.map(function (v) {return v.mark;});
+
+    ///TODO: scale missing?
+    return this._steps.map(function (v) {
+      return v.mark - this.minpoint.x;
+    },this);
   }
 
   RSP_Discrete.prototype._currentPointOfMark = function () {
