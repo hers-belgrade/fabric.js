@@ -55,10 +55,8 @@
 			return ret;
 		}
 
-		svgelem.hide = function () {
-			//console.log('hide done', this.id);
-			var ret = old_hide.apply(this, arguments);
-
+    svgelem.forceRemoval = function () {
+      //console.log('will do force removal ...');
 			///if I'm visible for mouse do remove 
 			if (this.wantsMouse) {
 				//console.log('should remove ', this.id, 'BUCKET');
@@ -78,6 +76,13 @@
 					self.invokeOnCanvas('removeFromMouseListeners', o);
 				}
 			});
+
+    }
+
+		svgelem.hide = function () {
+			//console.log('hide done', this.id);
+			var ret = old_hide.apply(this, arguments);
+      this.forceRemoval();
 			return ret;
 		}
 
