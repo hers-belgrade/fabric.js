@@ -451,6 +451,8 @@
 
     addToMouseListeners: function (obj){
       if(obj.wantsMouse && !obj.addedToCanvasMouseListeners){//this._mouseListeners.indexOf(obj)<0){
+
+        obj.id === 'slot_game_frame_hotspot' && (console.log('added ',obj.id));
         //obj.id === 'slot_game_frame_hotspot' && (console.log('added ',obj.id) || console.trace());
         this._mouseListeners.push(obj);
         obj.addedToCanvasMouseListeners=true;
@@ -462,6 +464,7 @@
     removeFromMouseListeners: function (obj){
       if(obj.addedToCanvasMouseListeners){
         var mii = this._mouseListeners.indexOf(obj);
+        obj.id === 'slot_game_frame_hotspot' && (console.log('remove?',obj.id, mii));
         //obj.id === 'slot_game_frame_hotspot' && (console.log('remove?',obj.id, mii) || console.trace());
         if(mii>=0){
           delete obj.addedToCanvasMouseListeners;
