@@ -198,7 +198,7 @@
 
     ///TODO: scale missing?
     return this._steps.map(function (v) {
-      return v.mark - this.minpoint.x;
+      return v.mark - ((this._config.vertical) ? this.minpoint.y : this.minpoint.x) ;//(this._config.vertical) ? this.minpoint.y : this.minpoint.x;
     },this);
   }
 
@@ -431,8 +431,8 @@
     };
     var posToHandlePos = function(pos){
       return {
-        left:Plugin.zerohandlepoint.x+(pos.x-Plugin.minpoint.x)*Plugin.handlescale.x,
-        top:Plugin.zerohandlepoint.y+(pos.y-Plugin.maxpoint.y)*Plugin.handlescale.y
+        left:/*Plugin.zerohandlepoint.x+*/(pos.x-Plugin.minpoint.x)*Plugin.handlescale.x,
+        top:/*Plugin.zerohandlepoint.y+*/(pos.y-Plugin.maxpoint.y)*Plugin.handlescale.y
       };
     };
     var placeHandle = function(p, animation_params){

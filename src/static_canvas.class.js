@@ -462,7 +462,7 @@
     removeFromMouseListeners: function (obj){
       if(obj.addedToCanvasMouseListeners){
         var mii = this._mouseListeners.indexOf(obj);
-        (obj.id === 'slot_game_frame_hotspot' || obj.id === 'spin_button_hotspot' || obj.id === 'decision_button_hotspot') && (console.log('remove?',obj.id, obj._cntr, mii, obj._tt));
+        //(obj.id === 'slot_game_frame_hotspot' || obj.id === 'spin_button_hotspot' || obj.id === 'decision_button_hotspot') && (console.log('remove?',obj.id, obj._cntr, mii, obj._tt));
         if(mii>=0){
           delete obj.addedToCanvasMouseListeners;
           this._mouseListeners.splice(mii,1);
