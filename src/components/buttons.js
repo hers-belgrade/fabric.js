@@ -30,6 +30,7 @@
 
     ///should I consider some destroy method in order to do nice clean-up and avoid 'total recall' : multiple responses to a single click?
     if (svgelem._resource_button_inited) return svgelem;
+    delete svgelem._clicked_cb;
 
     svgelem._clicked_cb = (function (_config) {
         return function (e){

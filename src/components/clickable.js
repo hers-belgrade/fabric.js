@@ -10,6 +10,7 @@
     var longPressTimeout;
 
     svgelem.on('mouse:down',function(e){
+      //console.log('mouse down', this.id, this.getUsedObj ? this.getUsedObj()._tt : '');
       if(this.addedToCanvasMouseListeners && this.isVisible() && this.enabled){
         if(!mouseEvents.pressed){
           e.e.listeners.push(svgelem);

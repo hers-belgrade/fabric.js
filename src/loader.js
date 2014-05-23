@@ -106,6 +106,7 @@
           case 'sprites':
             return _loadSprites(picname,resourceloaded);
           case 'svg':
+            console.log('loading',rn);
             return _loadSVG(rn,resourceloaded);
           default:
             return _lf(index+1);

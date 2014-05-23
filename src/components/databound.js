@@ -15,7 +15,7 @@
 		if (!(name in this.conditions)) return;
 		this.conditions[name] = value;
 		if (!this.isAllowed()) return;
-		//console.log('all conditions met ',this.conditions);
+		//console.log(this.el.id, 'all conditions met ',this.conditions);
 		this.el.fire('conditions:true');
 	}
 
@@ -36,10 +36,10 @@
 
   function setScalar(svgelem,value){
 		if (svgelem._conditions && !svgelem._conditions.isAllowed()) {
-			//console.log('conditions said no', svgelem.id, value, svgelem._conditions.conditions);
+			//svgelem.id === 'balance' && console.log('conditions said no', svgelem.id, value, svgelem._conditions.conditions);
 			return;
 		}
-    //console.log('conditions said ok', svgelem.id, value);
+    //svgelem.id === 'balance' && console.log('conditions said ok', svgelem.id, value);
 		if (isFunction(svgelem._db.formula)) value = svgelem._db.formula(value);
     if(typeof svgelem.setScalar === 'function'){
       svgelem.setScalar(value);

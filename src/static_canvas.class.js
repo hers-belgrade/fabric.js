@@ -451,9 +451,7 @@
 
     addToMouseListeners: function (obj){
       if(obj.wantsMouse && !obj.addedToCanvasMouseListeners){//this._mouseListeners.indexOf(obj)<0){
-
-        obj.id === 'slot_game_frame_hotspot' && (console.log('added ',obj.id));
-        //obj.id === 'slot_game_frame_hotspot' && (console.log('added ',obj.id) || console.trace());
+        if (this._mouseListeners.indexOf(obj) > -1) return;
         this._mouseListeners.push(obj);
         obj.addedToCanvasMouseListeners=true;
         /// koliko je ovo zaista skupo?
@@ -464,8 +462,7 @@
     removeFromMouseListeners: function (obj){
       if(obj.addedToCanvasMouseListeners){
         var mii = this._mouseListeners.indexOf(obj);
-        obj.id === 'slot_game_frame_hotspot' && (console.log('remove?',obj.id, mii));
-        //obj.id === 'slot_game_frame_hotspot' && (console.log('remove?',obj.id, mii) || console.trace());
+        (obj.id === 'slot_game_frame_hotspot' || obj.id === 'spin_button_hotspot' || obj.id === 'decision_button_hotspot') && (console.log('remove?',obj.id, obj._cntr, mii, obj._tt));
         if(mii>=0){
           delete obj.addedToCanvasMouseListeners;
           this._mouseListeners.splice(mii,1);
