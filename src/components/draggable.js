@@ -296,7 +296,10 @@
   }
 
   RSP_Step.prototype.updateSetup = function (s) {
-    if (!this.setup(s)) return;
+    if (!this.setup(s)) {
+      console.log('denied setup', s);
+      return;
+    }
     this.laststepindex = 0;
 
     var config = this._config;
@@ -346,15 +349,16 @@
       }
       steps.push({mark:lastx,val:s.max});
     }
+    console.log('STEPS?', steps, this);
     this._steps = steps;
   }
 
   ///KRPEZ AKO MENE PITAS ...
   RSP_Step.prototype.mouseClick_correction = function () {
-    return this._config.vertical ?  {x:0,y:this.handlehotspot.height/this.handlescale.y/2} : {x:this.handlehotspot.width/this.handlescale.x/2,y:0};
+    return this._config.vertical ?  {x:0,y:((this.handlehotspot) ? (this.handlehotspot.height/this.handlescale.y/2) : 0)} : {x:((this.handlehotspot) ? (this.handlehotspot.width/this.handlescale.x/2) : 0),y:0};
   }
   RSP_Discrete.prototype.mouseClick_correction = function() {
-    return this._config.vertical ? {x:0,y:this.handlehotspot.height/this.handlescale.y/2 + this.area.top} : {x:this.handlehotspot.width/this.handlescale.x/2 + this.area.left,y:0};
+    return this._config.vertical ? {x:0,y:((this.handlehotspot) ? (this.handlehotspot.height/this.handlescale.y/2) : 0) + this.area.top} : {x: ((this.handlehotspot) ? (this.handlehotspot.width/this.handlescale.x/2) : 0) + this.area.left,y:0};
   }
 
   ///TODO
@@ -381,8 +385,9 @@
     var handlehotspot = svgelem.getObjectById(handle.id+'_hotspot');
     var setupdone = false,lastvalue;
     var handlescale,areascale,zerohandlepoint;
-
-    var Plugin = PluginFactory(config.type || 'step', config);
+    delete svgelem._slider_plugin;
+    svgelem._slider_plugin = PluginFactory(config.type || 'step', config);
+    var Plugin = svgelem._slider_plugin;
 
 
 
@@ -436,6 +441,7 @@
       };
     };
     var placeHandle = function(p, animation_params){
+      if (!Plugin._steps) return;
       ///TODO: do not place if not changed ...
       //console.log('mouse',p.x,p.y);
       p.x-=corr.x;
