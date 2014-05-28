@@ -40,7 +40,7 @@
 			return;
 		}
     //svgelem.id === 'balance' && console.log('conditions said ok', svgelem.id, value);
-		if (isFunction(svgelem._db.formula)) value = svgelem._db.formula(value);
+		if (svgelem._db && isFunction(svgelem._db.formula)) value = svgelem._db.formula(value);
     if(typeof svgelem.setScalar === 'function'){
       svgelem.setScalar(value);
     }else{
@@ -49,6 +49,8 @@
   };
 
 	function prepareValue (svgelem, config, init_val) {
+    config = config || {};
+
     if (svgelem._ct) {
       svgelem.off('conditions:true', svgelem._ct);
       delete svgelem._ct;
