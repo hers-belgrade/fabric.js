@@ -29,8 +29,8 @@
 		}
 		this.state = undefined;
 		this.svgelem = svgelem;
-    this.svgelem.id === 'spin_screen' && console.log('initial set state to undefined');
-    console.log('!!!!!!!!!!!!!!!!!!!!', svgelem.id);
+    //this.svgelem.id === 'spin_screen' && console.log('initial set state to undefined');
+    //console.log('!!!!!!!!!!!!!!!!!!!!', svgelem.id);
 	}
 
 	StateManager.prototype.list = function () {
@@ -66,14 +66,14 @@
 		}
 	}
   StateManager.prototype.dropState = function () {
-    this.svgelem.id === 'spin_screen' && (console.log('will drop state') || console.trace());
+    //this.svgelem.id === 'spin_screen' && (console.log('will drop state') || console.trace());
     delete this.state;
   }
 
 	StateManager.prototype.setState = function (s) {
-    this.svgelem.id === 'spin_screen' && console.log('will try to set state', s, 'old is', this.state);
+    //this.svgelem.id === 'spin_screen' && console.log('will try to set state', s, 'old is', this.state);
 		if (this.state === s) {
-      console.log('WILL REJECT TRIGGERING SINCE state already is', s);
+      //console.log('WILL REJECT TRIGGERING SINCE state already is', s);
       return undefined;
     }
 		var old = this.state;
