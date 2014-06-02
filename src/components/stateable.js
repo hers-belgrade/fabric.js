@@ -29,6 +29,8 @@
 		}
 		this.state = undefined;
 		this.svgelem = svgelem;
+    this.svgelem.id === 'spin_screen' && console.log('initial set state to undefined');
+    console.log('!!!!!!!!!!!!!!!!!!!!', svgelem.id);
 	}
 
 	StateManager.prototype.list = function () {
@@ -64,17 +66,18 @@
 		}
 	}
   StateManager.prototype.dropState = function () {
+    this.svgelem.id === 'spin_screen' && (console.log('will drop state') || console.trace());
     delete this.state;
   }
 
 	StateManager.prototype.setState = function (s) {
-		if (this.state === s) return undefined;
-    (this.svgelem.id === 'double_up_screen') && console.log(' ===> will set state on',s, this.svgelem.id, this.registrants[s].length);
-
-
+    this.svgelem.id === 'spin_screen' && console.log('will try to set state', s, 'old is', this.state);
+		if (this.state === s) {
+      console.log('WILL REJECT TRIGGERING SINCE state already is', s);
+      return undefined;
+    }
 		var old = this.state;
 		this.state = s;
-    //console.log('registrants: old', (this.registrants[old] || []).length, 'new:', (this.registrants[s] || []).length);
 
 		for (var i in this.registrants[old]) {
 			_execute.call(this, this.registrants[old][i], 'out', old);
@@ -89,7 +92,7 @@
 
 	fabric.Stateable = function (svgelem, config) {
     if (svgelem._stateable) {
-      svgelem._stateable.dropState();
+      //svgelem._stateable.dropState();
     }else{
 		  svgelem._stateable = new StateManager(svgelem, config.states);
     }

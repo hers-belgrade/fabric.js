@@ -58,9 +58,12 @@
     svgelem.forceRemoval = function () {
       //console.log('will do force removal ...');
 			///if I'm visible for mouse do remove 
+      var canvas = this.getCanvas();
+      if(!canvas){return;}
 			if (this.wantsMouse) {
 				//console.log('should remove ', this.id, 'BUCKET');
-				this.invokeOnCanvas('removeFromMouseListeners',this);
+        canvas.removeFromMouseListeners(this);
+				//this.invokeOnCanvas('removeFromMouseListeners',this);
 			}
 
 			if (!this.forEachObjectRecursive) return ret;
@@ -73,7 +76,8 @@
 				}
 				if (o.wantsMouse) {
 					//console.log('should remove', o.id);
-					self.invokeOnCanvas('removeFromMouseListeners', o);
+          canvas.removeFromMouseListeners(o);
+					//self.invokeOnCanvas('removeFromMouseListeners', o);
 				}
 			});
 
