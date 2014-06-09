@@ -156,7 +156,11 @@
     initialize: function(text, options) {
       if (options) {
         var tspans = options.tspans;
+        for (var i in tspans) tspans.tagName = 'tspan';
+
+
         delete options.tspans;
+        /*
         if (tspans && tspans.length) {
           options.tspans = [];
           var self = this;
@@ -167,6 +171,7 @@
             options.tspans[i] = instances[i];
           },fabric.util.object.clone(options));
         }
+        */
       }
       this.callSuper('initialize',options);
 			this.textLines = [text];
