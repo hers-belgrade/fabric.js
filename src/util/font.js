@@ -35,10 +35,7 @@
 
     var fields = ['fontFamily', 'fontStyle', 'fontVariant', 'fontWeight', 'fontSize'];
     var res = {};
-    for (var i in fields) {
-      var v = fields[i];
-      res[v] = settings[v];// || fontDeclarationEl.style[v];
-    }
+    fields.forEach (function (v) {res[v] = settings[v];});
 
     if (res.fontSize && 'string' === typeof(res.fontSize)) {
       res.fontSize = parseInt(res.fontSize.replace('px', ''));
