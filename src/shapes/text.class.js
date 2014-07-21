@@ -156,7 +156,11 @@
     initialize: function(text, options) {
       if (options) {
         var tspans = options.tspans;
+        for (var i in tspans) tspans.tagName = 'tspan';
+
+
         delete options.tspans;
+        /*
         if (tspans && tspans.length) {
           options.tspans = [];
           var self = this;
@@ -167,6 +171,7 @@
             options.tspans[i] = instances[i];
           },fabric.util.object.clone(options));
         }
+        */
       }
       this.callSuper('initialize',options);
 			this.textLines = [text];
@@ -211,11 +216,11 @@
       while (words.length) {
         var c = words.shift();
         var p = (l.length) ? l+' '+c : c;
-        if (ctx.measureText(p).width > max_width) {
+        if (ctx.measureText(p).width >= max_width) {
           lines.push (l);
           l = c;
         }else{
-          l+= (' '+c);
+          l+= ((l.length?' ':'')+c);
         }
       }
       lines.push (l);
@@ -481,7 +486,7 @@
      * @return {Number} Top offset
      */
     _getTopOffset: function() {
-      if (this.textLines.length < 2) return -this.height;
+      if (this.textLines.length < 2) return 0;
       switch (this.vAlign) {
         case 'center': return 0;
         case 'top':return -this.height/2;
@@ -506,8 +511,6 @@
       var lineHeights = 0;
 
       for (var i = 0, len = textLines.length; i < len; i++) {
-        var heightOfLine = this._getHeightOfLine(ctx, i, textLines);
-        lineHeights += heightOfLine;
         this._drawTextLine(
           'fillText',
           ctx,
@@ -516,6 +519,8 @@
           this._getTopOffset() + lineHeights,
           i
         );
+        var heightOfLine = this._getHeightOfLine(ctx, i, textLines);
+        lineHeights += heightOfLine;
       }
     },
 
@@ -540,9 +545,6 @@
 
       ctx.beginPath();
       for (var i = 0, len = textLines.length; i < len; i++) {
-        var heightOfLine = this._getHeightOfLine(ctx, i, textLines);
-        lineHeights += heightOfLine;
-
         this._drawTextLine(
           'strokeText',
           ctx,
@@ -551,6 +553,8 @@
           this._getTopOffset() + lineHeights,
           i
         );
+        var heightOfLine = this._getHeightOfLine(ctx, i, textLines);
+        lineHeights += heightOfLine;
       }
       ctx.closePath();
       ctx.restore();

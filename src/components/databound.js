@@ -1,4 +1,5 @@
 (function(global) {
+  var globl_cnt = 1;
 
   var fabric = global.fabric || (global.fabric = { }),
 			isFunction = fabric.util.isFunction,
@@ -9,13 +10,14 @@
 		this.el = svgelem;
 		this.value;
 		this.conditions = config.conditions;
+    this._cntr = globl_cnt;
+    globl_cnt++;
 	}
-
 	ConditionHandler.prototype.setCondition = function (name, value) {
 		if (!(name in this.conditions)) return;
+    //if (this.el.id === 'balance') console.log('setting condition to balance', name, value, this._cntr);
 		this.conditions[name] = value;
 		if (!this.isAllowed()) return;
-		//console.log(this.el.id, 'all conditions met ',this.conditions);
 		this.el.fire('conditions:true');
 	}
 
@@ -36,11 +38,11 @@
 
   function setScalar(svgelem,value){
 		if (svgelem._conditions && !svgelem._conditions.isAllowed()) {
-			//svgelem.id === 'balance' && console.log('conditions said no', svgelem.id, value, svgelem._conditions.conditions);
+			//(svgelem.id === 'balance') && console.log('conditions said no', svgelem.id, value, svgelem._conditions.conditions, svgelem._conditions._cntr);
 			return;
 		}
-    //svgelem.id === 'balance' && console.log('conditions said ok', svgelem.id, value);
-		if (isFunction(svgelem._db.formula)) value = svgelem._db.formula(value);
+    //(svgelem.id === 'balance') && console.log('conditions said ok', svgelem.id, value);
+		if (svgelem._db && isFunction(svgelem._db.formula)) value = svgelem._db.formula(value);
     if(typeof svgelem.setScalar === 'function'){
       svgelem.setScalar(value);
     }else{
@@ -49,17 +51,19 @@
   };
 
 	function prepareValue (svgelem, config, init_val) {
+    config = config || {};
+
     if (svgelem._ct) {
       svgelem.off('conditions:true', svgelem._ct);
       delete svgelem._ct;
     }
 		svgelem._db = { formula : (isFunction(config.calc)) ? config.calc : undefined };
-		setScalar(svgelem, init_val);
 		if (config.conditions) {
       svgelem._ct = function () { setScalar(svgelem, svgelem._readScalar()); };
 			svgelem.on ('conditions:true' , svgelem._ct);
-			svgelem._conditions = new ConditionHandler(svgelem, config);
+			if (!svgelem._conditions) svgelem._conditions = new ConditionHandler(svgelem, config);
 		}
+		setScalar(svgelem, init_val);
 	}
 
 	function prepareOnline (svgelem, config, init_val) {
