@@ -19,8 +19,9 @@
         //console.log('images loading done');
         var started = (new Date()).getTime();
         var offel = fabric.util.createCanvasElement();
-        offel.width = fabric.masterSize.width;
-        offel.height = fabric.masterSize.height;
+
+        offel.width = self.getSvgEl().get('width');
+        offel.height = self.getSvgEl().get('height');
         //console.log('offel created in', (new Date()).getTime() - started);
 
         self.show();

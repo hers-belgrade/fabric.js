@@ -144,6 +144,18 @@
       var self = this;
       if (this._activated) return;
       this._activated = true;
+
+      fabric.masterSize = {
+        width: this.get('width')
+        ,height: this.get('height')
+      }
+
+      if(fabric.activeCanvasInstance){
+        fabric.activeCanvasInstance._computeMasterScale();
+        fabric.activeCanvasInstance.renderAll();
+      }
+
+
       var started = (new Date()).getTime();
       for (var i in this._path_cache) this._path_cache[i] = false;
       load_cache.call(this, function () {

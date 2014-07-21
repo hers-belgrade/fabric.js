@@ -40,12 +40,7 @@
 
   function _loadSVG(resourcename,loaded){
     return fabric.loadSVGHierarchicalFromURL(resourcename, function(svg){
-      if(!fabric.masterSize){
-        fabric.masterSize = {width:svg.width,height:svg.height};
-        if(fabric.activeCanvasInstance){
-          fabric.activeCanvasInstance._computeMasterScale();
-        }
-      }
+
       if(svg.static){
         svg.static.setURL(resourcename);
       }
