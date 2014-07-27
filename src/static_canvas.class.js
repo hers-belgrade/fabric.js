@@ -16,6 +16,14 @@
 
       CANVAS_INIT_ERROR = new Error('Could not initialize `canvas` element');
 
+  var _requestAnimFrame = fabric.window.requestAnimationFrame       ||
+                          fabric.window.webkitRequestAnimationFrame ||
+                          fabric.window.mozRequestAnimationFrame    ||
+                          fabric.window.oRequestAnimationFrame      ||
+                          fabric.window.msRequestAnimationFrame     ||
+                          function(callback) {
+                            fabric.window.setTimeout(callback, 1000 / 60);
+                          };
   /**
    * Static canvas class
    * @class fabric.StaticCanvas
@@ -213,20 +221,14 @@
       if (options.backgroundColor) {
         this.setBackgroundColor(options.backgroundColor, this.renderAll.bind(this));
       }
-      var _requestAnimFrame = fabric.window.requestAnimationFrame       ||
-                              fabric.window.webkitRequestAnimationFrame ||
-                              fabric.window.mozRequestAnimationFrame    ||
-                              fabric.window.oRequestAnimationFrame      ||
-                              fabric.window.msRequestAnimationFrame     ||
-                              function(callback) {
-                                fabric.window.setTimeout(callback, 1000 / 60);
-                              };
-      this.goRender = (function(_t){
-        var t = _t;
-        return function(){
-          setTimeout(function(){_requestAnimFrame.call(fabric.window,function(){t._realRenderAll();});},1);
-        }
-      })(this);
+      this.myRenderer = _requestAnimFrame.bind(fabric.window,this._realRenderAll.bind(this));
+    },
+
+    goRender: function(){
+      if(this._renderTimeout){
+        return;
+      }
+      this._renderTimeout = setTimeout(this.myRenderer,1);
     },
 
     /**
@@ -658,39 +660,38 @@
     },
 
     _realRenderAll: function (allOnTop) {
+      this._renderTimeout = 0;
       var cursor = 0;
       var itm = undefined;
       var should_splice = false;
 
       //there are animations at the queue, so we will be dirty anyway ....
-      this.dirty = this.animationTickers.length && true; ///make it always boolean not a number or so ...
+      if(this.animationTickers){
+        this.dirty = this.dirty || this.animationTickers.length>0;
+        while(cursor<this.animationTickers.length){
+          should_splice = false;
+          itm = this.animationTickers[cursor];
 
-      while(cursor<this.animationTickers.length){
-        should_splice = false;
-        itm = this.animationTickers[cursor];
+          if (itm.ff) {
+            should_splice = true;
+            itm.ticker.forceFinish();
+          }else if (itm.ticker()) {
+            should_splice = true;
+          }
 
-        if (itm.ff) {
-          should_splice = true;
-          itm.ticker.forceFinish();
-        }else if (itm.ticker()) {
-          should_splice = true;
-        }
-
-        if(should_splice){
-          this.animationTickers.splice(cursor,1);
-        }else{
-          cursor++;
+          if(should_splice){
+            this.animationTickers.splice(cursor,1);
+          }else{
+            cursor++;
+          }
         }
       }
-
-      ///TODO
-      this.dirty = true;
 
       if(!this.dirty){
         this.goRender();
         return;
       }
-      delete this.dirty;
+      this.dirty = false;
       this.calcOffset();
       this.rendering = true;
       //console.log('render starts');
@@ -762,7 +763,7 @@
       this.fire('after:render');
       //console.log('canvas rendered in', (((new Date()).getTime()) - _render_start));
 
-      delete this.rendering;
+      this.rendering = false;
       this.goRender();
     },
 
