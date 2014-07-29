@@ -131,13 +131,6 @@
     clipTo: null,
 
     /**
-     * Indicates whether object controls (borders/controls) are rendered above overlay image
-     * @type Boolean
-     * @default
-     */
-    controlsAboveOverlay: false,
-
-    /**
      * Indicates whether the browser can be scrolled when using a touchscreen and dragging on the canvas
      * @type Boolean
      * @default
@@ -524,16 +517,7 @@
     _draw: function (ctx, object) {
       if (!object) return;
 
-      if (this.controlsAboveOverlay) {
-        var hasBorders = object.hasBorders, hasControls = object.hasControls;
-        object.hasBorders = object.hasControls = false;
-        object.render(ctx);
-        object.hasBorders = hasBorders;
-        object.hasControls = hasControls;
-      }
-      else {
-        object.render(ctx);
-      }
+      object.render(ctx);
     },
 
     /**
@@ -733,9 +717,6 @@
         ctxToDrawOn.drawImage(this.overlayImage, this.overlayImageLeft, this.overlayImageTop);
       }
 
-      if (this.controlsAboveOverlay && this.interactive) {
-        this.drawControls(ctxToDrawOn);
-      }
       ctxToDrawOn.restore();
 
       this.fire('after:render');

@@ -47,13 +47,6 @@
     uniScaleTransform:      false,
 
     /**
-     * When true, objects use center point as the origin of transformation
-     * @type Boolean
-     * @default
-     */
-    centerTransform:        false,
-
-    /**
      * Indicates that canvas is interactive. This property should not be changed.
      * @type Boolean
      * @default
@@ -153,46 +146,6 @@
       this._createUpperCanvas();
       this._createDOMBackgroundSupport();
       this._initEvents();
-    },
-
-    /**
-     * Resets the current transform to its original values and chooses the type of resizing based on the event
-     * @private
-     * @param {Event} e Event object fired on mousemove
-     */
-    _resetCurrentTransform: function(e) {
-      var t = this._currentTransform;
-
-      t.target.set('scaleX', t.original.scaleX);
-      t.target.set('scaleY', t.original.scaleY);
-      t.target.set('left', t.original.left);
-      t.target.set('top', t.original.top);
-
-      if (e.altKey || this.centerTransform || t.target.centerTransform) {
-        if (t.originX !== 'center') {
-          if (t.originX === 'right') {
-            t.mouseXSign = -1;
-          }
-          else {
-            t.mouseXSign = 1;
-          }
-        }
-        if (t.originY !== 'center') {
-          if (t.originY === 'bottom') {
-            t.mouseYSign = -1;
-          }
-          else {
-            t.mouseYSign = 1;
-          }
-        }
-
-        t.originX = 'center';
-        t.originY = 'center';
-      }
-      else {
-        t.originX = t.original.originX;
-        t.originY = t.original.originY;
-      }
     },
 
     /**

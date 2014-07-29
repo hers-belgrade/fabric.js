@@ -95,48 +95,6 @@ fabric.Object = fabric.util.createClass(/** @lends fabric.Object.prototype */ {
   opacity:                  1,
 
   /**
-   * Size of object's controlling corners (in pixels)
-   * @type Number
-   * @default
-   */
-  cornerSize:               12,
-
-  /**
-   * Default cursor value used when hovering over this object on canvas
-   * @type String
-   * @default
-   */
-  hoverCursor:              null,
-
-  /**
-   * Padding between object and its controlling borders (in pixels)
-   * @type Number
-   * @default
-   */
-  padding:                  0,
-
-  /**
-   * Color of controlling borders of an object (when it's active)
-   * @type String
-   * @default
-   */
-  borderColor:              'rgba(102,153,255,0.75)',
-
-  /**
-   * Color of controlling corners of an object (when it's active)
-   * @type String
-   * @default
-   */
-  cornerColor:              'rgba(102,153,255,0.5)',
-
-  /**
-   * When true, this object will use center point as the origin of transformation
-   * when being resized via the controls
-   * @type Boolean
-   */
-  centerTransform:          false,
-
-  /**
    * Color of object's fill
    * @type String
    * @default
@@ -206,13 +164,6 @@ fabric.Object = fabric.util.createClass(/** @lends fabric.Object.prototype */ {
   shadow:                   null,
 
   /**
-   * Opacity of object's controlling borders when object is active and moving
-   * @type Number
-   * @default
-   */
-  borderOpacityWhenMoving:  0.4,
-
-  /**
    * Scale factor of object's controlling borders
    * @type Number
    * @default
@@ -233,47 +184,11 @@ fabric.Object = fabric.util.createClass(/** @lends fabric.Object.prototype */ {
   minScaleLimit:            0.01,
 
   /**
-   * When set to `false`, an object can not be selected for modification (using either point-click-based or group-based selection).
-   * All events propagate through it.
-   * @type Boolean
-   * @default
-   */
-  selectable:               true,
-
-  /**
    * When set to `false`, an object is not rendered on canvas
    * @type Boolean
    * @default
    */
   visible:                  true,
-
-  /**
-   * When set to `false`, object's controls are not displayed and can not be used to manipulate object
-   * @type Boolean
-   * @default
-   */
-  hasControls:              true,
-
-  /**
-   * When set to `false`, object's controlling borders are not rendered
-   * @type Boolean
-   * @default
-   */
-  hasBorders:               true,
-
-  /**
-   * When set to `false`, object's controlling rotating point will not be visible or selectable
-   * @type Boolean
-   * @default
-   */
-  hasRotatingPoint:         true,
-
-  /**
-   * Offset for object's controlling rotating point (when enabled via `hasRotatingPoint`)
-   * @type Number
-   * @default
-   */
-  rotatingPointOffset:      40,
 
   /**
    * When set to `true`, objects are "found" on canvas on per-pixel basis rather than according to bounding box

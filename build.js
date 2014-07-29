@@ -184,8 +184,6 @@ var filesToInclude = [
   'src/mixins/object_geometry.mixin.js',
   'src/mixins/stateful.mixin.js',
 
-  ifSpecifiedInclude('interaction', 'src/mixins/object_interactivity.mixin.js'),
-
   // ifSpecifiedInclude('animation', 'src/mixins/animation.mixin.js'),
   'src/mixins/animation.mixin.js',
 
