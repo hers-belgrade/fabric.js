@@ -299,19 +299,6 @@
       this._setTextStyles(ctx);
       this.adaptToText();
       this.callSuper('transform',ctx);
-
-      /*
-      if (this.textLines && this.textLines.length < 2) return;
-      switch(this.vAlign) {
-        case 'center' : return;
-        case 'top': {
-          ctx.transform(1,0,0,1,0, this.height);break;
-        }
-        case 'bottom': {
-          ctx.transform(1,0,0,1,0,this.height/2);break;
-        }
-      }
-      */
     },
 
     /**
@@ -319,17 +306,6 @@
      * @param {CanvasRenderingContext2D} ctx Context to render on
      */
     _render: function(ctx) {
-      /*
-      var isInPathGroup = this.group && this.group.type !== 'group';
-      if (isInPathGroup && !this.transformMatrix) {
-        ctx.translate(-this.group.width/2 + this.left, -this.group.height / 2 + this.top);
-      }
-      else if (isInPathGroup && this.transformMatrix) {
-        ctx.translate(-this.group.width/2, -this.group.height/2);
-      }
-      console.log(this.text,this.transformMatrix);
-      */
-
       if (typeof Cufon === 'undefined' || this.useNative === true) {
         this._renderViaNative(ctx);
       }
@@ -504,9 +480,7 @@
       if ('undefined' === typeof(fill)) {
         fill = ctx.fillStyle;
       }
-
       if (!fill && !this.skipFillStrokeCheck) return;
-
       this._boundaries = [ ];
       var lineHeights = 0;
 

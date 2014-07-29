@@ -978,7 +978,7 @@ fabric.Object = fabric.util.createClass(/** @lends fabric.Object.prototype */ {
 
       if (this.oCoords) {
         cb.call(this);
-        return;
+        return undefined;
       }
       if (!this.oCoords) {
         if (!this._gm_requesters) this._gm_requesters = [];
@@ -994,6 +994,10 @@ fabric.Object = fabric.util.createClass(/** @lends fabric.Object.prototype */ {
       delete this._gm_requesters;
     },
 
+    _drop_geometry_ready: function () {
+      this._gm_requesters && this._gm_requesters.splice(0, this._gm_requesters.length);
+    },
+
     /**
      * Renders an object on a specified context
      * @param {CanvasRenderingContext2D} ctx context to render on
@@ -1001,7 +1005,6 @@ fabric.Object = fabric.util.createClass(/** @lends fabric.Object.prototype */ {
      */
     render: function(ctx, topctx) {
       // do not render if width/height are zeros or object is not visible
-      //if (this.width === 0 || this.height === 0 || !this.visible) return;
       if (!this.visible) return;
       if (this.opacity===0) return;
       if (this.display==='none') return;
@@ -1015,15 +1018,7 @@ fabric.Object = fabric.util.createClass(/** @lends fabric.Object.prototype */ {
         fire_gm = this._gm_requesters;
       }
 
-
-
-
-      //var _render_start = (new Date()).getTime();
-      //console.log(this.type,this.id,'starts render');
-
-
       ctx.save();
-
       this.transform(ctx); //there is a special ctx.save in this call
 
       if (this._raster.content && this.shouldRasterize) {
