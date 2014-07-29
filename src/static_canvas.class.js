@@ -516,22 +516,6 @@
     },
 
     /**
-     * Returns currently selected object, if any
-     * @return {fabric.Object}
-     */
-    getActiveObject: function() {
-      return null;
-    },
-
-    /**
-     * Returns currently selected group of object, if any
-     * @return {fabric.Group}
-     */
-    getActiveGroup: function() {
-      return null;
-    },
-
-    /**
      * Given a context, renders an object on that context
      * @param ctx {Object} context to render object on
      * @param object {Object} object to render
@@ -616,12 +600,6 @@
      */
     clear: function () {
       this._objects.length = 0;
-      if (this.discardActiveGroup) {
-        this.discardActiveGroup();
-      }
-      if (this.discardActiveObject) {
-        this.discardActiveObject();
-      }
       this.clearContext(this.contextContainer);
       if (this.contextTop) {
         this.clearContext(this.contextTop);
@@ -798,13 +776,6 @@
         this._drawSelection();
       }
 
-      // delegate rendering to group selection if one exists
-      // used for drawing selection borders/controls
-      var activeGroup = this.getActiveGroup();
-      if (activeGroup) {
-        activeGroup.render(ctx);
-      }
-
       if (this.overlayImage) {
         ctx.drawImage(this.overlayImage, this.overlayImageLeft, this.overlayImageTop);
       }
@@ -894,10 +865,6 @@
      */
     _toObjectMethod: function (methodName, propertiesToInclude) {
 
-      var activeGroup = this.getActiveGroup();
-      if (activeGroup) {
-        this.discardActiveGroup();
-      }
       var data = {
         objects: this.getObjects().map(function (instance) {
           // TODO (kangax): figure out how to clean this up
@@ -927,10 +894,6 @@
         data.overlayImageTop = this.overlayImageTop;
       }
       fabric.util.populateWithProperties(this, data, propertiesToInclude);
-      if (activeGroup) {
-        this.setActiveGroup(new fabric.Group(activeGroup.getObjects()));
-        activeGroup.forEachObject(function(o) { o.set('active', true) });
-      }
       return data;
     },
 
@@ -1000,16 +963,8 @@
         );
       }
 
-      var activeGroup = this.getActiveGroup();
-      if (activeGroup) {
-        this.discardActiveGroup();
-      }
       for (var i = 0, objects = this.getObjects(), len = objects.length; i < len; i++) {
         markup.push(objects[i].toSVG());
-      }
-      if (activeGroup) {
-        this.setActiveGroup(new fabric.Group(activeGroup.getObjects()));
-        activeGroup.forEachObject(function(o) { o.set('active', true) });
       }
       markup.push('</svg>');
 
@@ -1024,11 +979,6 @@
      */
     remove: function (object) {
       // removing active object should fire "selection:cleared" events
-      if (this.getActiveObject() === object) {
-        this.fire('before:selection:cleared', { target: object });
-        this.discardActiveObject();
-        this.fire('selection:cleared');
-      }
       for (var i in this.animationTickers) {
         var itm = this.animationTickers[i];
         if (itm.obj === object) {

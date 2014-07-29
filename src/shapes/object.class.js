@@ -102,13 +102,6 @@ fabric.Object = fabric.util.createClass(/** @lends fabric.Object.prototype */ {
   cornerSize:               12,
 
   /**
-   * When true, object's controlling corners are rendered as transparent inside (i.e. stroke instead of fill)
-   * @type Boolean
-   * @default
-   */
-  transparentCorners:       true,
-
-  /**
    * Default cursor value used when hovering over this object on canvas
    * @type String
    * @default
