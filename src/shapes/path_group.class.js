@@ -81,10 +81,6 @@
       this.clipTo && ctx.restore();
       this._removeShadow(ctx);
 
-      if (this.active) {
-        this.drawBorders(ctx);
-        this.drawControls(ctx);
-      }
       ctx.restore();
     },
 

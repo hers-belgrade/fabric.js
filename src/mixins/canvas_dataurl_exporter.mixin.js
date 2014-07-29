@@ -49,21 +49,10 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
         origHeight = this.getHeight(),
         scaledWidth = origWidth * multiplier,
         scaledHeight = origHeight * multiplier,
-        activeObject = this.getActiveObject(),
-        activeGroup = this.getActiveGroup(),
-
         ctx = this.contextTop || this.contextContainer;
 
     this.setWidth(scaledWidth).setHeight(scaledHeight);
     ctx.scale(multiplier, multiplier);
-
-    if (activeGroup) {
-      // not removing group due to complications with restoring it with correct state afterwords
-      this._tempRemoveBordersControlsFromGroup(activeGroup);
-    }
-    else if (activeObject && this.deactivateAll) {
-      this.deactivateAll();
-    }
 
     // restoring width, height for `renderAll` to draw
     // background properly (while context is scaled)
@@ -76,13 +65,6 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
 
     ctx.scale(1 / multiplier,  1 / multiplier);
     this.setWidth(origWidth).setHeight(origHeight);
-
-    if (activeGroup) {
-      this._restoreBordersControlsOnGroup(activeGroup);
-    }
-    else if (activeObject && this.setActiveObject) {
-      this.setActiveObject(activeObject);
-    }
 
     this.contextTop && this.clearContext(this.contextTop);
     this.renderAll();
@@ -103,35 +85,6 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
       format: format,
       multiplier: multiplier,
       quality: quality
-    });
-  },
-
-  /**
-   * @private
-   */
-  _tempRemoveBordersControlsFromGroup: function(group) {
-    group.origHasControls = group.hasControls;
-    group.origBorderColor = group.borderColor;
-
-    group.hasControls = true;
-    group.borderColor = 'rgba(0,0,0,0)';
-
-    group.forEachObject(function(o) {
-      o.origBorderColor = o.borderColor;
-      o.borderColor = 'rgba(0,0,0,0)';
-    });
-  },
-
-  /**
-   * @private
-   */
-  _restoreBordersControlsOnGroup: function(group) {
-    group.hideControls = group.origHideControls;
-    group.borderColor = group.origBorderColor;
-
-    group.forEachObject(function(o) {
-      o.borderColor = o.origBorderColor;
-      delete o.origBorderColor;
     });
   }
 });

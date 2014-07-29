@@ -221,51 +221,6 @@
         },20);
         return;
       }
-    },
-
-    /**
-     * Sets the cursor depending on where the canvas is being hovered.
-     * Note: very buggy in Opera
-     * @param {Event} e Event object
-     * @param {Object} target Object that the mouse is hovering, if so.
-     */
-    _setCursorFromEvent: function (e, target) {
-      var s = this.upperCanvasEl.style;
-      if (!target) {
-        s.cursor = this.defaultCursor;
-        return false;
-      }
-      else {
-        var activeGroup = this.getActiveGroup();
-        // only show proper corner when group selection is not active
-        var corner = target._findTargetCorner
-                      && (!activeGroup || !activeGroup.contains(target))
-                      && target._findTargetCorner(e, this._offset);
-
-        if (!corner) {
-          s.cursor = target.hoverCursor || this.hoverCursor;
-        }
-        else {
-          if (corner in cursorOffset) {
-            var n = Math.round((target.getAngle() % 360) / 45);
-            if (n<0) {
-              n += 8; // full circle ahead
-            }
-            n += cursorOffset[corner];
-            // normalize n to be from 0 to 7
-            n %= 8;
-            s.cursor = cursorMap[n];
-          }
-          else if (corner === 'mtr' && target.hasRotatingPoint) {
-            s.cursor = this.rotationCursor;
-          }
-          else {
-            s.cursor = this.defaultCursor;
-            return false;
-          }
-        }
-      }
-      return true;
     }
   });
 
