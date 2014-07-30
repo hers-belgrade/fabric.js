@@ -6,16 +6,20 @@
   if(fabric.Draggable){return;}
 
   fabric.Draggable = function(svgelem,config){
+
 		function get_me_obj (req) {
 			return ('string' === typeof(req)) ? svgelem.getObjectById(req) : req;
 		}
-
 		var config = config || {};
     var hotspot = config&&config.hotspot ? get_me_obj(config.hotspot) : svgelem;
     var target = config&&config.target ? get_me_obj(config.target) : svgelem;
     var area = config&&config.area ? get_me_obj(config.area) : svgelem;
     var direction = config ? config.direction : '';
     var doConstrain;
+
+
+    svgelem._drag_target = target;
+
     if(config && config.constrainto){
       doConstrain = function(){
         if(area.oCoords && target.oCoords){
@@ -41,18 +45,17 @@
       }
     }
 
-
 		function add(a, b) {return a+b;}
 		function sub(a, b) {return a-b;}
 
 		var update = (config.nature === 'negative') ? sub : add;
+
 		var vm = function () {
-			return config.value_manipulator.apply(target, arguments);
+			return config.value_manipulator.apply(svgelem._drag_target, arguments);
 		}
 
 		////TODO: we still have bit odd behavior, to restore dragging abilities ...
 		function doneWithDragging () {
-			//console.log('=================>', this.id, this);
       delete this.dragActive;
       delete this.dragPosition;
       doConstrain && doConstrain();
@@ -61,6 +64,7 @@
 				y: vm('get','y')
 			});
 		}
+
 
 		hotspot.on('mouselisteners:removed', doneWithDragging);
     fabric.Clickable(hotspot,{ctx:svgelem,downcb:function(e){
@@ -90,7 +94,6 @@
 			}
 		}
     area.on('mouse:move',function(e){
-			//console.log('doing mouse move ...');
       if(svgelem.dragActive){
         var p = e.e;
         switch(direction){
