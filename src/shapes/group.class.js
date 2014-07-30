@@ -211,51 +211,6 @@
     },
 
     /**
-     * Retores original state of each of group objects (original state is that which was before group was created).
-     * @private
-     * @return {fabric.Group} thisArg
-     * @chainable
-     */
-    _restoreObjectsState: function() {
-      return;
-      this._objects.forEach(this._restoreObjectState, this);
-      return this;
-    },
-
-    /**
-     * Restores original state of a specified object in group
-     * @private
-     * @param {fabric.Object} object
-     * @return {fabric.Group} thisArg
-     */
-    _restoreObjectState: function(object) {
-      return;
-
-      var groupLeft = this.get('left'),
-          groupTop = this.get('top'),
-          groupAngle = this.getAngle() * (Math.PI / 180),
-          rotatedTop = Math.cos(groupAngle) * object.get('top') * this.get('scaleY') + Math.sin(groupAngle) * object.get('left') * this.get('scaleX'),
-          rotatedLeft = -Math.sin(groupAngle) * object.get('top') * this.get('scaleY') + Math.cos(groupAngle) * object.get('left') * this.get('scaleX');
-
-      object.setAngle(object.getAngle() + this.getAngle());
-
-      object.set('left', groupLeft + rotatedLeft);
-      object.set('top', groupTop + rotatedTop);
-
-      object.set('scaleX', object.get('scaleX') * this.get('scaleX'));
-      object.set('scaleY', object.get('scaleY') * this.get('scaleY'));
-
-      object.setCoords();
-      object.hasControls = object.__origHasControls;
-      delete object.__origHasControls;
-      object.set('active', false);
-      object.setCoords();
-      delete object.group;
-
-      return this;
-    },
-
-    /**
      * Destroys a group (restoring state of its objects)
      * @return {fabric.Group} thisArg
      * @chainable
@@ -391,7 +346,9 @@
    * @return {fabric.Group} An instance of fabric.Group
    */
   fabric.Group.fromObject = function(object) {
-    return new fabric.Group(fabric.util.enlivenObjects(object.objects),object);
+    var ret = new fabric.Group(fabric.util.enlivenObjects(object.objects),object);
+    delete ret.objects;
+    return ret;
   };
 
   fabric.Group.findChildGroups = function (s) {

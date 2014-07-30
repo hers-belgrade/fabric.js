@@ -155,6 +155,12 @@
         fabric.activeCanvasInstance.renderAll();
       }
 
+      this._objects.map (function (v) {
+        v.notify_on_geometry_ready(function () {
+          fabric.activeCanvasInstance.renderAll();
+        });
+      });
+
 
       var started = (new Date()).getTime();
       for (var i in this._path_cache) this._path_cache[i] = false;
@@ -167,7 +173,7 @@
     deactivate: function(){
       if (!this._activated) return;
       this._activated = false;
-      //drop image cache as well ...
+      this.forEachObject(function (v) { v._drop_geometry_ready(); }); //drop image cache as well ...
       for (var i in this._path_cache) { 
         this._path_cache[i] = false;
         var o = this._image_cache[i];

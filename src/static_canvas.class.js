@@ -16,6 +16,14 @@
 
       CANVAS_INIT_ERROR = new Error('Could not initialize `canvas` element');
 
+  var _requestAnimFrame = fabric.window.requestAnimationFrame       ||
+                          fabric.window.webkitRequestAnimationFrame ||
+                          fabric.window.mozRequestAnimationFrame    ||
+                          fabric.window.oRequestAnimationFrame      ||
+                          fabric.window.msRequestAnimationFrame     ||
+                          function(callback) {
+                            fabric.window.setTimeout(callback, 1000 / 60);
+                          };
   /**
    * Static canvas class
    * @class fabric.StaticCanvas
@@ -123,13 +131,6 @@
     clipTo: null,
 
     /**
-     * Indicates whether object controls (borders/controls) are rendered above overlay image
-     * @type Boolean
-     * @default
-     */
-    controlsAboveOverlay: false,
-
-    /**
      * Indicates whether the browser can be scrolled when using a touchscreen and dragging on the canvas
      * @type Boolean
      * @default
@@ -213,20 +214,14 @@
       if (options.backgroundColor) {
         this.setBackgroundColor(options.backgroundColor, this.renderAll.bind(this));
       }
-      var _requestAnimFrame = fabric.window.requestAnimationFrame       ||
-                              fabric.window.webkitRequestAnimationFrame ||
-                              fabric.window.mozRequestAnimationFrame    ||
-                              fabric.window.oRequestAnimationFrame      ||
-                              fabric.window.msRequestAnimationFrame     ||
-                              function(callback) {
-                                fabric.window.setTimeout(callback, 1000 / 60);
-                              };
-      this.goRender = (function(_t){
-        var t = _t;
-        return function(){
-          setTimeout(function(){_requestAnimFrame.call(fabric.window,function(){t._realRenderAll();});},1);
-        }
-      })(this);
+      this.myRenderer = _requestAnimFrame.bind(fabric.window,this._realRenderAll.bind(this));
+    },
+
+    goRender: function(){
+      if(this._renderTimeout){
+        return;
+      }
+      this._renderTimeout = setTimeout(this.myRenderer,1);
     },
 
     /**
@@ -514,22 +509,6 @@
     },
 
     /**
-     * Returns currently selected object, if any
-     * @return {fabric.Object}
-     */
-    getActiveObject: function() {
-      return null;
-    },
-
-    /**
-     * Returns currently selected group of object, if any
-     * @return {fabric.Group}
-     */
-    getActiveGroup: function() {
-      return null;
-    },
-
-    /**
      * Given a context, renders an object on that context
      * @param ctx {Object} context to render object on
      * @param object {Object} object to render
@@ -538,16 +517,7 @@
     _draw: function (ctx, object) {
       if (!object) return;
 
-      if (this.controlsAboveOverlay) {
-        var hasBorders = object.hasBorders, hasControls = object.hasControls;
-        object.hasBorders = object.hasControls = false;
-        object.render(ctx);
-        object.hasBorders = hasBorders;
-        object.hasControls = hasControls;
-      }
-      else {
-        object.render(ctx);
-      }
+      object.render(ctx);
     },
 
     /**
@@ -614,12 +584,6 @@
      */
     clear: function () {
       this._objects.length = 0;
-      if (this.discardActiveGroup) {
-        this.discardActiveGroup();
-      }
-      if (this.discardActiveObject) {
-        this.discardActiveObject();
-      }
       this.clearContext(this.contextContainer);
       if (this.contextTop) {
         this.clearContext(this.contextTop);
@@ -658,39 +622,38 @@
     },
 
     _realRenderAll: function (allOnTop) {
+      this._renderTimeout = 0;
       var cursor = 0;
       var itm = undefined;
       var should_splice = false;
 
       //there are animations at the queue, so we will be dirty anyway ....
-      this.dirty = this.animationTickers.length && true; ///make it always boolean not a number or so ...
+      if(this.animationTickers){
+        this.dirty = this.dirty || this.animationTickers.length>0;
+        while(cursor<this.animationTickers.length){
+          should_splice = false;
+          itm = this.animationTickers[cursor];
 
-      while(cursor<this.animationTickers.length){
-        should_splice = false;
-        itm = this.animationTickers[cursor];
+          if (itm.ff) {
+            should_splice = true;
+            itm.ticker.forceFinish();
+          }else if (itm.ticker()) {
+            should_splice = true;
+          }
 
-        if (itm.ff) {
-          should_splice = true;
-          itm.ticker.forceFinish();
-        }else if (itm.ticker()) {
-          should_splice = true;
-        }
-
-        if(should_splice){
-          this.animationTickers.splice(cursor,1);
-        }else{
-          cursor++;
+          if(should_splice){
+            this.animationTickers.splice(cursor,1);
+          }else{
+            cursor++;
+          }
         }
       }
-
-      ///TODO
-      this.dirty = true;
 
       if(!this.dirty){
         this.goRender();
         return;
       }
-      delete this.dirty;
+      this.dirty = false;
       this.calcOffset();
       this.rendering = true;
       //console.log('render starts');
@@ -754,15 +717,12 @@
         ctxToDrawOn.drawImage(this.overlayImage, this.overlayImageLeft, this.overlayImageTop);
       }
 
-      if (this.controlsAboveOverlay && this.interactive) {
-        this.drawControls(ctxToDrawOn);
-      }
       ctxToDrawOn.restore();
 
       this.fire('after:render');
       //console.log('canvas rendered in', (((new Date()).getTime()) - _render_start));
 
-      delete this.rendering;
+      this.rendering = false;
       this.goRender();
     },
 
@@ -795,13 +755,6 @@
       // we render the top context - last object
       if (this.selection) {
         this._drawSelection();
-      }
-
-      // delegate rendering to group selection if one exists
-      // used for drawing selection borders/controls
-      var activeGroup = this.getActiveGroup();
-      if (activeGroup) {
-        activeGroup.render(ctx);
       }
 
       if (this.overlayImage) {
@@ -893,10 +846,6 @@
      */
     _toObjectMethod: function (methodName, propertiesToInclude) {
 
-      var activeGroup = this.getActiveGroup();
-      if (activeGroup) {
-        this.discardActiveGroup();
-      }
       var data = {
         objects: this.getObjects().map(function (instance) {
           // TODO (kangax): figure out how to clean this up
@@ -926,10 +875,6 @@
         data.overlayImageTop = this.overlayImageTop;
       }
       fabric.util.populateWithProperties(this, data, propertiesToInclude);
-      if (activeGroup) {
-        this.setActiveGroup(new fabric.Group(activeGroup.getObjects()));
-        activeGroup.forEachObject(function(o) { o.set('active', true) });
-      }
       return data;
     },
 
@@ -999,16 +944,8 @@
         );
       }
 
-      var activeGroup = this.getActiveGroup();
-      if (activeGroup) {
-        this.discardActiveGroup();
-      }
       for (var i = 0, objects = this.getObjects(), len = objects.length; i < len; i++) {
         markup.push(objects[i].toSVG());
-      }
-      if (activeGroup) {
-        this.setActiveGroup(new fabric.Group(activeGroup.getObjects()));
-        activeGroup.forEachObject(function(o) { o.set('active', true) });
       }
       markup.push('</svg>');
 
@@ -1023,11 +960,6 @@
      */
     remove: function (object) {
       // removing active object should fire "selection:cleared" events
-      if (this.getActiveObject() === object) {
-        this.fire('before:selection:cleared', { target: object });
-        this.discardActiveObject();
-        this.fire('selection:cleared');
-      }
       for (var i in this.animationTickers) {
         var itm = this.animationTickers[i];
         if (itm.obj === object) {
