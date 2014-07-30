@@ -5,107 +5,136 @@
 
   if(fabric.Draggable){return;}
 
-  fabric.Draggable = function(svgelem,config){
+	function get_me_obj (svgelem, req) {
+		return ('string' === typeof(req)) ? svgelem.getObjectById(req) : req;
+	}
 
-		function get_me_obj (req) {
-			return ('string' === typeof(req)) ? svgelem.getObjectById(req) : req;
-		}
-		var config = config || {};
-    var hotspot = config&&config.hotspot ? get_me_obj(config.hotspot) : svgelem;
-    var target = config&&config.target ? get_me_obj(config.target) : svgelem;
-    var area = config&&config.area ? get_me_obj(config.area) : svgelem;
-    var direction = config ? config.direction : '';
-    var doConstrain;
+  function get_me_component (svgelem, what) {
+    return svgelem._draggable[what];
+  }
 
+  function doConstrain (svgelem) {
+    var area = get_me_component(svgelem, 'area'),
+      constrainto = get_me_component(svgelem, 'constrainto')
+      target = get_me_component(svgelem, 'target');
 
-    svgelem._drag_target = target;
+   if (!constrainto) return;
 
-    if(config && config.constrainto){
-      doConstrain = function(){
-        if(area.oCoords && target.oCoords){
-          var coc = config.constrainto.oCoords, toc = target.oCoords;
-          if(coc.tl.y<toc.tl.y){
-            target.animate({top:target.top + (coc.tl.y-toc.tl.y)},100);
+    if(area.oCoords && target.oCoords){
+
+      var coc = constrainto.oCoords, 
+      toc = target.oCoords;
+
+      if(coc.tl.y<toc.tl.y){
+        target.animate({top:target.top + (coc.tl.y-toc.tl.y)},100);
+        svgelem.invokeOnCanvas('renderAll');
+      }else{
+        //display as much as possible
+        var ch = coc.br.y-coc.tl.y;
+        var th = toc.br.y-toc.tl.y;
+        if(coc.br.y>toc.br.y && th>ch){
+          target.set({top:target.top + (coc.br.y-toc.br.y)});
+          svgelem.invokeOnCanvas('renderAll');
+        }else{
+          if(coc.tl.y>toc.tl.y && th<ch){
+            target.set({top:target.top + (coc.tl.y-toc.tl.y)});
             svgelem.invokeOnCanvas('renderAll');
-          }else{
-            //display as much as possible
-            var ch = coc.br.y-coc.tl.y;
-            var th = toc.br.y-toc.tl.y;
-            if(coc.br.y>toc.br.y && th>ch){
-              target.set({top:target.top + (coc.br.y-toc.br.y)});
-              svgelem.invokeOnCanvas('renderAll');
-            }else{
-              if(coc.tl.y>toc.tl.y && th<ch){
-                target.set({top:target.top + (coc.tl.y-toc.tl.y)});
-                svgelem.invokeOnCanvas('renderAll');
-              }
-            }
           }
         }
       }
     }
+  }
 
-		function add(a, b) {return a+b;}
-		function sub(a, b) {return a-b;}
+  function add(a, b) {return a+b;}
+  function sub(a, b) {return a-b;}
 
-		var update = (config.nature === 'negative') ? sub : add;
 
-		var vm = function () {
-			return config.value_manipulator.apply(svgelem._drag_target, arguments);
-		}
+	function vm (svgelem) {
+    var value_manipulator = get_me_component (svgelem,'value_manipulator');
+		return value_manipulator.apply(get_me_component(svgelem, 'target'), Array.prototype.slice.call(arguments, 1));
+	}
 
-		////TODO: we still have bit odd behavior, to restore dragging abilities ...
-		function doneWithDragging () {
-      delete this.dragActive;
-      delete this.dragPosition;
-      doConstrain && doConstrain();
-			isFunction(config.onFinished) && config.onFinished.call(svgelem, {
-				x: vm('get','x'),
-				y: vm('get','y')
-			});
-		}
+	function doneWithDragging () {
+    delete this.dragActive;
+    delete this.dragPosition;
+    doConstrain(this);
+    var finished = get_me_component(this, 'onFinished');
+    if (!finished) return;
 
+		finished.call(this, {
+			x: vm(this, 'get','x'),
+			y: vm(this, 'get','y')
+		});
+	}
+
+  function default_value_manipulator (action, axis, value) {
+    if (action === 'get') {
+      return (axis === 'x') ? this.left : this.top;
+    }
+
+    if (action === 'set') {
+      if (axis === 'x') {
+        return this.set('left', value);
+      }else{
+        return this.set('top', value);
+      }
+    }
+	}
+
+
+
+
+  fabric.Draggable = function(svgelem,config){
+    if (!svgelem._draggable) {
+      //do da cleanup
+    }
+
+    svgelem._draggable = {
+      hotspot: config&&config.hotspot ? get_me_obj(svgelem, config.hotspot) : svgelem
+      ,target: config&&config.target ? get_me_obj(svgelem, config.target) : svgelem
+      ,area: config&&config.area ? get_me_obj(svgelem, config.area) : svgelem
+      ,direction : config ? config.direction : ''
+      ,value_manipulator: config.value_manipulator || default_value_manipulator
+      ,constrainto: config.constrainto
+      ,nature: config.nature
+      ,update: config.nature === 'negative' ? sub : add
+      ,onFinished: ('function' === typeof(config.onFinished)) ? config.onFinished : undefined
+      ,onStarted: ('function' === typeof(config.onStarted)) ? config.onStarted : undefined
+    };
+
+    var hotspot = get_me_component(svgelem, 'hotspot'),
+      area = get_me_component(svgelem, 'area')
+      value_manipulator = get_me_component(svgelem, 'value_manipulator');
 
 		hotspot.on('mouselisteners:removed', doneWithDragging);
+
     fabric.Clickable(hotspot,{ctx:svgelem,downcb:function(e){
       this.dragActive=true;
       this.dragPosition=e.e;
-			isFunction(config.onStarted) && config.onStarted.call(svgelem, {
-				x : vm('get', 'x'),
-				y : vm('get', 'y')
+      var started = get_me_obj(this, 'onStarted');
+      if (!started) return;
+      started.call(this, {
+				x : vm(this, 'get', 'x'),
+				y : vm(this, 'get', 'y')
 			});
     },clickcb:doneWithDragging});
     fabric.MouseAware(area);
 
-
-		if (!isFunction(config.value_manipulator)) {
-			config.value_manipulator = function (action, axis, value) {
-				if (action === 'get') {
-					return (axis === 'x') ? this.left : this.top;
-				}
-
-				if (action === 'set') {
-					if (axis === 'x') {
-						return this.set('left', value);
-					}else{
-						return this.set('top', value);
-					}
-				}
-			}
-		}
     area.on('mouse:move',function(e){
       if(svgelem.dragActive){
+        var update = get_me_component(svgelem, 'update')
+        direction = get_me_component(svgelem, 'direction');
         var p = e.e;
         switch(direction){
           case 'vertical':
-            vm('set','y',update(vm('get', 'y'),(p.y-svgelem.dragPosition.y)));
+            vm(svgelem, 'set','y',update(vm(svgelem, 'get', 'y'),(p.y-svgelem.dragPosition.y)));
           break;
           case 'horizontal':
-            vm('set','x',update(vm('get', 'x'),(p.x-svgelem.dragPosition.x)));
+            vm(svgelem, 'set','x',update(vm(svgelem, 'get', 'x'),(p.x-svgelem.dragPosition.x)));
           break;
           default:
-            vm('set','x',update(vm('get', 'x'),(p.x-svgelem.dragPosition.x)));
-            vm('set','y',update(vm('get', 'y'),(p.y-svgelem.dragPosition.y)));
+            vm(svgelem, 'set','x',update(vm(svgelem, 'get', 'x'),(p.x-svgelem.dragPosition.x)));
+            vm(svgelem, 'set','y',update(vm(svgelem, 'get', 'y'),(p.y-svgelem.dragPosition.y)));
           break;
         }
         svgelem.dragPosition=p;

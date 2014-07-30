@@ -144,8 +144,7 @@
 					onComplete: cb
 				});
 			}
-
-
+      
 			fabric.Draggable(container, {
 				target: container._raster.content,
 				area: container.id+'_area',
@@ -186,7 +185,9 @@
 				direction: 'vertical',
 				nature:'negative'
 			});
-			doMove(value, true);
+      el.notify_on_geometry_ready (function () {
+			  doMove(value, true);
+      });
 		}
 
 		function invalidRaster () {
@@ -221,7 +222,9 @@
 				}
 				container.addWithUpdate(o);
 			}
-			o[ref_zero.id+'_text'].set('text', (isDefined(value)) ? value : '');
+      var scroll_item = fabric.TextWithDecorations(o[ref_zero.id+'_text']);
+			scroll_item.setText(isDefined(value) ? value : '');
+			//o[ref_zero.id+'_text'].set('text', (isDefined(value)) ? value : '');
 		}
 
 		function createValueSet (){
