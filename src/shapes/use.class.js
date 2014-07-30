@@ -42,19 +42,19 @@
           }
         }
       }
+
+      var nuo = this._prepareUsedObj(obj);
+      if(this.usedObj===nuo){
+        return;
+      }
       if (this.usedObj) {
-        if(this.usedObj===obj){
-          //return;
-        }
         this.usedObj.off('raster:created', this._rasterHandlers.create);
         this.usedObj.off('raster:changed', this._rasterHandlers.changed);
-        //delete this._rasterHandlers;
-        delete this.usedObj;
+        this.usedObj.group = null;
+        this.usedObj = null;
       }
 
-
-      //this.usedObj = obj.clone();
-      this.usedObj = this._prepareUsedObj(obj);
+      this.usedObj = nuo;
       this.usedObj.group = this;
       this.usedObj.on('raster:created', this._rasterHandlers.create);
       this.usedObj.on('raster:changed', this._rasterHandlers.changed);
