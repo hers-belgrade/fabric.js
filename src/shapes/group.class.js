@@ -346,7 +346,9 @@
    * @return {fabric.Group} An instance of fabric.Group
    */
   fabric.Group.fromObject = function(object) {
-    return new fabric.Group(fabric.util.enlivenObjects(object.objects),object);
+    var ret = new fabric.Group(fabric.util.enlivenObjects(object.objects),object);
+    delete ret.objects;
+    return ret;
   };
 
   fabric.Group.findChildGroups = function (s) {

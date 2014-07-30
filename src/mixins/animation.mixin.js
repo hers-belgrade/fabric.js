@@ -169,6 +169,7 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
     }
 
     var getValue = function(){
+      if(!this.get){return;}
       return propPair
       ? this.get(propPair[0])[propPair[1]]
       : this.get(property);
