@@ -55,9 +55,10 @@
 	}
 
 	function doneWithDragging () {
-    delete this.dragActive;
     delete this.dragPosition;
+    if (!this.dragActive) return;
     doConstrain(this);
+    delete this.dragActive;
     var finished = get_me_component(this, 'onFinished');
     if (!finished) return;
 
@@ -65,6 +66,7 @@
 			x: vm(this, 'get','x'),
 			y: vm(this, 'get','y')
 		});
+    this.invokeOnCanvas('renderAll');
 	}
 
   function default_value_manipulator (action, axis, value) {
@@ -456,6 +458,7 @@
     };
     handleconfig.clickcb = function(e){
       delete svgelem.dragActive;
+      svgelem.invokeOnCanvas('renderAll');
     };
     delete handleconfig.ctx;
 

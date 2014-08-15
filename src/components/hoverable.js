@@ -8,7 +8,7 @@
     var ctx=config.ctx||svgelem;
     function trigerrer(ctx,_cb){
       var cb = _cb;
-      return cb ? function(){
+      return cb ? function(evnt){
         this.isVisible() && this.enabled && cb.apply(ctx,arguments);
       } : function(){};
     }

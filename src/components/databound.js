@@ -10,6 +10,7 @@
 		this.el = svgelem;
 		this.value;
 		this.conditions = config.conditions;
+    this.debug = config.debug;
     this._cntr = globl_cnt;
     globl_cnt++;
 	}
@@ -38,7 +39,9 @@
 
   function setScalar(svgelem,value){
 		if (svgelem._conditions && !svgelem._conditions.isAllowed()) {
-			//(svgelem.id === 'balance') && console.log('conditions said no', svgelem.id, value, svgelem._conditions.conditions, svgelem._conditions._cntr);
+      if  (svgelem._conditions.debug){
+			  console.log('conditions said no', svgelem.id, value, svgelem._conditions.conditions, svgelem._conditions._cntr);
+      }
 			return;
 		}
     //(svgelem.id === 'balance') && console.log('conditions said ok', svgelem.id, value);
@@ -119,6 +122,7 @@
 			setScalar(svgelem, v); 
 		}
 		prepareValue(svgelem, config);
+    return svgelem;
 	}
 
 })(typeof exports !== 'undefined' ? exports : this);

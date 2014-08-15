@@ -23,7 +23,9 @@
 
 		var low = self[id+'_low'];
 		var high= self[id+'_high'];
-		var value = ('undefined' !== typeof(config.initialVal)) ? config.initialVal : undefined;
+
+
+		svgobj._ws_value = ('undefined' !== typeof(config.initialVal)) ? config.initialVal : undefined;
 
 		var label = fabric.TextWithDecorations(self[id+'_low'][id+'_low_value']);
 		updateValueText();
@@ -36,7 +38,7 @@
 		var hd_plus = fabric.ResourceButton (high[id+'_plus_button'], {
 			initialState: 'disabled',
 				clickcb : function () {
-					doMove(local_value_set[(local_value_set.indexOf(value) + 1) % local_value_set.length]);
+					doMove(local_value_set[(local_value_set.indexOf(svgobj._ws_value) + 1) % local_value_set.length]);
 				},
 				stoppropagation: true
 		});
@@ -44,7 +46,7 @@
 		var hd_minus = fabric.ResourceButton(high[id+'_minus_button'], {
 			initialState: 'disabled',
 				clickcb : function () {
-					doMove(local_value_set[(local_value_set.indexOf(value) - 1 + local_value_set.length) % local_value_set.length]);
+					doMove(local_value_set[(local_value_set.indexOf(svgobj._ws_value) - 1 + local_value_set.length) % local_value_set.length]);
 				},
 				stoppropagation: true
 		});
@@ -80,28 +82,31 @@
 		}
 		
 		function updateValueText (){
-			label.setText('undefined' !== typeof(value) ? value : '');
+      //if (label.get('text') == value) return;
+			label.setText('undefined' !== typeof(svgobj._ws_value) ? svgobj._ws_value : '');
+      svgobj.invokeOnCanvas('renderAll');
 		}
 
 		function doChanged (old_value, silent) {
 			updateValueText();
+      svgobj.invokeOnCanvas('renderAll');
 			if(silent) return;
 			svgobj.fire('scroller:changed', {
-				value:value,
+				value:svgobj._ws_value,
 				previous: old_value
 			});
 		}
 
 		function doMove(nv, force) {
-			if (!force && nv === value) return;
+			if (!force && nv === svgobj._ws_value) return;
 
 			var quants = before+local_value_set.indexOf(nv) - 1;
 			var val = quants*getMovementQuant();
 			var r = container._raster.content;
 			r.setRasterArea({ y: val});
 
-			var old_value = value;
-			value = nv;
+			var old_value = svgobj._ws_value;
+			svgobj._ws_value = nv;
 			updateButtons();
 			!force && doChanged(old_value);
 		}
@@ -110,7 +115,7 @@
 			hd_minus.enable();
 			hd_plus.enable();
 			return;
-			var mi = local_value_set.indexOf(value);
+			var mi = local_value_set.indexOf(svgobj._ws_value);
 
 			if (mi === 0) hd_minus.disable();
 			if (mi >= local_value_set.length - 1) hd_plus.disable();
@@ -120,7 +125,7 @@
       var hts = visible_elements*getMovementQuant();
 			el.setRasterArea({y:before*getMovementQuant(), height: hts});
       el.set('height', hts);
-			if ('undefined' === typeof(value)) return;
+			if ('undefined' === typeof(svgobj._ws_value)) return;
 			valid_raster = el;
 
 			var to_delta = null;
@@ -171,9 +176,9 @@
 						vs[axis] = val;
 						movement_direction = (this.area[axis] - val > 0) ? -1 : 1;
 						var sb = local_value_set[Math.floor((val + getMovementQuant()/2)/getMovementQuant())];
-						if (sb != value) {
-							var old = value;
-							value = sb;
+						if (sb != svgobj._ws_value) {
+							var old = svgobj._ws_value;
+							svgobj._ws_value = sb;
 							doChanged(old);
 						}
 						return this.setRasterArea(vs);
@@ -186,7 +191,7 @@
 				nature:'negative'
 			});
       el.notify_on_geometry_ready (function () {
-			  doMove(value, true);
+			  doMove(svgobj._ws_value, true);
       });
 		}
 
@@ -267,7 +272,7 @@
 			high.show();
 
 			if (valid_raster && 'undefined' !== typeof(value)) {
-				doMove(value, true);
+				doMove(svgobj._ws_value, true);
 			}
 			updateButtons();
 		}
@@ -294,15 +299,17 @@
 		}
 
 		svgobj.setValue = function (val, silent) {
-			var old = value;
+			var old = svgobj._ws_value;
+			svgobj._ws_value = val;
+      updateValueText();
 			if (old === val) return;
-			value = val;
 			doChanged(old, silent);
+      this.invokeOnCanvas('renderAll');
 			return val;
 		}
 
 		svgobj.getValue = function () {
-			return value;
+			return svgobj._ws_value;
 		}
     svgobj.dropValueSet = function () {
       local_value_set = [];
@@ -313,6 +320,7 @@
 			if (JSON.stringify(local_value_set) === JSON.stringify(temp)) return;
 			local_value_set = temp;
 			createValueSet();
+      this.invokeOnCanvas('renderAll');
 		}
 		return svgobj;
 	}

@@ -58,6 +58,7 @@
 
 
 		svgelem.setText = function (t) {
+      t = t+'';
 			for (var i in els) {
 				els[i] && els[i].set('text', t);
 			}
