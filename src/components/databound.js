@@ -14,18 +14,27 @@
     this._cntr = globl_cnt;
     globl_cnt++;
 	}
+
 	ConditionHandler.prototype.setCondition = function (name, value) {
+    if (this.debug) {
+      console.log('About to set condition ', name, 'to value', value, 'for el', this.el.id);
+    }
 		if (!(name in this.conditions)) return;
     //if (this.el.id === 'balance') console.log('setting condition to balance', name, value, this._cntr);
 		this.conditions[name] = value;
 		if (!this.isAllowed()) return;
+    if (this.debug) {
+      console.log('Conditions ok, should fire true on', this.el.id);
+    }
 		this.el.fire('conditions:true');
 	}
 
 	ConditionHandler.prototype.isAllowed = function () {
 		for (var i in this.conditions) {
 			if (!this.conditions[i]) {
-        //console.log(i, 'is false');
+        if (this.config) {
+          console.log(this.el.id, 'missing', i);
+        }
         return false;
       }
 		}
@@ -51,6 +60,7 @@
     }else{
       svgelem.set({text:value});
     }
+    svgelem.invokeOnCanvas('renderAll');
   };
 
 	function prepareValue (svgelem, config, init_val) {
